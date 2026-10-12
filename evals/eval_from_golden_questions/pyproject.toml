@@ -5,7 +5,7 @@ description = "RAG evaluation system using DeepEval metrics for Kunnskapsassiste
 readme = "README.md"
 requires-python = ">=3.13"
 dependencies = [
-    "kua-shared @ file:///Users/benjaminhope/src/customers/dio/KuA_evals/agents",
+    "kua-shared",
     "deepeval>=1.0.0",
     "langfuse>=3.10.0",
     "diskcache>=5.6.0",
@@ -24,6 +24,9 @@ dev = [
     "pytest>=8.0.0",
     "pytest-cov>=4.1.0",
 ]
+
+[tool.uv.sources]
+kua-shared = { path = "../agents" }
 
 [build-system]
 requires = ["hatchling"]
