@@ -7,6 +7,7 @@ import {
 } from '@digdir/designsystemet-react';
 import { useImperativeHandle, useRef, useState } from 'react';
 import type { FacetFieldProps } from './FacetField';
+import { useListFollowsField } from './listFollowsField';
 import {
   allChosenText,
   MAX_VALUES_PER_FIELD,
@@ -32,7 +33,9 @@ const HINT = 'Skriv et år eller en periode, som 2021 eller 2023–2028';
  * documents can still be chosen. Chips are the chosen years as periods, removed whole. */
 export function YearRangeField({ ref, facet, selected, onChange }: FacetFieldProps) {
   const inputRef = useRef<HTMLInputElement>(null);
+  const listRef = useRef<HTMLDataListElement>(null);
   useImperativeHandle(ref, () => ({ focus: () => inputRef.current?.focus() }), []);
+  useListFollowsField(selected, listRef, inputRef);
   const [query, setQuery] = useState('');
 
   const facetYears = facet.values.map((value) => value.value);
@@ -154,7 +157,7 @@ export function YearRangeField({ ref, facet, selected, onChange }: FacetFieldPro
         />
         {/* No Toggle: there is no list to open, and an arrow promises one. */}
         <Suggestion.Clear />
-        <Suggestion.List data-overscroll="contain" data-autoplacement="false">
+        <Suggestion.List ref={listRef} data-overscroll="contain">
           {/* Options or the hint, never both: u-datalist decides on the empty option before
               React draws the options. The period the text reads as is labelled as typed, so
               Enter chooses it («23-28» is 2023–2028). */}

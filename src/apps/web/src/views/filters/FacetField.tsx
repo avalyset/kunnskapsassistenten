@@ -10,6 +10,7 @@ import { useFlag } from '../../flags';
 import type { FilterFacet } from '../../model';
 import { chosenFirst, useChosenFirst } from './chosenFirst';
 import { renderChip, removedDrawnChip, valuesAfter, withDrawnChips } from './drawnChips';
+import { useListFollowsField } from './listFollowsField';
 import {
   allChosenText,
   MAX_VALUES_PER_FIELD,
@@ -35,13 +36,14 @@ export type FacetFieldProps = {
 };
 
 /** Designsystemet's Suggestion with `multiple`, whose chips show the selection. `data-overscroll`
- * lifts its inline width lock so our CSS can widen the list; `autoPlacement` is a dead prop in
- * 1.21.0, `data-autoplacement` works. Its Clear clears only typed text, hence our «Tøm». */
+ * lifts its inline width lock so our CSS can widen the list. Its Clear clears only typed text,
+ * hence our «Tøm». */
 export function FacetField({ ref, facet, selected, onChange }: FacetFieldProps) {
   const inputRef = useRef<HTMLInputElement>(null);
   const listRef = useRef<HTMLDataListElement>(null);
   useImperativeHandle(ref, () => ({ focus: () => inputRef.current?.focus() }), []);
   const first = useChosenFirst(selected, listRef);
+  useListFollowsField(selected, listRef, inputRef);
   const total = facet.values.length;
   const chosen = selected.length;
   // Every listed value ticked, the rule `askedSelection` leaves the field out by. Not
@@ -219,7 +221,7 @@ export function FacetField({ ref, facet, selected, onChange }: FacetFieldProps) 
         />
         <Suggestion.Toggle />
         <Suggestion.Clear />
-        <Suggestion.List ref={listRef} data-overscroll="contain" data-autoplacement="false">
+        <Suggestion.List ref={listRef} data-overscroll="contain">
           {chosenFirst(facet.values, (value) => first.has(value.value)).map((value) => (
             // The count stays out of `label`, which the chip and the filtering use.
             <Suggestion.Option key={value.value} value={value.value} label={value.label}>
