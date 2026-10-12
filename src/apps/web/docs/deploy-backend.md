@@ -115,9 +115,9 @@ commiten står i serverens diagnosepanel. Lokalt tar bygget om lag ti minutter.
 ## Steg 2: parameterfila
 
 Alle verdiene malen trenger utenom commiten, i én fil som bare du kan lese.
-Steget har fire blokker: to som bare definerer en funksjon, og to som kjører
+Steget har seks blokker: tre som bare definerer en funksjon, og tre som kjører
 den. **Har du fila fra før**, uten Postgres-passordet, kjører du bare 2c og
-2d.
+2d, og uten nøkkelen til liveness-proben bare 2e og 2f.
 
 ### 2a: funksjonen som lager fila
 
@@ -226,6 +226,34 @@ ka_rag_postgres_password
 
 Første gang skal den skrive `postgresAdminPassword 36` og `ny`.
 
+### 2e: funksjonen som legger til nøkkelen til liveness-proben
+
+Legger `livenessApiKey` til i fila som finnes, og nekter hvis den alt står der.
+Formatet er det samme som `apiKey`. Hva nøkkelen er til, står i
+[Liveness-proben](#liveness-proben).
+
+```sh
+ka_rag_liveness_key() {
+  local file="$HOME/.config/ka-rag-test/parameters.json"
+  [ -e "$file" ] || { echo "Finner ikke $file. Ta 2b først."; return 1; }
+  jq -e '.parameters.livenessApiKey' "$file" > /dev/null && { echo "livenessApiKey finnes alt. Ingenting er endret."; return 1; }
+  (
+    umask 077
+    export livenessApiKey="rag_$(openssl rand -hex 32)"
+    jq '.parameters.livenessApiKey = {value: env.livenessApiKey}' "$file" > "$file.ny" && mv "$file.ny" "$file"
+  ) || return 1
+  jq -r '.parameters.livenessApiKey.value | "livenessApiKey \(length)"' "$file"
+}
+```
+
+### 2f: nøkkelen
+
+```sh
+ka_rag_liveness_key
+```
+
+Den skal skrive `livenessApiKey 68`.
+
 ## Steg 3: Postgres, lagringen og seed-jobben
 
 ```sh
@@ -253,6 +281,10 @@ som `@secure()`, så de lagres ikke i utrullingshistorikken.
 bare `server/`. Jobben kjører det fra delingen, fra samme commit som bildet.
 Med `--auth-mode key` og uten nøkkel henter `az` kontonøkkelen selv. Målt i
 Azure 28.09: `seed-kudos-full.clj` ble lastet opp med 4 372 byte.
+
+`1c65865`, bildet fra 05.10, har ikke `scripts/kudos-full`, så blokken under
+feiler med den commiten. Skriptet finnes i `a836b91`, som det ble lastet opp
+fra 28.09. Seeding med `1c65865` og det skriptet er ikke prøvd.
 
 ```sh
 az storage file upload --subscription Altinn-AI-Assistant --auth-mode key --account-name karagvxd2q2aj52lqw --share-name ka-rag-db --source "$HOME/.cache/ka-rag-test/src/scripts/kudos-full/seed.clj" --path seed-kudos-full.clj
@@ -312,6 +344,9 @@ annet:
 Derfor sikrer oppskriften at appen ikke finnes, og lar ikke vakta gjøre det.
 Å skalere appen til 0 er ikke det samme: den vekkes av den første
 forespørselen, også av vaktas egen.
+
+Før steg 6 må nøkkelen til liveness-proben inn i databasen, med den samme
+jobben mens appen ikke finnes. Se [Liveness-proben](#liveness-proben).
 
 ## Steg 6: backenden
 
@@ -388,8 +423,9 @@ kildene lagres ikke med samtalen, og det sier frontenden selv.
 
 Backenden lager ingen nøkkel av seg selv. Det finnes to veier i koden:
 konsollet (`digdir.config.api-keys/create-api-key!`, bak admin-innlogging), og
-oppstartskroken `digdir.e2e.seed/maybe-seed!`. Oppsettet her bruker kroken,
-som er det lokal kjøring også gjør:
+oppstartskroken `digdir.e2e.seed/maybe-seed!`. Liveness-proben har en egen
+nøkkel, se [Liveness-proben](#liveness-proben). Frontendens nøkkel kommer fra
+kroken, som er det lokal kjøring også gjør:
 
 - Når `E2E_API_KEY` er satt, gjør hver oppstart tre ting: legger inn de
   innebygde agentene og to testagenter (8 i alt), lagrer akkurat denne verdien
@@ -418,6 +454,89 @@ som er det lokal kjøring også gjør:
 En nøkkel låst til `kudos/kudos-full` går an: `store-api-key` tar
 `:dataset-scopes`. Det krever egen kode i seed-jobben i stedet for kroken, og
 er ikke gjort.
+
+## Liveness-proben
+
+`/up` rører ikke databasen. Da skriveren i Datahike stoppet 08.10, hang alle
+kall med nøkkel, mens `/up` svarte hele tiden. Appen var nede i om lag 30 timer
+uten å bli startet på nytt
+([digdir/digdir-headless-rag#38](https://github.com/digdir/digdir-headless-rag/issues/38)).
+Derfor går liveness-proben mot `GET /api/conversations` med en nøkkel.
+Nøkkelsjekken skriver til databasen, og kallet henger når skriveren står.
+Etter to tidsavbrudd på rad starter Container Apps containeren på nytt, og det
+er det som løser hengen.
+
+- **Takten:** proben går hvert 240. sekund, med 10 s tidsavbrudd, og to bom gir
+  omstart. En heng blir oppdaget innen om lag åtte minutter, og så kommer
+  oppstarten (78 s i Azure 05.10). I Azure 09.10 svarte listen igjen 6 min
+  35 s etter at hengen ble laget, se [Målt i Azure 09.10](#målt-i-azure-0910).
+  Oppstarts- og readiness-proben står på `/up`.
+- **Hvert kall skriver.** Nøkkelsjekken oppdaterer når nøkkelen sist ble brukt.
+  Målt lokalt gir det om lag 25 KB i databasen per kall, eller om lag 9 MB i
+  døgnet med denne takten.
+- **Nøkkelen heter `ka-liveness-probe`.** Den har scope `query` og én agent som
+  ikke finnes. En liste med agenter begrenser MCP og `/v1` til dem, så
+  nøkkelen når ingen agent. Målt lokalt på `1c65865`:
+  - listen gir 200;
+  - `tools/list` gir ingen verktøy;
+  - `tools/call` og `/v1/chat/completions` svarer «API key cannot access
+    agent».
+
+  Den kan lese og endre tråder for en hvilken som helst `X-User-Id`, som
+  frontendens nøkkel.
+
+- **Verdien er synlig for alle som kan lese appen.** Hodene til en probe kan
+  ikke hente verdien fra en secret, så den står i klartekst i appens oppsett,
+  i portalen og i `az containerapp show`. Backenden har bare intern adresse, så
+  nøkkelen virker bare fra apper i samme miljø.
+- **Ikke laget i konsollet.** Oppsettet har ingen admin-bruker, og konsollet
+  lager ikke en nøkkel uten datasett eller policy.
+- **Den kan ikke trekkes tilbake** uten en admin-bruker. En ny verdi blir en
+  ny nøkkel ved siden av den gamle.
+
+### Nøkkelen inn i databasen
+
+Seed-jobben legger nøkkelen inn med `seedScript=liveness-key.clj`, mens appen
+ikke kjører, for Datahike tåler bare én skriver (se [steg 5](#steg-5-seeding)).
+Skriptet lagrer nøkkelen én gang og skriver `finnes alt` når den kjøres igjen.
+
+- **Første gang** kjøres blokkene under mellom steg 5 og 6, mens appen ennå
+  ikke finnes.
+- **Når appen kjører,** skjer det i det samme bruddet som i
+  [Et nytt bilde](#et-nytt-bilde): først revisjonen til fila og
+  deaktiveringen, så blokkene under, og til slutt steg 6 og deaktiveringen
+  igjen.
+
+Skriptet er `deploy/liveness-key.clj`. Opp på delingen:
+
+```sh
+az storage file upload --subscription Altinn-AI-Assistant --auth-mode key --account-name karagvxd2q2aj52lqw --share-name ka-rag-db --source deploy/liveness-key.clj --path liveness-key.clj
+```
+
+Jobben med nøkkelskriptet. Uten `withApp` rører malen ikke appen:
+
+```sh
+az deployment group create --subscription Altinn-AI-Assistant -g rg-ka-test -n ka-rag-liveness-key --template-file deploy/rag.bicep --parameters @"$HOME/.config/ka-rag-test/parameters.json" registryName=kafrontendvxd2q2aj52lqw imageTag="$(cat "$HOME/.cache/ka-rag-test/commit")" withApp=false seedScript=liveness-key.clj --query properties.provisioningState -o tsv
+```
+
+Jobben skal nå kjøre nøkkelskriptet. Denne skal skrive
+`/seed/liveness-key.clj`:
+
+```sh
+az containerapp job show --subscription Altinn-AI-Assistant -g rg-ka-test -n ka-rag-test-seed --query "properties.template.containers[0].args[-1]" -o tsv
+```
+
+Når appen finnes, skal ingen revisjon være aktiv før jobben startes. Denne
+skal ikke skrive noe:
+
+```sh
+az containerapp revision list --subscription Altinn-AI-Assistant -g rg-ka-test -n ka-rag-test --query "[?properties.active].name" -o tsv
+```
+
+Start jobben og vent på den med `job start` og ventingen i
+[steg 5](#steg-5-seeding). Siste linje i loggen skal være
+`lagret: ka-liveness-probe`. Loggen leses i portalen, som i steg 5. Steg 6
+setter jobben tilbake til seedingen og gir appen proben.
 
 ## Databasen i Postgres
 
@@ -731,6 +850,27 @@ med desimalene.
 | Spørsmål uten filter, gjennom ka-frontend-test | 19 s, 1 529 tegn og 1 kilde. Før byttet: 21 s og 1 kilde.                                                                                                                                                                                                  |
 | Spørsmål med filteret Årsrapport               | 13 s, 975 tegn, låst, og 3 kilder som alle er årsrapporter. Før byttet: 19 s og 2 kilder.                                                                                                                                                                  |
 | Etter ny innlasting                            | svaret, kildene og låsen som før, og 0 konsollfeil                                                                                                                                                                                                         |
+
+## Målt i Azure 09.10
+
+Selvhelingen med [liveness-proben](#liveness-proben), på revisjonen
+`ka-rag-test--0000002` i `rg-ka-test`. Tidene er UTC. Hengen ble laget slik
+den oppsto i
+[digdir/digdir-headless-rag#38](https://github.com/digdir/digdir-headless-rag/issues/38):
+appens tre ledige tilkoblinger ble lukket fra Postgres-siden med
+`pg_terminate_backend`. Listen ble spurt gjennom ka-frontend-test hvert 15.
+sekund.
+
+| Hva                      | Målt                                                                                                 |
+| ------------------------ | ---------------------------------------------------------------------------------------------------- |
+| Tilkoblingene lukket     | 19:33:01                                                                                             |
+| Første kall etterpå      | 500 kl. 19:33:09, og `Writer thread shutting down because of commit error` i loggen. Så hang listen. |
+| Proben                   | bom 19:34:11 og 19:38:11, og omstart av containeren 19:38:11                                         |
+| Oppstarten               | JVM 19:38:12, `init-db` 19:39:22, Jetty 19:39:26                                                     |
+| Listen svarte igjen      | 19:39:36                                                                                             |
+| Fra lukkingen til svar   | 6 min 35 s                                                                                           |
+| Fra hengen til omstarten | 5 min 2 s                                                                                            |
+| Fra omstarten til svar   | 1 min 25 s                                                                                           |
 
 ## Det som ikke er målt
 

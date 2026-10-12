@@ -17,10 +17,10 @@
 // Ikke på Azure Files: Datahikes filbackend skriver en ny fil og gir den det
 // gamle navnet, og SMB på Azure Files nekter det. Målt av dirigenten 28.09:
 // seed-jobben feilet med AccessDeniedException på `.ksv.new -> .ksv`.
-// Delingen har nå bare seed-skriptet.
+// Delingen har nå bare skriptene jobben kjører.
 //
-// IKKE KJØRT. Bevist lokalt i samme form under Colima, se «Prøve det lokalt» i
-// docs/deploy-backend.md.
+// Kjørt i rg-ka-test siden 28.09. Prøvd lokalt i samme form under Colima
+// først, se «Prøve det lokalt» i docs/deploy-backend.md.
 
 @description('Backendens navn. Frontenden når den på http://<navn> inne i miljøet.')
 param name string = 'ka-rag-test'
@@ -81,6 +81,14 @@ param jwtSecret string
 @secure()
 @description('Nøkkelen frontenden bruker. «rag_» og 64 heksadesimale tegn.')
 param apiKey string
+
+@secure()
+@description('Nøkkelen liveness-proben bruker, «ka-liveness-probe». «rag_» og 64 heksadesimale tegn. Står i klartekst i appens oppsett; se docs/deploy-backend.md, «Liveness-proben».')
+param livenessApiKey string
+
+@description('Skriptet på delingen som jobben kjører: seedingen, eller nøkkelen til liveness-proben.')
+@allowed(['seed-kudos-full.clj', 'liveness-key.clj'])
+param seedScript string = 'seed-kudos-full.clj'
 
 @secure()
 param azureOpenAiApiKey string
@@ -274,6 +282,7 @@ resource seedJob 'Microsoft.App/jobs@2024-03-01' = {
         { name: 'typesense-api-key-admin', value: typesenseApiKeyAdmin }
         { name: 'colbert-api-key', value: colbertApiKey }
         { name: 'postgres-password', value: postgresAdminPassword }
+        { name: 'liveness-api-key', value: livenessApiKey }
       ]
     }
     template: {
@@ -287,8 +296,8 @@ resource seedJob 'Microsoft.App/jobs@2024-03-01' = {
             '/app/app.jar'
             'clojure.main'
             '-e'
-            '(require \'digdir.setup.common) (digdir.setup.common/refuse-if-server-running! "seed-kudos-full.clj")'
-            '/seed/seed-kudos-full.clj'
+            '(require \'digdir.setup.common) (digdir.setup.common/refuse-if-server-running! "${seedScript}")'
+            '/seed/${seedScript}'
           ]
           resources: { cpu: json('1'), memory: '2Gi' }
           env: concat(bootstrapEnv, [
@@ -309,6 +318,7 @@ resource seedJob 'Microsoft.App/jobs@2024-03-01' = {
             { name: 'AZURE_OPENAI_API_ENDPOINT', value: azureOpenAiEndpoint }
             { name: 'AZURE_OPENAI_DEPLOYMENT_NAME', value: azureOpenAiDeployment }
             { name: 'AZURE_OPENAI_API_KEY', secretRef: 'azure-openai-api-key' }
+            { name: 'LIVENESS_API_KEY', secretRef: 'liveness-api-key' }
           ])
           volumeMounts: [seedMount]
         }
@@ -380,11 +390,23 @@ resource app 'Microsoft.App/containerApps@2024-03-01' = if (withApp) {
               httpGet: { path: '/up', port: 8080 }
               periodSeconds: 10
             }
+            // Not /up: it never touches the database, so it stayed green
+            // through the hang in digdir/digdir-headless-rag#38. A call with
+            // a key writes, and hangs once the writer has stopped. Probe
+            // headers cannot reference a secret, so the key is in plain text.
             {
               type: 'Liveness'
-              httpGet: { path: '/up', port: 8080 }
-              periodSeconds: 30
-              failureThreshold: 3
+              httpGet: {
+                path: '/api/conversations'
+                port: 8080
+                httpHeaders: [
+                  { name: 'X-API-Key', value: livenessApiKey }
+                  { name: 'X-User-Id', value: 'ka-liveness' }
+                ]
+              }
+              periodSeconds: 240
+              timeoutSeconds: 10
+              failureThreshold: 2
             }
           ]
         }

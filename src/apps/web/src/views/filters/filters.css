@@ -187,6 +187,13 @@
   min-block-size: var(--dsc-suggestion-chip-height);
 }
 
+/* A chip drawn for several values (drawnChips.tsx): Suggestion's chip per value stays for
+   u-combobox, which ticks and counts by it, and is hidden while the drawn one stands.
+   `display: none` takes it out of the accessibility tree and the focus order too. */
+.filters-view ds-suggestion:has(> data > .drawn-chip) > data:not(:has(> .drawn-chip)) {
+  display: none;
+}
+
 /* data-overscroll="contain" leaves the list without the input's width. rem, as
    a percentage reads against the viewport in the top layer. Only `width`, never
    `display`: u-combobox opens and closes the list with `hidden`. */

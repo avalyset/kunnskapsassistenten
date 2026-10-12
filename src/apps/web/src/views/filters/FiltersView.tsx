@@ -108,11 +108,17 @@ export function FiltersView({
     setAnnouncement('');
   }
 
-  /** Every change the reader makes, so the note is announced as it appears. */
-  function change(next: FilterSelection) {
-    if (inUnlockedThread && !changedInThread && !sameSelection(next, baseline.selection)) {
-      setAnnouncement(CHANGED_IN_THREAD);
-    }
+  /** Every change the reader makes, so the note is announced as it appears. `said` is a field's
+   * own account of the change (FacetField), told first. */
+  function change(next: FilterSelection, said?: string) {
+    const note =
+      inUnlockedThread && !changedInThread && !sameSelection(next, baseline.selection)
+        ? CHANGED_IN_THREAD
+        : undefined;
+    // The same words twice would not change the region, and it would stay silent; a no-break
+    // space makes them new.
+    const text = [said, note].filter(Boolean).join(' ');
+    if (text) setAnnouncement((previous) => (previous === text ? `${text}\u00a0` : text));
     setSelection(next);
   }
   const { documents } = useAnswerSources();
@@ -358,7 +364,7 @@ export function FiltersView({
               ref={index === 0 ? firstFieldRef : undefined}
               facet={facet}
               selected={chosen[facet.dimension]}
-              onChange={(values) => change({ ...chosen, [facet.dimension]: values })}
+              onChange={(values, said) => change({ ...chosen, [facet.dimension]: values }, said)}
             />
           );
         })}

@@ -16,3 +16,13 @@ export const SCREEN_READER_TEXTS = {
 /** The most values per field: headless-rag takes 1 to 100, and the BFF answers more with
     `400 filter-too-many-values`. Told before the question rather than as an error after it. */
 export const MAX_VALUES_PER_FIELD = 100;
+
+/** For the live region after «Velg alle»: every listed value of the field is chosen. */
+export function allChosenText(label: string, total: number): string {
+  return `Alle ${total} ${label.toLocaleLowerCase('nb-NO')} er valgt.`;
+}
+
+/** For the live region after «Tøm», or after the one chip for all of them goes. */
+export function noneChosenText(label: string): string {
+  return `Ingen ${label.toLocaleLowerCase('nb-NO')} er valgt.`;
+}
