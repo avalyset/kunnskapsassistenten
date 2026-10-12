@@ -333,6 +333,30 @@ function Sidebar({
     toggle.current?.focus();
   }, [hasFocus, state.collapsed, resizing]);
 
+  // The same repair for focus lent to a modal dialog elsewhere (the flags menu): the browser
+  // hands it back on close, and if this slot collapsed meanwhile, the element is hidden and the
+  // focus drops to `<body>`. Remembered on the way out, since the slot no longer holds the focus
+  // when it collapses. `close` does not bubble, hence capture. It fires after the hand-back, and
+  // a failed one leaves the focus in the closed dialog (Chromium) or on `<body>`.
+  const lentToDialog = useRef<HTMLElement | null>(null);
+  useEffect(() => {
+    const onClose = (event: Event) => {
+      const from = lentToDialog.current;
+      lentToDialog.current = null;
+      if (from === null || !(content.current?.contains(from) ?? false)) return;
+
+      const active = document.activeElement;
+      const lost =
+        active === null ||
+        active === document.body ||
+        !active.isConnected ||
+        (event.target instanceof Node && event.target.contains(active));
+      if (lost) toggle.current?.focus();
+    };
+    document.addEventListener('close', onClose, true);
+    return () => document.removeEventListener('close', onClose, true);
+  }, []);
+
   // From the slot's name, so a moved view keeps its wording. No count: a number
   // reads as a notification (issue 87). Must equal the tooltip, which
   // @digdir/designsystemet-web otherwise writes over `aria-label`.
@@ -463,7 +487,13 @@ function Sidebar({
       // inside.
       onFocus={() => setHasFocus(true)}
       onBlur={(event) => {
-        if (!element.current?.contains(event.relatedTarget)) setHasFocus(false);
+        const to = event.relatedTarget;
+        const leaving = !element.current?.contains(to);
+        if (leaving) setHasFocus(false);
+        lentToDialog.current =
+          leaving && to instanceof HTMLElement && to.closest('dialog[open]') !== null
+            ? event.target
+            : null;
       }}
     >
       {/* The separator is in the landmark (axe `region`) but outside the clipping box. */}
