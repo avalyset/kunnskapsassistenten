@@ -8,6 +8,7 @@ import {
 import { useImperativeHandle, useRef, type Ref } from 'react';
 import { useFlag } from '../../flags';
 import type { FilterFacet } from '../../model';
+import { chosenFirst, useChosenFirst } from './chosenFirst';
 import { renderChip, removedDrawnChip, valuesAfter, withDrawnChips } from './drawnChips';
 import {
   allChosenText,
@@ -38,7 +39,9 @@ export type FacetFieldProps = {
  * 1.21.0, `data-autoplacement` works. Its Clear clears only typed text, hence our «Tøm». */
 export function FacetField({ ref, facet, selected, onChange }: FacetFieldProps) {
   const inputRef = useRef<HTMLInputElement>(null);
+  const listRef = useRef<HTMLDataListElement>(null);
   useImperativeHandle(ref, () => ({ focus: () => inputRef.current?.focus() }), []);
+  const first = useChosenFirst(selected, listRef);
   const total = facet.values.length;
   const chosen = selected.length;
   // Every listed value ticked, the rule `askedSelection` leaves the field out by. Not
@@ -216,8 +219,8 @@ export function FacetField({ ref, facet, selected, onChange }: FacetFieldProps) 
         />
         <Suggestion.Toggle />
         <Suggestion.Clear />
-        <Suggestion.List data-overscroll="contain" data-autoplacement="false">
-          {facet.values.map((value) => (
+        <Suggestion.List ref={listRef} data-overscroll="contain" data-autoplacement="false">
+          {chosenFirst(facet.values, (value) => first.has(value.value)).map((value) => (
             // The count stays out of `label`, which the chip and the filtering use.
             <Suggestion.Option key={value.value} value={value.value} label={value.label}>
               {value.count === undefined ? value.label : `${value.label} (${value.count})`}
