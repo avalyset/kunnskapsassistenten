@@ -46,14 +46,25 @@ function ticked(container: HTMLElement): string[] {
 }
 
 /** The selection lives above the field, as it does in the view. */
-function Years({ initial = [] as string[], seen }: { initial?: string[]; seen?: string[][] }) {
+function Years({
+  initial = [] as string[],
+  seen,
+  said,
+  facet = years,
+}: {
+  initial?: string[];
+  seen?: string[][];
+  said?: (string | undefined)[];
+  facet?: FilterFacet;
+}) {
   const [selected, setSelected] = useState(initial);
   return (
     <YearRangeField
-      facet={years}
+      facet={facet}
       selected={selected}
-      onChange={(next) => {
+      onChange={(next, text) => {
         seen?.push(next);
+        said?.push(text);
         setSelected(next);
       }}
     />
@@ -274,6 +285,126 @@ describe('årsfilteret med perioder (year-ranges)', () => {
     fireEvent.click(screen.getByRole('button', { name: 'Tøm år' }));
     expect(seen.at(-1)).toEqual([]);
     expect(screen.getByText('Ingen avgrensning')).toBeTruthy();
+  });
+});
+
+describe('årslista ved klikk (year-ranges)', () => {
+  const hint = 'Skriv et år eller en periode, som 2021 eller 2023–2028';
+
+  it('viser årene med dokumenter før noe er skrevet, med hintet over dem', () => {
+    const facet = {
+      ...years,
+      values: [...years.values, { value: '2018', label: '2018', count: 0 }],
+    };
+    const { container } = render(<Years facet={facet} />);
+
+    expect(offered(container)).toEqual([
+      '2024 (6)',
+      '2023 (5)',
+      '2022 (4)',
+      '2021 (3)',
+      '2020 (2)',
+      '2019 (1)',
+    ]);
+    // Not an option to walk to or choose; the placeholder says the same to a screen reader.
+    expect(screen.getByText(hint).closest('u-datalist')).toBeTruthy();
+    expect(screen.getByText(hint).getAttribute('aria-hidden')).toBe('true');
+    expect(screen.getByRole('button', { name: 'Valg' })).toBeTruthy();
+  });
+
+  it('krysser av de valgte årene, også inne i en periode, og setter dem først', () => {
+    const { container } = render(<Years initial={['2020', '2022', '2023']} />);
+
+    expect(chips(container)).toEqual(['2020', '2022–2023']);
+    expect(ticked(container)).toEqual(['2023', '2022', '2020']);
+    expect(offered(container)).toEqual([
+      '2023 (5)',
+      '2022 (4)',
+      '2020 (2)',
+      '2024 (6)',
+      '2021 (3)',
+      '2019 (1)',
+    ]);
+  });
+
+  it('setter de valgte årene først også mens et år skrives', () => {
+    const { container } = render(<Years initial={['2021']} />);
+
+    type('202');
+
+    expect(offered(container)).toEqual([
+      '2021 (3)',
+      '2024 (6)',
+      '2023 (5)',
+      '2022 (4)',
+      '2020 (2)',
+    ]);
+  });
+
+  it('tar et år ut av perioden når det velges igjen, og sier fra', () => {
+    const seen: string[][] = [];
+    const said: (string | undefined)[] = [];
+    const { container } = render(
+      <Years initial={['2022', '2023', '2024']} seen={seen} said={said} />,
+    );
+
+    choose('2023 (5)');
+
+    expect(seen.at(-1)).toEqual(['2022', '2024']);
+    expect(chips(container)).toEqual(['2022', '2024']);
+    expect(said.at(-1)).toBe('Fjernet 2023');
+  });
+
+  it('sier hva som ble lagt til, også når det slår seg sammen med en periode', () => {
+    const said: (string | undefined)[] = [];
+    render(<Years initial={['2022']} said={said} />);
+
+    choose('2023 (5)');
+    expect(said.at(-1)).toBe('Lagt til 2023');
+
+    type('19-21');
+    choose('2019–2021 (6)');
+    expect(said.at(-1)).toBe('Lagt til 2019–2021');
+  });
+
+  it('endrer ingenting når en periode som alt er valgt, velges igjen', () => {
+    const seen: string[][] = [];
+    render(<Years initial={['2020', '2021', '2022']} seen={seen} />);
+
+    type('20-22');
+    choose('2020–2022 (9)');
+
+    expect(seen).toEqual([]);
+    expect(input().value).toBe('');
+  });
+
+  it('teller årene for skjermleseren, ikke merkelappene', () => {
+    render(<Years initial={['2022', '2023', '2024']} />);
+
+    expect(input().getAttribute('aria-description')).toBe('3 valgt, naviger bakover for å endre');
+  });
+
+  it('flytter fokus til neste periode, og så til feltet, når perioder fjernes med tastaturet', () => {
+    const seen: string[][] = [];
+    const said: (string | undefined)[] = [];
+    render(<Years initial={['2019', '2020', '2022', '2023']} seen={seen} said={said} />);
+
+    // Back from the field to the last period, and on to the first.
+    act(() => input().focus());
+    fireEvent.keyDown(input(), { key: 'ArrowLeft' });
+    fireEvent.keyDown(document.activeElement as Element, { key: 'ArrowLeft' });
+    const first = screen.getByRole('option', { name: /^2019–2020, Trykk for å fjerne/u });
+    expect(document.activeElement).toBe(first);
+
+    fireEvent.keyDown(first, { key: 'Backspace' });
+    expect(seen.at(-1)).toEqual(['2022', '2023']);
+    expect(said.at(-1)).toBe('Fjernet 2019–2020');
+    const last = screen.getByRole('option', { name: /^2022–2023, Trykk for å fjerne/u });
+    expect(document.activeElement).toBe(last);
+
+    fireEvent.keyDown(last, { key: 'Backspace' });
+    expect(seen.at(-1)).toEqual([]);
+    expect(document.activeElement).toBe(input());
   });
 });
 
@@ -539,17 +670,17 @@ describe('«Velg alle» og «Tøm» for skjermleseren', () => {
     expect(said).toEqual(['Alle 5 virksomheter er valgt.']);
   });
 
-  it('teller perioder i årsfeltet, der en periode er én merkelapp', () => {
-    // 2019 and 2022 are two chips, and «Velg alle» makes them one: three chips change.
+  it('sier fra selv i årsfeltet, der et år og perioden det står i, er hver sin merkelapp', () => {
+    // u-combobox counts the chips Suggestion holds: one per year, hidden, and one per period.
     const said: (string | undefined)[] = [];
     render(<Years initial={['2019', '2022']} said={said} />);
 
     fireEvent.click(screen.getByRole('button', { name: 'Velg alle år' }));
     expect(said.at(-1)).toBe('Alle 6 år er valgt.');
 
-    // One chip, 2019–2024, goes: u-combobox says «Fjernet 2019–2024».
+    // Six years and the period 2019–2024 go.
     fireEvent.click(screen.getByRole('button', { name: 'Tøm år' }));
-    expect(said.at(-1)).toBeUndefined();
+    expect(said.at(-1)).toBe('Ingen år er valgt.');
   });
 
   it('sier fra i panelet også når de samme ordene kommer to ganger etter hverandre', () => {
