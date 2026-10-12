@@ -96,10 +96,8 @@ export function LayoutProvider({
   );
 
   // The filters-over-sources trial (flag `filters-right-panel`, digdir/kunnskapsassistenten#84) is
-  // derived, never stored. Starting it opens the panel the filters moved to, through `fitted`, so
-  // a narrow window shuts the navigation panel as a click on the rail would. Not in drawer mode,
-  // and not on a page load where the reader had shut that panel. Before the narrow rule below,
-  // which then finds one sidebar open and leaves it.
+  // derived, never stored. Starting it opens the filters' panel through `fitted`, like the rail,
+  // except in drawer mode or on a load where the reader had shut it. Before the narrow rule below.
   const filtersBeside = useFlag('filters-right-panel');
   const [appliedFiltersBeside, setAppliedFiltersBeside] = useState<boolean | null>(null);
   if (filtersBeside !== appliedFiltersBeside) {

@@ -333,17 +333,15 @@ function Sidebar({
     toggle.current?.focus();
   }, [hasFocus, state.collapsed, resizing]);
 
-  // The same repair for focus lent to a modal dialog elsewhere (the flags menu): the browser
-  // hands it back on close, and if this slot collapsed meanwhile, the element is hidden and the
-  // focus drops to `<body>`. Remembered on the way out, since the slot no longer holds the focus
-  // when it collapses. `close` does not bubble, hence capture. It fires after the hand-back, and
-  // a failed one leaves the focus in the closed dialog (Chromium) or on `<body>`.
-  const lentToDialog = useRef<HTMLElement | null>(null);
+  // Focus lent to a modal dialog (the flags menu) is handed back on close; if this slot collapsed
+  // meanwhile, the element is hidden and the focus is left in the closed dialog. Then the toggle.
+  // Noted in `onBlur`, since the slot no longer holds it; capture, since `close` does not bubble.
+  const lentToDialog = useRef(false);
   useEffect(() => {
     const onClose = (event: Event) => {
-      const from = lentToDialog.current;
-      lentToDialog.current = null;
-      if (from === null || !(content.current?.contains(from) ?? false)) return;
+      const lent = lentToDialog.current;
+      lentToDialog.current = false;
+      if (!lent) return;
 
       const active = document.activeElement;
       const lost =
@@ -491,9 +489,7 @@ function Sidebar({
         const leaving = !element.current?.contains(to);
         if (leaving) setHasFocus(false);
         lentToDialog.current =
-          leaving && to instanceof HTMLElement && to.closest('dialog[open]') !== null
-            ? event.target
-            : null;
+          leaving && to instanceof HTMLElement && to.closest('dialog[open]') !== null;
       }}
     >
       {/* The separator is in the landmark (axe `region`) but outside the clipping box. */}

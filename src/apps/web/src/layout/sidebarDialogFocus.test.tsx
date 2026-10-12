@@ -2,15 +2,16 @@ import { act, render, screen } from '@testing-library/react';
 import { MemoryRouter, Route, Routes } from 'react-router';
 import { afterEach, beforeEach, describe, expect, it } from 'vitest';
 import { defaultViewportWidth, setViewportWidth } from '../test/matchMedia';
+import { resetFooterMode, setFooterMode } from './footerMode';
 import { LayoutProvider } from './LayoutProvider';
 import { Shell } from './Shell';
 import { useLayout } from './useLayout';
 
 /**
  * Focus lent to a modal dialog elsewhere (the flags menu) while a sidebar collapses. The browser
- * hands it back on close, to an element the collapse has hidden, and Chromium then leaves it in
- * the closed dialog until it drops to `<body>`. jsdom does no hand-back, so each test does the
- * browser's part: nothing when the element is hidden, focusing it when it is not.
+ * hands it back on close, to an element the collapse has hidden or removed, and leaves it in the
+ * closed dialog. jsdom does no hand-back, so each test does the browser's part: nothing when the
+ * element is gone, focusing it when it is not.
  */
 
 globalThis.ResizeObserver ??= class {
@@ -25,6 +26,7 @@ beforeEach(() => {
 });
 afterEach(() => {
   window.localStorage.clear();
+  resetFooterMode();
   setViewportWidth(defaultViewportWidth);
 });
 
@@ -70,6 +72,23 @@ describe('fokus lånt til en dialog mens navigasjonspanelet lukkes', () => {
   it('går til skinneknappen når dialogen lukkes og elementet er skjult', () => {
     open();
     focusInNavigationPanel();
+    const menuButton = screen.getByRole('button', { name: 'Lukk navigasjonspanelet' });
+    menuButton.focus();
+
+    act(() => menuButton.click());
+    closeMenu();
+
+    expect(document.activeElement).toBe(
+      screen.getByRole('button', { name: 'Vis tråder og filter' }),
+    );
+  });
+
+  it('går til skinneknappen også fra en festet fot, som står utenfor innholdet', () => {
+    setFooterMode('pinned');
+    open();
+    const link = document.querySelector<HTMLElement>('.primary-sidebar .sidebar-footer a[href]');
+    if (!link || link.closest('.sidebar-content')) throw new Error('Ingen festet fot å stå i.');
+    link.focus();
     const menuButton = screen.getByRole('button', { name: 'Lukk navigasjonspanelet' });
     menuButton.focus();
 
