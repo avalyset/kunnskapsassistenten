@@ -136,8 +136,6 @@ export function YearRangeField({ ref, facet, selected, onChange }: FacetFieldPro
     const next = [...years].sort((a, b) => a - b).map(String);
     keepFocusFromDrawnChip(items, drawn, inputRef.current);
     clearQuery();
-    // A period whose years are all chosen adds nothing.
-    if (next.length === chosen && next.every((year) => selected.includes(year))) return;
 
     // What u-combobox took or gave: a year, a period from the text, or a drawn period.
     const kept = new Set(items.map((item) => item.value));
@@ -145,6 +143,14 @@ export function YearRangeField({ ref, facet, selected, onChange }: FacetFieldPro
     const removed = selectedItems.find((item) => !kept.has(item.value));
     const added = items.find((item) => !was.has(item.value));
     const range = added && rangeOf(added.value);
+
+    // A period whose years are all chosen adds nothing, and is not ticked to be taken off; said,
+    // or the text would just go.
+    if (next.length === chosen && next.every((year) => selected.includes(year))) {
+      if (range) onChange(selected, `${formatRange(range)} er alt valgt.`);
+      return;
+    }
+
     const said = told(next)
       ? undefined
       : removed

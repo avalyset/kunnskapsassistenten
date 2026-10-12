@@ -40,6 +40,45 @@ test(
   },
 );
 
+test(
+  'lista åpner øverst igjen etter rulling, så de valgte synes',
+  MOCK,
+  async ({ page }, testInfo) => {
+    covers(testInfo, 'filtre kan velges og gir chips');
+    await page.goto('/');
+    const { input, list } = organisations(page);
+    await input.click();
+    const options = list.getByRole('option');
+    const picked = (await options.nth(30).textContent()) ?? '';
+
+    // The click scrolls the option into view, and the list remembers where it was.
+    await options.nth(30).click();
+    await expect.poll(() => list.evaluate((element) => element.scrollTop)).toBeGreaterThan(0);
+
+    await page.keyboard.press('Escape');
+    await input.click();
+    await expect(options.first()).toHaveText(picked);
+    await expect.poll(() => list.evaluate((element) => element.scrollTop)).toBe(0);
+    await expect(options.first()).toBeInViewport();
+  },
+);
+
+test.describe('i et vindu der det er trangt under feltet', () => {
+  test.use({ viewport: { width: 1280, height: 800 } });
+
+  test('lista åpner over feltet', MOCK, async ({ page }, testInfo) => {
+    covers(testInfo, 'filtre kan velges og gir chips');
+    await page.goto('/');
+    const { input, list } = organisations(page);
+    await input.click();
+
+    await expect(list).toHaveAttribute('data-floating', /^top/u);
+    const field = await input.boundingBox();
+    const box = await list.boundingBox();
+    expect(box && field && box.y + box.height <= field.y).toBe(true);
+  });
+});
+
 test.describe('i et høyt vindu, der lista åpner under feltet', () => {
   test.use({ viewport: { width: 1280, height: 1100 } });
 

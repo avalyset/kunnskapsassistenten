@@ -31,7 +31,8 @@ export type FacetFieldProps = {
   facet: FilterFacet;
   /** Selected {@link FacetValue.value}s. Empty means «no restriction». */
   selected: string[];
-  /** `said` is for the view's live region: the change, where u-combobox says nothing. */
+  /** `said` is for the view's live region: the change, where u-combobox says nothing. With the
+   * values as they were, it is all there is to tell. */
   onChange: (values: string[], said?: string) => void;
 };
 

@@ -1,7 +1,7 @@
 import { act, fireEvent, render, screen } from '@testing-library/react';
 import { useState } from 'react';
 import { MemoryRouter } from 'react-router';
-import { beforeEach, describe, expect, it } from 'vitest';
+import { beforeEach, describe, expect, it, vi } from 'vitest';
 import { resetFlags, setFlag } from '../../flags/flags';
 import { AnswerSourcesContext, inertAnswerSources } from '../../layout/answerSourcesContext';
 import { FilterContext } from '../../layout/filterContext';
@@ -367,14 +367,20 @@ describe('årslista ved klikk (year-ranges)', () => {
     expect(said.at(-1)).toBe('Lagt til 2019–2021');
   });
 
-  it('endrer ingenting når en periode som alt er valgt, velges igjen', () => {
+  it('endrer ingenting når en periode som alt er valgt, velges igjen, men sier fra', () => {
     const seen: string[][] = [];
-    render(<Years initial={['2020', '2021', '2022']} seen={seen} />);
+    const said: (string | undefined)[] = [];
+    render(<Years initial={['2020', '2021', '2022', '2023']} seen={seen} said={said} />);
 
     type('20-22');
     choose('2020–2022 (9)');
+    // Inside a longer period too.
+    type('21-22');
+    choose('2021–2022 (7)');
 
-    expect(seen).toEqual([]);
+    const before = ['2020', '2021', '2022', '2023'];
+    expect(seen).toEqual([before, before]);
+    expect(said).toEqual(['2020–2022 er alt valgt.', '2021–2022 er alt valgt.']);
     expect(input().value).toBe('');
   });
 
@@ -732,6 +738,45 @@ describe('«Velg alle» og «Tøm» for skjermleseren', () => {
 
     fireEvent.click(screen.getByRole('button', { name: 'Tøm virksomheter' }));
     expect(region()).toBe('Ingen virksomheter er valgt.\u00a0');
+  });
+});
+
+describe('en periode som alt er valgt, i panelet', () => {
+  it('sier fra i panelet uten å sette filteret på nytt, som ville hentet fasettene', () => {
+    setFlag('year-ranges', true);
+    const setSelection = vi.fn();
+    const { container } = render(
+      <MemoryRouter>
+        <FilterContext
+          value={{ selection: { ...emptyFilterSelection, year: ['2022', '2023'] }, setSelection }}
+        >
+          <AnswerSourcesContext value={inertAnswerSources}>
+            <FiltersView siblingViews={['filters']} onShowView={() => {}} facets={[years]} />
+          </AnswerSourcesContext>
+        </FilterContext>
+      </MemoryRouter>,
+    );
+    const field = screen.getByPlaceholderText('Skriv et år eller en periode') as HTMLInputElement;
+    act(() => {
+      field.value = '22-23';
+      field.dispatchEvent(
+        new InputEvent('input', { bubbles: true, inputType: 'insertText', data: '22-23' }),
+      );
+    });
+    const value =
+      screen.getByRole('option', { name: '2022–2023 (9)', hidden: true }).getAttribute('value') ??
+      '';
+    act(() => {
+      field.value = value;
+      field.dispatchEvent(
+        new InputEvent('input', { bubbles: true, inputType: 'insertReplacementText', data: value }),
+      );
+    });
+
+    expect(container.querySelector('.filters-view > output')?.textContent).toBe(
+      '2022–2023 er alt valgt.',
+    );
+    expect(setSelection).not.toHaveBeenCalled();
   });
 });
 
