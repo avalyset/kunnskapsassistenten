@@ -3,6 +3,7 @@ import { MemoryRouter } from 'react-router';
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import type { ChatClient } from '../../api/chatClient';
 import { emptyFilterSelection, type FilterSelection, type Thread } from '../../model';
+import { allChosenText } from './suggestionField';
 
 /**
  * Changing the filter in a thread that is going on (issue 90).
@@ -129,12 +130,13 @@ describe('the filter changed in a thread with no lock', () => {
     const box = await findNote(panel);
     expect(box.textContent).toContain(NOTE);
     expect(within(box).getByRole('link', { name: 'Ny tråd' }).getAttribute('href')).toBe('/');
-    // The panel's own live region, so it is said once, as it appears.
+    // The panel's own live region, so it is said once, as it appears: after what the field
+    // says the change was.
     expect(
-      [...panel.querySelectorAll('output.ds-sr-only')].some((region) =>
-        region.textContent?.startsWith(NOTE),
-      ),
-    ).toBe(true);
+      [...panel.querySelectorAll('output.ds-sr-only')].map((region) => region.textContent),
+    ).toContain(
+      `${allChosenText('Dokumenttyper', 5)} ${NOTE} Nye spørsmål i tråden bruker det nye filteret.`,
+    );
   });
 
   it('takes the note away when the filter is changed back', async () => {

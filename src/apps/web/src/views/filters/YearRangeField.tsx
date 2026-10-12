@@ -7,7 +7,12 @@ import {
 } from '@digdir/designsystemet-react';
 import { useImperativeHandle, useRef, useState } from 'react';
 import type { FacetFieldProps } from './FacetField';
-import { MAX_VALUES_PER_FIELD, SCREEN_READER_TEXTS } from './suggestionField';
+import {
+  allChosenText,
+  MAX_VALUES_PER_FIELD,
+  noneChosenText,
+  SCREEN_READER_TEXTS,
+} from './suggestionField';
 import {
   documentsIn,
   formatRange,
@@ -79,11 +84,18 @@ export function YearRangeField({ ref, facet, selected, onChange }: FacetFieldPro
     onChange([...years].sort((a, b) => a - b).map(String));
   }
 
-  /* As in FacetField: the button goes in the render it causes, so focus goes first. */
-  function changeFromButton(values: string[]) {
+  /* As in FacetField: the button goes in the render it causes, so focus goes first, and the
+     change is told in the view's live region unless u-combobox tells it, which it does when
+     exactly one chip, here a period, comes or goes. */
+  function changeFromButton(values: string[], said: string) {
     inputRef.current?.focus();
     clearQuery();
-    onChange(values);
+    const before = new Set(selectedItems.map((item) => item.value));
+    const after = new Set(toRanges(values).map(rangeKey));
+    const changed =
+      [...after].filter((key) => !before.has(key)).length +
+      [...before].filter((key) => !after.has(key)).length;
+    onChange(values, changed === 1 ? undefined : said);
   }
 
   return (
@@ -98,7 +110,12 @@ export function YearRangeField({ ref, facet, selected, onChange }: FacetFieldPro
               data-color="neutral"
               data-size="sm"
               aria-label={`Velg alle ${facet.label.toLocaleLowerCase('nb-NO')}`}
-              onClick={() => changeFromButton([...new Set([...selected, ...facetYears])])}
+              onClick={() =>
+                changeFromButton(
+                  [...new Set([...selected, ...facetYears])],
+                  allChosenText(facet.label, total),
+                )
+              }
             >
               Velg alle
             </Button>
@@ -109,7 +126,7 @@ export function YearRangeField({ ref, facet, selected, onChange }: FacetFieldPro
               data-color="neutral"
               data-size="sm"
               aria-label={`Tøm ${facet.label.toLocaleLowerCase('nb-NO')}`}
-              onClick={() => changeFromButton([])}
+              onClick={() => changeFromButton([], noneChosenText(facet.label))}
             >
               Tøm
             </Button>

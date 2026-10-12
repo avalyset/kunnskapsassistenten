@@ -30,10 +30,18 @@ const organisations: FilterFacet = {
   })),
 };
 
-/** The chips Suggestion draws, as the reader sees them. */
+/** The chips as the reader sees them: a drawn chip hides the chip per value (filters.css, which
+ * jsdom does not apply), so with one drawn, only the drawn ones. */
 function chips(container: HTMLElement): string[] {
-  return [...container.querySelectorAll('ds-suggestion > data')].map(
-    (chip) => chip.textContent ?? '',
+  const all = [...container.querySelectorAll('ds-suggestion > data')];
+  const drawn = all.filter((chip) => chip.querySelector('.drawn-chip'));
+  return (drawn.length > 0 ? drawn : all).map((chip) => chip.textContent ?? '');
+}
+
+/** The options u-combobox has ticked. */
+function ticked(container: HTMLElement): string[] {
+  return [...container.querySelectorAll('u-datalist u-option[selected]')].map(
+    (option) => option.getAttribute('value') ?? '',
   );
 }
 
@@ -298,14 +306,23 @@ describe('årsfeltet når lista har færre år enn det som er valgt', () => {
 });
 
 describe('samlede merkelapper (compact-filter-chips)', () => {
-  function Organisations({ initial, seen }: { initial: string[]; seen?: string[][] }) {
+  function Organisations({
+    initial,
+    seen,
+    said,
+  }: {
+    initial: string[];
+    seen?: string[][];
+    said?: (string | undefined)[];
+  }) {
     const [selected, setSelected] = useState(initial);
     return (
       <FacetField
         facet={organisations}
         selected={selected}
-        onChange={(next) => {
+        onChange={(next, text) => {
           seen?.push(next);
+          said?.push(text);
           setSelected(next);
         }}
       />
@@ -360,6 +377,230 @@ describe('samlede merkelapper (compact-filter-chips)', () => {
 
     expect(seen.at(-1)).toEqual(first(13));
     expect(chips(container)).toEqual(['13 virksomheter']);
+  });
+
+  it('krysser av hver valgte verdi i lista mens den samlede merkelappen står', () => {
+    // Measured 12.10 on 220fa83: the list ticked none, as the one chip was the only one.
+    setFlag('compact-filter-chips', true);
+    const { container } = render(<Organisations initial={first(12)} />);
+
+    expect(ticked(container)).toEqual(first(12));
+  });
+
+  it('tar bort én verdi når en avkrysset verdi velges igjen', () => {
+    setFlag('compact-filter-chips', true);
+    const seen: string[][] = [];
+    const { container } = render(<Organisations initial={first(12)} seen={seen} />);
+
+    choose('Virksomhet 3 (1)');
+
+    expect(seen.at(-1)).toEqual(first(12).filter((value) => value !== 'Virksomhet 3'));
+    expect(chips(container)).toEqual(['11 virksomheter']);
+  });
+
+  it('teller verdiene, ikke merkelappene, for skjermleseren', () => {
+    setFlag('compact-filter-chips', true);
+    render(<Organisations initial={first(12)} />);
+
+    expect(input().getAttribute('aria-description')).toBe(
+      '12 valgt, naviger bakover for å fjerne alle',
+    );
+  });
+
+  it('sier selv fra om verdien som gjør merkelappene til én, og om den som deler dem igjen', () => {
+    // u-combobox reads out a change only when one chip comes or goes, and here the drawn
+    // chip comes or goes as well.
+    setFlag('compact-filter-chips', true);
+    const said: (string | undefined)[] = [];
+    render(<Organisations initial={first(5)} said={said} />);
+
+    choose('Virksomhet 6 (1)');
+    expect(said.at(-1)).toBe('Lagt til Virksomhet 6');
+
+    choose('Virksomhet 7 (1)');
+    expect(said.at(-1)).toBeUndefined();
+
+    choose('Virksomhet 7 (1)');
+    choose('Virksomhet 6 (1)');
+    expect(said.at(-1)).toBe('Fjernet Virksomhet 6');
+  });
+
+  it('flytter fokus til feltet og sier fra når den samlede merkelappen fjernes med tastaturet', () => {
+    setFlag('compact-filter-chips', true);
+    const seen: string[][] = [];
+    const said: (string | undefined)[] = [];
+    const { container } = render(<Organisations initial={first(12)} seen={seen} said={said} />);
+
+    // Back from the empty field reaches the drawn chip, the last one, as u-combobox walks them.
+    act(() => input().focus());
+    fireEvent.keyDown(input(), { key: 'ArrowLeft' });
+    const chip = screen.getByRole('option', { name: /^12 virksomheter, Trykk for å fjerne alle/u });
+    expect(document.activeElement).toBe(chip);
+
+    fireEvent.keyDown(chip, { key: 'Backspace' });
+
+    expect(seen.at(-1)).toEqual([]);
+    expect(said.at(-1)).toBe('Ingen virksomheter er valgt.');
+    expect(chips(container)).toEqual([]);
+    expect(document.activeElement).toBe(input());
+  });
+});
+
+describe('«Velg alle» og «Tøm» for skjermleseren', () => {
+  /** What the field gives the view's live region, one entry per change. */
+  function Organisations({ initial, said }: { initial: string[]; said: (string | undefined)[] }) {
+    const [selected, setSelected] = useState(initial);
+    return (
+      <FacetField
+        facet={organisations}
+        selected={selected}
+        onChange={(next, text) => {
+          said.push(text);
+          setSelected(next);
+        }}
+      />
+    );
+  }
+
+  function Years({ initial, said }: { initial: string[]; said: (string | undefined)[] }) {
+    const [selected, setSelected] = useState(initial);
+    return (
+      <YearRangeField
+        facet={years}
+        selected={selected}
+        onChange={(next, text) => {
+          said.push(text);
+          setSelected(next);
+        }}
+      />
+    );
+  }
+
+  const all = organisations.values.map((value) => value.value);
+
+  it('sier hva knappene gjorde når mange verdier endres', () => {
+    const said: (string | undefined)[] = [];
+    render(<Organisations initial={[]} said={said} />);
+
+    fireEvent.click(screen.getByRole('button', { name: 'Velg alle virksomheter' }));
+    expect(said.at(-1)).toBe('Alle 20 virksomheter er valgt.');
+
+    fireEvent.click(screen.getByRole('button', { name: 'Tøm virksomheter' }));
+    expect(said.at(-1)).toBe('Ingen virksomheter er valgt.');
+  });
+
+  // u-combobox reads out one chip that comes or goes («Fjernet …», «Lagt til …»); the view
+  // saying it too was heard twice (measured 12.10).
+  it('lar u-combobox si fra alene når bare én verdi endres', () => {
+    const said: (string | undefined)[] = [];
+    const { unmount } = render(<Organisations initial={all.slice(0, 1)} said={said} />);
+    fireEvent.click(screen.getByRole('button', { name: 'Tøm virksomheter' }));
+    expect(said).toEqual([undefined]);
+    unmount();
+
+    render(<Organisations initial={all.slice(1)} said={said} />);
+    fireEvent.click(screen.getByRole('button', { name: 'Velg alle virksomheter' }));
+    expect(said).toEqual([undefined, undefined]);
+  });
+
+  it('lar u-combobox si fra alene også bak den samlede merkelappen, som blir stående', () => {
+    setFlag('compact-filter-chips', true);
+    const said: (string | undefined)[] = [];
+    render(<Organisations initial={all.slice(1)} said={said} />);
+
+    fireEvent.click(screen.getByRole('button', { name: 'Velg alle virksomheter' }));
+
+    expect(said).toEqual([undefined]);
+    expect(chips(document.body)).toEqual(['Alle virksomheter']);
+  });
+
+  it('sier fra når den samlede merkelappen kommer, også om bare én verdi kom til', () => {
+    // Four of five: the chips are four, and «Velg alle» makes them one drawn chip.
+    setFlag('compact-filter-chips', true);
+    const five: FilterFacet = { ...organisations, values: organisations.values.slice(0, 5) };
+    const said: (string | undefined)[] = [];
+    function Five() {
+      const [selected, setSelected] = useState(all.slice(0, 4));
+      return (
+        <FacetField
+          facet={five}
+          selected={selected}
+          onChange={(next, text) => {
+            said.push(text);
+            setSelected(next);
+          }}
+        />
+      );
+    }
+    render(<Five />);
+
+    fireEvent.click(screen.getByRole('button', { name: 'Velg alle virksomheter' }));
+
+    expect(said).toEqual(['Alle 5 virksomheter er valgt.']);
+  });
+
+  it('teller perioder i årsfeltet, der en periode er én merkelapp', () => {
+    // 2019 and 2022 are two chips, and «Velg alle» makes them one: three chips change.
+    const said: (string | undefined)[] = [];
+    render(<Years initial={['2019', '2022']} said={said} />);
+
+    fireEvent.click(screen.getByRole('button', { name: 'Velg alle år' }));
+    expect(said.at(-1)).toBe('Alle 6 år er valgt.');
+
+    // One chip, 2019–2024, goes: u-combobox says «Fjernet 2019–2024».
+    fireEvent.click(screen.getByRole('button', { name: 'Tøm år' }));
+    expect(said.at(-1)).toBeUndefined();
+  });
+
+  it('sier fra i panelet også når de samme ordene kommer to ganger etter hverandre', () => {
+    // A live region speaks when its text changes; the second «Ingen … er valgt.» gets a
+    // no-break space so it does.
+    function View() {
+      const [selection, setSelection] = useState({
+        ...emptyFilterSelection,
+        organisation: all.slice(0, 2),
+      });
+      return (
+        <MemoryRouter>
+          <FilterContext value={{ selection, setSelection }}>
+            <AnswerSourcesContext value={inertAnswerSources}>
+              <FiltersView
+                siblingViews={['filters']}
+                onShowView={() => {}}
+                facets={[organisations]}
+              />
+            </AnswerSourcesContext>
+          </FilterContext>
+        </MemoryRouter>
+      );
+    }
+    const { container } = render(<View />);
+    const region = () => container.querySelector('.filters-view > output')?.textContent;
+    const field = screen.getByPlaceholderText('Søk i virksomheter') as HTMLInputElement;
+    function pick(name: string) {
+      const value = screen.getByRole('option', { name, hidden: true }).getAttribute('value') ?? '';
+      act(() => {
+        field.value = value;
+        field.dispatchEvent(
+          new InputEvent('input', {
+            bubbles: true,
+            inputType: 'insertReplacementText',
+            data: value,
+          }),
+        );
+      });
+    }
+
+    fireEvent.click(screen.getByRole('button', { name: 'Tøm virksomheter' }));
+    expect(region()).toBe('Ingen virksomheter er valgt.');
+
+    // One at a time, so u-combobox tells them and the region keeps its words.
+    pick('Virksomhet 3 (1)');
+    pick('Virksomhet 4 (1)');
+    expect(region()).toBe('Ingen virksomheter er valgt.');
+
+    fireEvent.click(screen.getByRole('button', { name: 'Tøm virksomheter' }));
+    expect(region()).toBe('Ingen virksomheter er valgt.\u00a0');
   });
 });
 
