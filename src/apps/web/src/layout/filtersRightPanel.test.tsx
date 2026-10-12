@@ -103,6 +103,19 @@ describe('flagget filters-right-panel i layouten', () => {
     expect(read('secondary-open')).toBe('false');
   });
 
+  it('åpner ikke skuffen når flagget slås på mens siden er oppe', () => {
+    setViewportWidth(drawerMaxViewport - 1);
+    render(
+      <LayoutProvider>
+        <Probe />
+      </LayoutProvider>,
+    );
+
+    act(() => setFlag('filters-right-panel', true));
+
+    expect(read('secondary-open')).toBe('false');
+  });
+
   // Too narrow for both sidebars, wide enough not to draw them as drawers: the one-sidebar rule.
   describe.each([drawerMaxViewport, bothSidebarsMinViewport - 1])(
     'i et vindu på %i px',
