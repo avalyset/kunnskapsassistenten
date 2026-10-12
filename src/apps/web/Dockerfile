@@ -10,7 +10,7 @@ WORKDIR /app
 
 # Built with src/ as the context (docs/deploy.md): the npm workspace has one
 # lockfile, and it is there. npm ci needs only the root manifest and this one.
-# Avhengighetene først, så laget gjenbrukes når bare koden er endret.
+# Dependencies first, so the layer is reused when only the code changes.
 COPY package.json package-lock.json ./
 COPY apps/web/package.json apps/web/
 RUN npm ci --workspace apps/web

@@ -25,8 +25,8 @@ bare om serveren sender kallene videre. Se
 | `Dockerfile`                   | To steg: bygg med devDependencies, kjøretid uten node_modules. Kontekst `src/`.    |
 | `deploy/main.bicep`            | Register, Container App, miljø, logganalyse, to identiteter og innloggingen        |
 | `deploy/test.bicepparam`       | Live-oppsettet for [Live for én person](#live-for-én-person). Ingen hemmeligheter. |
-| `.github/workflows/deploy.yml` | Bygger, pusher og ruller ut ved hver push til `main`.                              |
-| `.github/workflows/ci.yml`     | Bygger og starter bildet på hver PR, uten å pushe.                                 |
+| `.github/workflows/deploy.yml` | Bygger, pusher og ruller ut ved hver push til `main`. Kjører ikke her.             |
+| `.github/workflows/ci.yml`     | Bygger og starter bildet på hver PR, uten å pushe. Kjører ikke her.                |
 
 Serveren gjør fire ting: proxyer klientens kall under `/api/` til backenden med
 `X-API-Key` påsatt (bare i live; i mock svarer `/api/*` 404). Det er
@@ -843,7 +843,7 @@ I mock sender serveren ingenting til backenden, heller ikke med nøkkelen satt.
 
 Modusen har to deler. `KA_MODE` er serverens, og byttes med en ny revisjon som
 under. Klientens modus er bygget inn i bildet (`src/api/apiMode.ts`), og
-`/config.js` kan ikke endre den. Bildet fra `Deploy` er bygget for live. Et
+`/config.js` kan ikke endre den. Bildet i testmiljøet er bygget for live. Et
 miljø der klienten svarer fra mocken, trenger et bilde bygget med
 `docker build --build-arg VITE_API_MODE=mock` i tillegg til `KA_MODE=mock`.
 
@@ -889,28 +889,12 @@ målt om Container Apps godtar en secret med tom verdi; utelatt virker uansett.
 
 ## Bygge og rulle ut for hånd
 
-For når GitHub ikke er et alternativ. `az acr build` laster opp arbeidstreet
-og bygger i registeret, så ingenting må pushes først. Contributor på
-ressursgruppa holder, siden registeret ligger der.
-
-Funksjonen stopper hvis arbeidstreet har endringer som ikke er committet. Den
-bruker `return` og ikke `exit`, for `exit` i et interaktivt skall lukker
-terminalen.
-
-```sh
-deploy_by_hand() {
-  git diff --quiet HEAD || { echo "Ucommittede endringer. Commit først."; return 1; }
-  SHA=$(git rev-parse HEAD)
-  az acr build --subscription "$SUB" --registry $ACR --image $APP:$SHA . || return 1
-  az containerapp update --subscription "$SUB" -n $APP -g $RG \
-    --image $ACR.azurecr.io/$APP:$SHA --revision-suffix hand${SHA:0:7}
-}
-deploy_by_hand
-```
+Se [Ny versjon](#ny-versjon). Contributor på ressursgruppa holder, siden
+registeret ligger der.
 
 ## Prøve det lokalt før Azure
 
-Nøkkelen leses med `read -rs`, som over:
+Fra `src/apps/web`. Nøkkelen leses med `read -rs`, som over:
 
 ```sh
 read -rs KEY
@@ -918,20 +902,22 @@ VITE_API_MODE=live npm run build
 KA_MODE=live DIGDIR_API_BASE=http://localhost:8080 DIGDIR_API_KEY="$KEY" npm start
 ```
 
-Eller i container. I mock, med klienten bygget for mock:
+Eller i container, fra `src/`, der lockfila ligger. I mock, med klienten
+bygget for mock:
 
 ```sh
-docker build --build-arg VITE_API_MODE=mock -t ka-frontend-test:mock .
+docker build --file apps/web/Dockerfile --build-arg VITE_API_MODE=mock -t ka-frontend-test:mock .
 docker run --rm -p 8787:8787 -e KA_MODE=mock ka-frontend-test:mock
 curl -fsS localhost:8787/healthz
 ```
 
 Den siste linja skal svare `{"ok":true,"mode":"mock"}`.
 
-Mot stacken på maskinen, med bildet bygget for live som i testmiljøet:
+Mot stacken på maskinen, med bildet bygget for live som i testmiljøet, også
+fra `src/`:
 
 ```sh
-docker build -t ka-frontend-test:local .
+docker build --file apps/web/Dockerfile -t ka-frontend-test:local .
 docker run --rm -p 8787:8787 \
   -e KA_MODE=live \
   -e DIGDIR_API_BASE=http://host.docker.internal:8080 \
