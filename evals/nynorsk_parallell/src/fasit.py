@@ -61,9 +61,7 @@ def filter_pairs(
     pairs = [(nb, nn) for nb, nn in pairs if nb and nn]
     counts["non_empty"] = len(pairs)
 
-    pairs = [
-        (nb, nn) for nb, nn in pairs if min_words <= len(nb.split()) <= max_words
-    ]
+    pairs = [(nb, nn) for nb, nn in pairs if min_words <= len(nb.split()) <= max_words]
     counts["word_range"] = len(pairs)
 
     pairs = [(nb, nn) for nb, nn in pairs if nb != nn]
@@ -81,9 +79,7 @@ def filter_pairs(
     return unique, counts
 
 
-def sample_pairs(
-    pairs: List[Tuple[str, str]], n: int, seed: int
-) -> List[FasitPair]:
+def sample_pairs(pairs: List[Tuple[str, str]], n: int, seed: int) -> List[FasitPair]:
     """
     Draw a fixed-seed sample of sentence pairs.
 

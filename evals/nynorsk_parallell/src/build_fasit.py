@@ -46,7 +46,9 @@ def main() -> int:
         Exit code.
     """
     parser = argparse.ArgumentParser(description=__doc__)
-    parser.add_argument("input_file", type=Path, help="NPK/NTB translation memory (TSV)")
+    parser.add_argument(
+        "input_file", type=Path, help="NPK/NTB translation memory (TSV)"
+    )
     parser.add_argument("--output", "-o", type=Path, default=Path("data/fasit.tsv"))
     parser.add_argument("--seed", type=int, default=DEFAULT_SEED)
     parser.add_argument("--n", type=int, default=DEFAULT_N)
