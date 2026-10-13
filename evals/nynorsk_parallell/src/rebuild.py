@@ -3,7 +3,7 @@
 
 Use this when a run was interrupted after the blind key was written. The
 blinded files are scored again. The stored scores and the stored blind key
-are read, not overwritten.
+are read, not overwritten. Statuses from an earlier results.json are kept.
 """
 
 import argparse
@@ -17,7 +17,7 @@ from src.config import load_config
 from src.fasit import load_fasit, read_manifest
 from src.reporter import build_results, print_summary, save_results, unblind
 from src.scoring import RepetitionScore, score_blinded_dir
-from src.translator import INSTRUCTION
+from src.translator import INSTRUCTION, ModelStatus
 
 logger = logging.getLogger(__name__)
 
@@ -60,6 +60,26 @@ def check_against_stored_scores(
             raise ValueError(f"Score for {blind_id} differs from the stored score")
 
 
+def read_stored_statuses(results_path: Path) -> Dict[str, ModelStatus]:
+    """
+    Read the translation statuses from an earlier results.json, if there is one.
+
+    Args:
+        results_path: Path to results.json in the run directory.
+
+    Returns:
+        Status per model name. Empty if the file or the statuses are missing.
+    """
+    if not results_path.exists():
+        return {}
+    stored = json.loads(results_path.read_text(encoding="utf-8"))
+    return {
+        name: ModelStatus(**entry["status"])
+        for name, entry in stored.get("models", {}).items()
+        if entry.get("status")
+    }
+
+
 def main() -> int:
     """
     Score the stored translations again and write results.json.
@@ -90,6 +110,7 @@ def main() -> int:
         fasit_sha256=read_manifest(args.manifest),
         instruction=INSTRUCTION,
         summaries=summaries,
+        statuses=read_stored_statuses(args.run_dir / "results.json"),
     )
     save_results(results, args.run_dir / "results.json")
     print_summary(results)

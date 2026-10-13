@@ -128,22 +128,27 @@ def save_results(results: Dict[str, Any], path: Path) -> None:
     logger.info(f"Saved results to {path}")
 
 
-def format_table(results: Dict[str, Any]) -> str:
+def format_table(results: Dict[str, Any], exclude: Optional[List[str]] = None) -> str:
     """
     Format the results as a Markdown table, read from the result dictionary.
 
     Args:
         results: Result dictionary as written by save_results.
+        exclude: Model names to leave out of the table.
 
     Returns:
-        Markdown table sorted by mean corpus chrF.
+        Markdown table sorted by mean corpus chrF, with the copy baseline last.
     """
     lines = [
-        "| Modell | Modell-ID | chrF (snitt) | Std.avvik | Per gjentak | Tomme svar |",
-        "|---|---|---|---|---|---|",
+        "| Modell | chrF (snitt) | Std.avvik | Per gjentak | Ordrett treff (snitt) |",
+        "|---|---|---|---|---|",
     ]
     rows = sorted(
-        results["models"].items(),
+        (
+            (name, entry)
+            for name, entry in results["models"].items()
+            if name not in (exclude or [])
+        ),
         key=lambda item: item[1]["summary"]["corpus_chrf_mean"],
         reverse=True,
     )
@@ -153,15 +158,15 @@ def format_table(results: Dict[str, Any]) -> str:
             f"{score:.2f}" for score in summary["corpus_chrf_per_repetition"]
         )
         lines.append(
-            f"| {name} | `{entry['model']}` | {summary['corpus_chrf_mean']:.2f} "
+            f"| {name} | {summary['corpus_chrf_mean']:.2f} "
             f"| {summary['corpus_chrf_std']:.2f} | {per_repetition} "
-            f"| {summary['empty_outputs']} |"
+            f"| {summary['exact_match_rate_mean']:.1%} |"
         )
 
     baseline = results["baseline"][COPY_BASELINE]
     lines.append(
-        f"| Kopi av bokmål (ingen oversettelse) | | {baseline['corpus_chrf']:.2f} "
-        "| | | 0 |"
+        f"| Kopi av bokmål (ingen oversettelse) | {baseline['corpus_chrf']:.2f} "
+        f"| | | {baseline['exact_match_rate']:.1%} |"
     )
     return "\n".join(lines)
 

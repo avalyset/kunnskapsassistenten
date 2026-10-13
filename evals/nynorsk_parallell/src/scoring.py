@@ -23,6 +23,7 @@ class RepetitionScore(BaseModel):
     corpus_chrf: float
     mean_sentence_chrf: float
     sentence_chrf: Dict[str, float]
+    exact_match_rate: float
     empty_outputs: int
 
 
@@ -34,7 +35,39 @@ class ModelSummary(BaseModel):
     corpus_chrf_mean: float
     corpus_chrf_std: float
     mean_sentence_chrf: float
+    exact_match_rate_per_repetition: List[float]
+    exact_match_rate_mean: float
     empty_outputs: int
+
+
+def normalize_whitespace(text: str) -> str:
+    """
+    Strip a text and collapse every run of whitespace to one space.
+
+    Args:
+        text: Translation or reference.
+
+    Returns:
+        Text used for the exact match comparison.
+    """
+    return " ".join(text.split())
+
+
+def is_exact_match(output: str, reference: str) -> bool:
+    """
+    Check whether a translation is identical to the reference.
+
+    The comparison is made after strip() and whitespace normalization. Case
+    and punctuation must be the same.
+
+    Args:
+        output: Translation from the model.
+        reference: Nynorsk reference.
+
+    Returns:
+        True if the two texts are identical.
+    """
+    return normalize_whitespace(output) == normalize_whitespace(reference)
 
 
 def chrf_signature() -> str:
@@ -62,7 +95,8 @@ def score_translations(
         hypotheses: Mapping from fasit id to translation.
 
     Returns:
-        Corpus chrF, mean sentence chrF and chrF per sentence.
+        Corpus chrF, mean sentence chrF, chrF per sentence and the share of
+        sentences that are identical to the reference.
     """
     chrf = CHRF()
     references = [pair.nn for pair in fasit]
@@ -78,6 +112,9 @@ def score_translations(
         corpus_chrf=corpus,
         mean_sentence_chrf=statistics.fmean(sentence_scores.values()),
         sentence_chrf=sentence_scores,
+        exact_match_rate=statistics.fmean(
+            is_exact_match(output, pair.nn) for pair, output in zip(fasit, outputs)
+        ),
         empty_outputs=sum(1 for output in outputs if not output),
     )
 
@@ -149,7 +186,8 @@ def summarize(repetition_scores: List[RepetitionScore]) -> ModelSummary:
         repetition_scores: Scores for each repetition of the same model.
 
     Returns:
-        Mean and sample standard deviation of corpus chrF across repetitions.
+        Mean and sample standard deviation of corpus chrF across repetitions,
+        and the exact match rate per repetition and as a mean.
 
     Raises:
         ValueError: If there are no repetitions.
@@ -165,6 +203,12 @@ def summarize(repetition_scores: List[RepetitionScore]) -> ModelSummary:
         corpus_chrf_std=statistics.stdev(corpus) if len(corpus) > 1 else 0.0,
         mean_sentence_chrf=statistics.fmean(
             score.mean_sentence_chrf for score in repetition_scores
+        ),
+        exact_match_rate_per_repetition=[
+            score.exact_match_rate for score in repetition_scores
+        ],
+        exact_match_rate_mean=statistics.fmean(
+            score.exact_match_rate for score in repetition_scores
         ),
         empty_outputs=sum(score.empty_outputs for score in repetition_scores),
     )

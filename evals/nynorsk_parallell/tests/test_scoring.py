@@ -10,6 +10,8 @@ from src.fasit import FasitPair
 from src.scoring import (
     RepetitionScore,
     chrf_signature,
+    is_exact_match,
+    normalize_whitespace,
     score_blinded_dir,
     score_copy_baseline,
     score_translations,
@@ -80,11 +82,12 @@ class TestScoreBlindedDir:
 class TestSummarize:
     """Tests for summarize function."""
 
-    def _score(self, corpus: float) -> RepetitionScore:
+    def _score(self, corpus: float, exact: float = 0.0) -> RepetitionScore:
         return RepetitionScore(
             corpus_chrf=corpus,
             mean_sentence_chrf=corpus,
             sentence_chrf={},
+            exact_match_rate=exact,
             empty_outputs=1,
         )
 
@@ -96,6 +99,13 @@ class TestSummarize:
         assert summary.corpus_chrf_mean == pytest.approx(72.0)
         assert summary.corpus_chrf_std == pytest.approx(2.0)
         assert summary.empty_outputs == 3
+
+    def test_summarize_exact_match_per_repetition_and_mean(self) -> None:
+        """Test that the exact match rate is kept per repetition and averaged."""
+        summary = summarize([self._score(70.0, 0.5), self._score(72.0, 0.25)])
+
+        assert summary.exact_match_rate_per_repetition == [0.5, 0.25]
+        assert summary.exact_match_rate_mean == pytest.approx(0.375)
 
     def test_summarize_single_repetition_has_zero_std(self) -> None:
         """Test that one repetition gives a standard deviation of zero."""
@@ -113,3 +123,40 @@ class TestChrfSignature:
     def test_chrf_signature_names_the_metric_configuration(self) -> None:
         """Test that the signature can be read without a previous scoring."""
         assert "nc:6" in chrf_signature()
+
+
+class TestExactMatch:
+    """Tests for the exact match metric."""
+
+    def test_normalize_whitespace_strips_and_collapses(self) -> None:
+        """Test that surrounding and repeated whitespace is removed."""
+        assert (
+            normalize_whitespace("  Eg kjem \n ikkje\t heim ") == "Eg kjem ikkje heim"
+        )
+
+    def test_is_exact_match_ignores_whitespace_differences(self) -> None:
+        """Test that only whitespace differences still count as a match."""
+        assert is_exact_match(" Eg kjem  ikkje heim\n", "Eg kjem ikkje heim")
+
+    def test_is_exact_match_is_strict_on_case_and_punctuation(self) -> None:
+        """Test that case, punctuation and wording must be the same."""
+        assert not is_exact_match("Eg kjem ikkje heim.", "Eg kjem ikkje heim")
+        assert not is_exact_match("eg kjem ikkje heim", "Eg kjem ikkje heim")
+        assert not is_exact_match("Eg kjem ikkje heim i dag", "Eg kjem ikkje heim")
+
+    def test_score_translations_exact_match_rate(self) -> None:
+        """Test the share of sentences identical to the reference."""
+        score = score_translations(
+            FASIT,
+            {"npk-0001": " Eg kjem ikkje heim i dag ", "npk-0002": "Ho fekk ei bok"},
+        )
+
+        assert score.exact_match_rate == 0.5
+
+    def test_score_translations_empty_output_is_not_a_match(self) -> None:
+        """Test that a missing translation never counts as an exact match."""
+        assert score_translations(FASIT, {}).exact_match_rate == 0.0
+
+    def test_score_copy_baseline_has_its_own_exact_match_rate(self) -> None:
+        """Test that the copy baseline reports an exact match rate."""
+        assert score_copy_baseline(FASIT).exact_match_rate == 0.0

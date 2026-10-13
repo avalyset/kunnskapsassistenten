@@ -9,7 +9,11 @@ import pytest
 from src.blinding import BlindKey
 from src.config import Config, ModelConfig, RunConfig
 from src.fasit import FasitPair
-from src.rebuild import check_against_stored_scores, read_blind_key
+from src.rebuild import (
+    check_against_stored_scores,
+    read_blind_key,
+    read_stored_statuses,
+)
 from src.reporter import build_results, unblind
 from src.scoring import score_blinded_dir
 
@@ -101,3 +105,35 @@ class TestBuildResults:
             "modell-b": "0 of 3 repetitions",
         }
         assert results["metric"].startswith("nrefs:1")
+
+
+class TestReadStoredStatuses:
+    """Tests for read_stored_statuses function."""
+
+    def test_read_stored_statuses_keeps_status_from_earlier_results(
+        self, tmp_path: Path
+    ) -> None:
+        """Test that statuses are read back and models without status are skipped."""
+        path = tmp_path / "results.json"
+        path.write_text(
+            json.dumps(
+                {
+                    "models": {
+                        "modell-a": {
+                            "status": {"completed_repetitions": 3, "errors": 2}
+                        },
+                        "modell-b": {"status": None},
+                    }
+                }
+            ),
+            encoding="utf-8",
+        )
+
+        statuses = read_stored_statuses(path)
+
+        assert set(statuses) == {"modell-a"}
+        assert statuses["modell-a"].errors == 2
+
+    def test_read_stored_statuses_is_empty_without_file(self, tmp_path: Path) -> None:
+        """Test that a missing results.json gives no statuses."""
+        assert read_stored_statuses(tmp_path / "results.json") == {}
