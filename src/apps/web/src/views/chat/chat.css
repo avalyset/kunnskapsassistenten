@@ -574,6 +574,26 @@
   background: var(--ds-color-neutral-background-tinted);
 }
 
+/* The front page: greeting, field, suggestions, as one group in the middle
+   of the room. Nothing scrolls behind the field yet, so it leaves its sticky
+   place, its seam and the pull into the shell's end padding; the `auto` it
+   gave the greeting's room moves to the end of the suggestions. */
+.ka-chat[data-start] .ka-composer-area {
+  position: relative;
+  inset-block-end: auto;
+  margin-block: 0;
+  padding-block: 0;
+}
+
+.ka-chat[data-start] .ka-composer-area::before {
+  content: none;
+}
+
+.ka-chat[data-start] .ka-kickstarters {
+  margin-block-end: auto;
+  padding-block-end: var(--ka-chat-room-inset);
+}
+
 /* What the compose field may not hide (WCAG 2.4.11). The field is left out,
    which is why this is not `scroll-padding` on the scroller: that covers the
    field too, and every keystroke then scrolls the column down. */

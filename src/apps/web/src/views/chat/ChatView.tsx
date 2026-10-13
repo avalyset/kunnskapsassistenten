@@ -30,6 +30,7 @@ import { useAgents } from './useAgents';
 import { AgentPicker } from './AgentPicker';
 import { ThreadLoading } from './ThreadLoading';
 import { Welcome } from './Welcome';
+import { Kickstarters } from './Kickstarters';
 import { SettingsDialog } from './SettingsDialog';
 import { useFooterMode } from '../../layout/footerMode';
 import { SETTINGS_HASH, useDisplayLevel } from './displayLevel';
@@ -348,8 +349,12 @@ function ChatSession({ userName, thread, loading, client }: ChatViewProps) {
     (retryRef.current ?? fieldRef.current)?.focus();
   }, [status]);
 
+  // Nothing asked and nothing being read: the greeting, the field and the
+  // suggestions, in that order, with the field out of its sticky place.
+  const startPage = messages.length === 0 && !loading;
+
   return (
-    <div className="ka-chat" ref={rootRef}>
+    <div className="ka-chat" data-start={startPage || undefined} ref={rootRef}>
       {/* The tab's title, from the heading the column draws (WCAG 2.4.2).
           Here and not in the route, which has the address and not the
           title. */}
@@ -386,16 +391,7 @@ function ChatSession({ userName, thread, loading, client }: ChatViewProps) {
       ) : loading ? (
         <ThreadLoading />
       ) : (
-        <Welcome
-          kickstarters={kickstartersFor(corpusKey)}
-          onPickKickstarter={(question) => {
-            // Fills the field, does not send. The caret goes with it, so the
-            // reader can edit before asking.
-            setDraft(question);
-            focusField();
-          }}
-          userName={userName}
-        />
+        <Welcome userName={userName} />
       )}
 
       {/* Mounted whether or not there is an error: an alert region only
@@ -452,6 +448,22 @@ function ChatSession({ userName, thread, loading, client }: ChatViewProps) {
         status={status}
         value={draft}
       />
+
+      {/* Under the field on the front page, and in the DOM there too, so the
+          tab order is the order on screen. After the composer and never
+          before it: the field keeps its place among the siblings, so the
+          first question does not remount it and take the caret away. */}
+      {startPage ? (
+        <Kickstarters
+          onPick={(question) => {
+            // Fills the field, does not send. The caret goes with it, so the
+            // reader can edit before asking.
+            setDraft(question);
+            focusField();
+          }}
+          questions={kickstartersFor(corpusKey)}
+        />
+      ) : null}
 
       {/* How the answer is coming along, for a screen reader. Polite, since
           an answer being written is not an interruption, and by whole
