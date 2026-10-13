@@ -17,6 +17,7 @@
     "kopi-av-bokmaal": {
       "corpus_chrf": 77.31486427024593,
       "mean_sentence_chrf": 76.69021315414857,
+      "exact_match_rate": 0.0,
       "empty_outputs": 0
     }
   },
@@ -35,6 +36,12 @@
         "corpus_chrf_mean": 91.28404504800739,
         "corpus_chrf_std": 0.4912918190465966,
         "mean_sentence_chrf": 91.87189562156227,
+        "exact_match_rate_per_repetition": [
+          0.27,
+          0.23,
+          0.225
+        ],
+        "exact_match_rate_mean": 0.2416666666666667,
         "empty_outputs": 0
       },
       "status": {

@@ -27,7 +27,10 @@ reference?
    (default 3), with seed `base_seed + repetition - 1`.
 5. **Metric.** chrF from sacrebleu, per sentence and for the whole set, with
    the mean and sample standard deviation of the set score across repetitions.
-   The untranslated Bokmål sentence is scored as a baseline.
+   The exact match rate is the share of sentences where the output is
+   identical to the reference after strip() and whitespace normalization,
+   reported per repetition and as a mean. The untranslated Bokmål sentence is
+   scored as a baseline for both.
 6. **Blinding.** Each (model, repetition) is stored as `<hash>.jsonl`. The hash
    uses a random salt that only lives in memory. The key that links hash and
    model is written after scoring is finished, and not before.

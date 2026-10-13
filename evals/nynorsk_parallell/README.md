@@ -87,9 +87,14 @@ Fasiten kan bygges på nytt fra kildefila med
    skåringen er ferdig.
 4. **Metrikk.** chrF fra sacrebleu, per setning og samlet for de 200 setningene.
    Tabellen viser snitt og standardavvik for den samlede skåren over gjentakene.
-5. **Nullpunkt.** Bokmål og nynorsk deler mye av skrivemåten, så evalet skårer
+5. **Ordrett treff.** Andelen setninger der svaret er identisk med fasiten
+   etter `strip()` og normalisering av mellomrom (alle følger av blanktegn
+   blir ett mellomrom). Store og små bokstaver og tegnsetting må være like.
+   Raten rapporteres per gjentak og som snitt. En høy rate kan bety at
+   modellen har sett fasiten, se begrensning 3.
+6. **Nullpunkt.** Bokmål og nynorsk deler mye av skrivemåten, så evalet skårer
    også bokmålssetningen uendret. En modell må ligge over dette tallet for å ha
-   oversatt noe.
+   oversatt noe. Nullpunktet får også sin rate for ordrett treff.
 
 ## Kjente begrensninger
 
@@ -101,18 +106,7 @@ Fasiten kan bygges på nytt fra kildefila med
 2. **Nyhetstekst, ikke forvaltningsspråk.** Setningene er NTB-meldinger.
    Resultatet sier lite om stortingsmeldinger, tildelingsbrev og årsrapporter,
    som er det Kunnskapsassistenten arbeider med.
-3. **Kontamineringsrisiko.** De fulle Borealis-modellene er trent med oppgaver
-   laget av pressemateriale under avtalen mellom staten og rettighetshaverne,
-   og kan ha sett NTB- eller NPK-tekst. Modellene med `-open` i navnet er
-   trent uten dette materialet og er den rene sammenligningen. Grunnmodellene
-   kan uansett ha sett de samme nyhetene på nettet, og det gjelder alle
-   modellene i tabellen.
-
-4. **Fasiten er åpent publisert av Nasjonalbiblioteket.** Omsetjingsminnet
-   ligger i Språkbanken under CC0, og kan inngå i treningsdataene til alle
-   Borealis-variantene, også `-open`. Vi har ikke kunnet bekrefte eller
-   avkrefte det, fordi treningsdatasettet ikke er åpent tilgjengelig. Tallene
-   for Borealis kan derfor være for høye på akkurat denne fasiten.
+3. Kontaminering: fasiten er hentet fra et datasett Nasjonalbiblioteket selv publiserer. Borealis-variantene gjengir fasiten ordrett i en langt større andel av setningene enn referansemodellen (se kolonnen for ordrett treff). Det tyder på at datasettet eller tekst fra samme kilde ligger i treningsdataene, også for modellene med -open. Skårene for Borealis kan derfor ikke leses som et mål på nynorsk-kvalitet. Evalet trenger en fasit som ligger utenfor treningsdataene før det kan brukes til modellvalg.
 
 I tillegg: 200 setninger og tre gjentak er et lite utvalg. Små forskjeller
 mellom modeller bør ikke tolkes.
@@ -125,14 +119,15 @@ og `resultater/2026-10-13-api.json`, som er to kjøringer mot samme fasit
 (sha256 i `data/fasit.sha256`). De lokale modellene er GGUF-filer i Q4_K_M,
 kjørt i Ollama 0.35.1 på en maskin med 16 GB minne.
 
-| Modell | Modell-ID | chrF (snitt) | Std.avvik | Per gjentak | Tomme svar |
-|---|---|---|---|---|---|
-| borealis-open-12b | `hf.co/NbAiLab/borealis-open-12b-gguf:Q4_K_M` | 96.31 | 0.00 | 96.31 | 0 |
-| borealis-4b | `hf.co/NbAiLab/borealis-4b-gguf:Q4_K_M` | 95.77 | 0.07 | 95.72, 95.85, 95.73 | 0 |
-| borealis-open-4b | `hf.co/NbAiLab/borealis-open-4b-gguf:Q4_K_M` | 95.71 | 0.13 | 95.57, 95.73, 95.82 | 0 |
-| claude-haiku-5-5 | `claude-haiku-5-5` | 91.28 | 0.49 | 91.19, 90.84, 91.81 | 0 |
-| normistral-7b-warm-instruct | `hf.co/ltg/normistral-7b-warm-instruct:Q4_K_M` | 62.61 | 1.09 | 61.49, 63.66, 62.67 | 1 |
-| Kopi av bokmål (ingen oversettelse) | | 77.31 | | | 0 |
+| Modell | chrF (snitt) | Std.avvik | Per gjentak | Ordrett treff (snitt) |
+|---|---|---|---|---|
+| borealis-open-12b | 96.31 | 0.00 | 96.31 | 54.5% |
+| borealis-4b | 95.77 | 0.07 | 95.72, 95.85, 95.73 | 47.2% |
+| borealis-open-4b | 95.71 | 0.13 | 95.57, 95.73, 95.82 | 48.5% |
+| claude-haiku-5-5 | 91.28 | 0.49 | 91.19, 90.84, 91.81 | 24.2% |
+| Kopi av bokmål (ingen oversettelse) | 77.31 | | | 0.0% |
+
+NorMistral 7B warm instruct er kjørt, men står ikke i tabellen. Oppsettet vårt følger ikke modellkortets promptformat, og modellen la til forklaringer etter oversettelsen. Tallet ville målt oppsettet vårt, ikke modellen.
 
 chrF-signatur: `nrefs:1|case:mixed|eff:yes|nc:6|nw:0|space:no|version:2.6.0`
 
@@ -142,13 +137,8 @@ Slik leses tabellen:
   første gjentak fordi modellen brukte for mye minne på maskinen. Tallet har
   derfor ingen spredning og bør ikke sammenlignes direkte med de andre.
 - **Borealis 4B og Borealis-open 4B er ikke til å skille.** Forskjellen er
-  mindre enn spredningen mellom gjentakene. Pressematerialet i den fulle
-  modellen gir altså ikke noe synlig utslag her. Se likevel begrensning 4.
-- **NorMistral ligger under nullpunktet fordi den ikke følger instruksjonen.**
-  Den oversetter, men legger ofte til forklaringer etter oversettelsen, og
-  svaret skåres som det er. Tallet sier derfor mer om instruksjonsfølging
-  enn om nynorsken. NorMistral er utviklet av Språkteknologigruppa ved
-  Universitetet i Oslo i samarbeid med blant andre Nasjonalbiblioteket.
+  mindre enn spredningen mellom gjentakene, både for chrF og for ordrett
+  treff. Se begrensning 3.
 - **Claude Haiku 5.5 er kjørt med andre innstillinger.** API-et avviser
   temperatur og seed, og modellen er kjørt uten tenking. Den er med som
   ekstern referanse. Vi hadde ikke tilgang til OpenAI-modellene som #18

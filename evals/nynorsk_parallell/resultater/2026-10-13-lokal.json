@@ -17,6 +17,7 @@
     "kopi-av-bokmaal": {
       "corpus_chrf": 77.31486427024593,
       "mean_sentence_chrf": 76.69021315414857,
+      "exact_match_rate": 0.0,
       "empty_outputs": 0
     }
   },
@@ -35,6 +36,12 @@
         "corpus_chrf_mean": 62.61066968579956,
         "corpus_chrf_std": 1.0854041030782418,
         "mean_sentence_chrf": 65.14611985501408,
+        "exact_match_rate_per_repetition": [
+          0.0,
+          0.0,
+          0.0
+        ],
+        "exact_match_rate_mean": 0.0,
         "empty_outputs": 1
       },
       "status": null
@@ -53,6 +60,12 @@
         "corpus_chrf_mean": 95.70595858507284,
         "corpus_chrf_std": 0.12782815593400063,
         "mean_sentence_chrf": 95.96622199328438,
+        "exact_match_rate_per_repetition": [
+          0.48,
+          0.48,
+          0.495
+        ],
+        "exact_match_rate_mean": 0.48500000000000004,
         "empty_outputs": 0
       },
       "status": null
@@ -71,6 +84,12 @@
         "corpus_chrf_mean": 95.76890100267508,
         "corpus_chrf_std": 0.07410969393166268,
         "mean_sentence_chrf": 95.95923704224651,
+        "exact_match_rate_per_repetition": [
+          0.455,
+          0.495,
+          0.465
+        ],
+        "exact_match_rate_mean": 0.4716666666666667,
         "empty_outputs": 0
       },
       "status": null
@@ -87,6 +106,10 @@
         "corpus_chrf_mean": 96.31264631841478,
         "corpus_chrf_std": 0.0,
         "mean_sentence_chrf": 96.51665406930547,
+        "exact_match_rate_per_repetition": [
+          0.545
+        ],
+        "exact_match_rate_mean": 0.545,
         "empty_outputs": 0
       },
       "status": null
