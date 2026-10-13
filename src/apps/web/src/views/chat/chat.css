@@ -216,6 +216,7 @@
 /* «Fremgangsmåte» at the standard display level (issue 88). Same steps as
    the detailed panel — the rules below name both — so switching level changes
    what a step SAYS and never where it sits. */
+.ka-procedure-card,
 .ka-procedure {
   inline-size: 100%;
 }
@@ -271,24 +272,14 @@
      200 px box is a sixth of it. */
   --ka-sources-summary-inset: clamp(var(--ds-size-2), 2vw, var(--ds-size-4));
   --dsc-details-padding: var(--ka-sources-summary-inset);
-  --dsc-details-background: var(--ds-color-neutral-background-tinted);
-  --dsc-details-border-color: var(--ds-color-neutral-border-subtle);
-  --dsc-details-summary-background: var(--ds-color-neutral-surface-default);
-  --dsc-details-summary-background--open: var(--ds-color-neutral-surface-default);
-  --dsc-details-summary-background--hover: var(--ds-color-neutral-surface-hover);
-
-  overflow: clip;
-  /* 32 px from the answer over it and from the closing question under it,
-     as Figma spaces it. The card's own 12 px over the question folds into
-     this. */
-  margin-block: var(--ds-size-8);
-  border: var(--ds-border-width-default) solid var(--ds-color-neutral-border-subtle);
-  border-radius: var(--ds-border-radius-lg);
 }
 
-/* The rule between the bar and the list, there only while the list is. */
-.ka-sources-summary[open] > summary {
-  border-block-end: var(--ds-border-width-default) solid var(--ds-color-neutral-border-subtle);
+/* Details in a Card, as Designsystemet shows it: the card holds the frame,
+   the corners and the colours (SourcesSummary.tsx). Only the spacing is
+   ours. 32 px from the answer over it and from the closing question under
+   it, as Figma spaces it. */
+.ka-sources-card {
+  margin-block: var(--ds-size-8);
 }
 
 /* Figma's 16 px round the list and 24 under it, against Designsystemet's 20
@@ -888,8 +879,10 @@
 .ka-filter-summary[hidden],
 .ka-answer-skeleton[hidden],
 .ka-streaming-status[hidden],
+.ka-procedure-card[hidden],
 .ka-procedure[hidden],
 .ka-procedure__summary[hidden],
+.ka-sources-card[hidden],
 .ka-sources-summary__title[hidden],
 .ka-procedure__block[hidden],
 .ka-procedure__keywords[hidden],
