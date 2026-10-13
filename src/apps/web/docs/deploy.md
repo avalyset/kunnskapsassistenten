@@ -742,7 +742,7 @@ Ett bilde, og modusen og korpuset er miljøvariabler.
 | Variabel                     | Hva                                                                                       | Standard                |
 | ---------------------------- | ----------------------------------------------------------------------------------------- | ----------------------- |
 | `PORT`                       | Porten serveren lytter på.                                                                | `8787`                  |
-| `KA_MODE`                    | `mock` eller `live`: om serveren sender kall videre. Alt annet enn `live` er mock.        | `mock`                  |
+| `KA_MODE`                    | `live` eller `mock`: om serveren sender kall videre. En annen verdi stopper serveren.     | `live`                  |
 | `DIGDIR_API_BASE`            | Backenden `/api/*` går til.                                                               | `http://localhost:8080` |
 | `DIGDIR_API_KEY`             | Nøkkelen. Container Apps-secret, aldri i repoet.                                          | tom                     |
 | `KA_USER_ID_FROM`            | `browser` eller `platform`, se [Innlogging](#innlogging). Annet stopper serveren.         | `browser`               |

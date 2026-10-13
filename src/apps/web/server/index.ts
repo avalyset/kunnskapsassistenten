@@ -45,7 +45,7 @@ server.listen(config.port, () => {
     config.accessSecret ? 'på, alt unntatt /healthz krever lenken' : 'av',
   );
   if (config.mode === 'live' && !config.apiKey) {
-    console.warn('[ka] KA_MODE=live uten DIGDIR_API_KEY. Spørringer vil gi 401.');
+    console.warn('[ka] live uten DIGDIR_API_KEY. Spørringer vil gi 401.');
   }
   const { typesenseUrl, typesenseKey, collections } = config.facets;
   console.log(
