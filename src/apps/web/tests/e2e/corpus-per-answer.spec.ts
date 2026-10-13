@@ -37,7 +37,7 @@ function disclaimer(page: Page) {
  * måten å komme til en tom skjerm på uten å laste om.
  */
 async function chooseCorpus(page: Page, label: string): Promise<void> {
-  await page.getByRole('combobox', { name: 'Korpus' }).selectOption({ label });
+  await page.getByRole('combobox', { name: 'Dokumentsamling' }).selectOption({ label });
   await expect(page.locator('.filters-view__corpus-source')).toContainText(label);
 }
 
@@ -51,7 +51,7 @@ test.describe('korpuset følger svaret', () => {
     await expect(disclaimer(page)).toContainText(`fra ${KUDOS}`);
 
     await chooseCorpus(page, WIKIPEDIA);
-    await ask(page, 'Hva handler dokumentene i dette korpuset om?');
+    await ask(page, 'Hva handler dokumentene i denne samlingen om?');
     await openSources(page, 1);
     await expect(disclaimer(page)).toContainText(`fra ${WIKIPEDIA}`);
   });
@@ -77,12 +77,14 @@ test.describe('korpuset følger svaret', () => {
       const kudosThread = page.url();
 
       await chooseCorpus(page, WIKIPEDIA);
-      await ask(page, 'Hva handler dokumentene i dette korpuset om?');
+      await ask(page, 'Hva handler dokumentene i denne samlingen om?');
 
       // Tilbake til Kudos-tråden, med Wikipedia fortsatt valgt.
       await showThreads(page);
       await page.goto(kudosThread);
-      await expect(page.getByRole('combobox', { name: 'Korpus' })).toHaveValue(/norquad-mock/);
+      await expect(page.getByRole('combobox', { name: 'Dokumentsamling' })).toHaveValue(
+        /norquad-mock/,
+      );
 
       await openSources(page, 1);
       await expect(

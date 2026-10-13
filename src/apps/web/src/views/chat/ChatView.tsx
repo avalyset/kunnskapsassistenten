@@ -1,6 +1,5 @@
 import { Heading } from '@digdir/designsystemet-react';
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
-import { useLocation, useNavigate } from 'react-router';
 import { corpusDisplayNameFor, corpusOption, createChatClient, type ChatClient } from '../../api';
 import { ErrorState, PageTitle } from '../../components';
 import { useAnswerSources } from '../../layout/useAnswerSources';
@@ -30,10 +29,6 @@ import { useAgents } from './useAgents';
 import { AgentPicker } from './AgentPicker';
 import { ThreadLoading } from './ThreadLoading';
 import { Welcome } from './Welcome';
-import { SettingsDialog } from './SettingsDialog';
-import { useFooterMode } from '../../layout/footerMode';
-import { SETTINGS_HASH, useDisplayLevel } from './displayLevel';
-import { FEATURE_FLAGS_HASH, FeatureFlagsDialog, useFlagLink } from '../../flags';
 import './chat.css';
 
 export type ChatViewProps = {
@@ -104,7 +99,7 @@ function ChatSession({ userName, thread, loading, client }: ChatViewProps) {
       const applied = appliedFilters[messageId] ?? thread?.filter ?? emptyFilterSelection;
       const answer = messages.find((message) => message.id === messageId);
       // `corpusOption` is not ceremony: `corpusDisplayNameFor` answers
-      // «standardkorpuset» for a key it does not know, which says something
+      // «standardsamlingen» for a key it does not know, which says something
       // about a default rather than about this answer. No name, no line.
       const from = answer?.corpusKey;
       const elsewhere =
@@ -322,19 +317,6 @@ function ChatSession({ userName, thread, loading, client }: ChatViewProps) {
   // useComposerShortcut.ts for what it refuses to do.
   useComposerShortcut(fieldRef);
 
-  // The hidden settings menu. A hash and not a query: it never reaches the
-  // server, never changes the route, and does not travel in a pasted link.
-  const { hash } = useLocation();
-  const navigate = useNavigate();
-  const settingsOpen = hash === SETTINGS_HASH;
-  // The flags menu opens the same way, from `#feature-flags`, and a link with
-  // `?flagg=` turns a flag on and lands there. See src/flags/flagLink.ts.
-  const flagsOpen = hash === FEATURE_FLAGS_HASH;
-  useFlagLink();
-  const displayLevel = useDisplayLevel();
-  // Read here only to hand the dialog the choice on screen.
-  const footerMode = useFooterMode();
-
   // The browser takes focus off the failed turn's send button one frame
   // LATER, so standing on that one button counts as lost — by identity, since
   // «a button in the composer» also catches the paperclip. The field stands.
@@ -459,20 +441,6 @@ function ChatSession({ userName, thread, loading, client }: ChatViewProps) {
       <p aria-live="polite" className="ds-sr-only">
         {announcement || loadingNotice}
       </p>
-
-      {/* Mounted only while the address asks for it, so a page nobody asked
-          it of holds no trace. `replace`, so closing leaves no history step
-          that Back walks straight into again. */}
-      {settingsOpen ? (
-        <SettingsDialog
-          footerMode={footerMode}
-          level={displayLevel}
-          onClose={() => navigate({ hash: '' }, { replace: true })}
-        />
-      ) : null}
-      {flagsOpen ? (
-        <FeatureFlagsDialog onClose={() => navigate({ hash: '' }, { replace: true })} />
-      ) : null}
     </div>
   );
 }

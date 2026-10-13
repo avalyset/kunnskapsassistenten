@@ -157,7 +157,7 @@ function renderFetchingView(
 
 function switchTo(label: string) {
   const key = corpus.options.find((option) => option.label === label)?.key;
-  fireEvent.change(screen.getByRole('combobox', { name: 'Korpus' }), {
+  fireEvent.change(screen.getByRole('combobox', { name: 'Dokumentsamling' }), {
     target: { value: key },
   });
 }
@@ -170,10 +170,10 @@ beforeEach(() => {
 });
 
 describe('korpusvelgeren', () => {
-  it('er en nedtrekksliste med etiketten «Korpus» og korpuset som er valgt', () => {
+  it('er en nedtrekksliste med etiketten «Dokumentsamling» og korpuset som er valgt', () => {
     renderView();
 
-    const select = screen.getByRole('combobox', { name: 'Korpus' });
+    const select = screen.getByRole('combobox', { name: 'Dokumentsamling' });
     expect((select as HTMLSelectElement).value).toBe('norquad-docs');
     expect(screen.getByRole('option', { name: 'Kudos-pilot' })).toBeTruthy();
   });
@@ -188,13 +188,13 @@ describe('korpusvelgeren', () => {
     // `hidden`, ikke fjernet: `aria-controls` peker på det, og et element
     // som ikke er i dokumentet kan ingen skjermleser følge pekeren til.
     expect(screen.getByText('351 artikler.').hasAttribute('hidden')).toBe(true);
-    expect(screen.getByRole('button', { name: 'Vis mer om korpuset' })).toBeTruthy();
+    expect(screen.getByRole('button', { name: 'Vis mer om dokumentsamlingen' })).toBeTruthy();
   });
 
   it('ber skallet bytte, og annonserer hvilket korpus det ble', () => {
     const { container } = renderView();
 
-    fireEvent.change(screen.getByRole('combobox', { name: 'Korpus' }), {
+    fireEvent.change(screen.getByRole('combobox', { name: 'Dokumentsamling' }), {
       target: { value: 'kudos-pilot' },
     });
 
@@ -202,7 +202,9 @@ describe('korpusvelgeren', () => {
     expect(corpus.set).toHaveBeenCalledWith('kudos-pilot');
     // Og den ene tingen som endret seg er den ingen ser: skjermbildet tegnes
     // om, men ingenting sier hva som nå blir søkt i.
-    expect(container.querySelector('output.ds-sr-only')?.textContent).toBe('Korpus: Kudos-pilot');
+    expect(container.querySelector('output.ds-sr-only')?.textContent).toBe(
+      'Dokumentsamling: Kudos-pilot',
+    );
   });
 
   it('teller fasettene på nytt når korpuset byttes', async () => {
@@ -253,7 +255,7 @@ describe('korpusvelgeren', () => {
     // Byttet er stille på skjermen: panelet tegnes om, og ingenting sier at
     // avgrensningen de satte er borte.
     expect(container.querySelector('output.ds-sr-only')?.textContent).toBe(
-      'Korpus: Kudos-pilot. Filteret er nullstilt fordi korpuset ble byttet.',
+      'Dokumentsamling: Kudos-pilot. Filteret er nullstilt fordi dokumentsamlingen ble byttet.',
     );
   });
 
@@ -261,9 +263,9 @@ describe('korpusvelgeren', () => {
     corpus.choosable = false;
     renderView();
 
-    expect(screen.queryByRole('combobox', { name: 'Korpus' })).toBeNull();
+    expect(screen.queryByRole('combobox', { name: 'Dokumentsamling' })).toBeNull();
     // Linja står som før: navnet på én linje, resten bak «Vis mer».
     expect(screen.getByText('Dokumenter fra Wikipedia (NorQuAD)')).toBeTruthy();
-    expect(screen.getByRole('button', { name: 'Vis mer om korpuset' })).toBeTruthy();
+    expect(screen.getByRole('button', { name: 'Vis mer om dokumentsamlingen' })).toBeTruthy();
   });
 });

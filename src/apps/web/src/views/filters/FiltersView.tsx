@@ -138,8 +138,8 @@ export function FiltersView({
 
     setAnnouncement(
       hadFilter
-        ? `Korpus: ${picked?.label ?? key}. Filteret er nullstilt fordi korpuset ble byttet.`
-        : `Korpus: ${picked?.label ?? key}`,
+        ? `Dokumentsamling: ${picked?.label ?? key}. Filteret er nullstilt fordi dokumentsamlingen ble byttet.`
+        : `Dokumentsamling: ${picked?.label ?? key}`,
     );
 
     // The shell owns what a switch does (a new thread and address); see useCorpus.ts.
@@ -285,7 +285,7 @@ export function FiltersView({
             `Suggestion`: one value from a handful. No description: the options say it. */}
         {choosable && (
           <Field>
-            <Label>Korpus</Label>
+            <Label>Dokumentsamling</Label>
             <Select value={active} onChange={(event) => chooseCorpus(event.currentTarget.value)}>
               {options.map((candidate) => (
                 <Select.Option key={candidate.key} value={candidate.key}>
@@ -375,11 +375,12 @@ export function FiltersView({
 
       {/* Not in the pinned head: the fields name what they narrow in their labels. */}
       <div className="filters-view__documents">
-        <CorpusLine facets={corpus} corpus={option} />
-
         {/* Below the filters even though the reader scrolls to them: the facets keep their
             full size, as this panel is the only place filtering lives. */}
-        <KudosDocuments documents={documents} />
+        <KudosDocuments
+          documents={documents}
+          corpusLine={<CorpusLine facets={corpus} corpus={option} />}
+        />
       </div>
 
       {/* Last: nothing in it changes with the answer. */}

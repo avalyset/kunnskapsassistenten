@@ -183,7 +183,7 @@ describe('ChatView og korpuset på linja over svaret', () => {
 
   it('tier når nøkkelen ikke er et korpus denne installasjonen kjenner', () => {
     /*
-     * `corpusDisplayNameFor` svarer «standardkorpuset» for en nøkkel den ikke
+     * `corpusDisplayNameFor` svarer «standardsamlingen» for en nøkkel den ikke
      * kjenner, og det er en setning om en standard heller enn om dette
      * svaret. En live-backend som valgte datasettet selv sender nettopp en
      * slik nøkkel (KA CC bør 1 på #138).
@@ -195,7 +195,7 @@ describe('ChatView og korpuset på linja over svaret', () => {
       </Shell>,
     );
 
-    expect(screen.queryByText(/standardkorpuset/u)).toBeNull();
+    expect(screen.queryByText(/standardsamlingen/u)).toBeNull();
     expect(screen.queryByText(/Hentet fra/u)).toBeNull();
   });
 

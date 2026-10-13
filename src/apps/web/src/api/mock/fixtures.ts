@@ -58,7 +58,7 @@ oppdrag, frister og styringsparametere for rapporteringen [4].
 Selve oppfølgingen mellom de to endene er beskrevet i instruksen, som slår
 fast at måloppnåelse vurderes gjennom året og ikke bare ved årsslutt [5].
 
-Merk at årsrapporten i dette korpuset er for 2025 og tildelingsbrevet for
+Merk at årsrapporten blant dokumentene er for 2025 og tildelingsbrevet for
 2026. De hører til hver sin runde av syklusen, så de beskriver den samme
 styringsmodellen og ikke det samme året.`;
 

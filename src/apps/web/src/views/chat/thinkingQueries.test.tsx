@@ -16,7 +16,7 @@ if (typeof document.getAnimations !== 'function') {
  * Søkestrengene i tenkesteget (KA CC, 16.09).
  *
  * `queries` har ligget i modellen, i mocken og i live-klienten hele tiden, og
- * ingen visning tegnet feltet. Så «Jeg søker i korpuset» sto uten å si etter
+ * ingen visning tegnet feltet. Så «Jeg søker i dokumentene» sto uten å si etter
  * hva.
  */
 const searchStep: ThinkingStep = {

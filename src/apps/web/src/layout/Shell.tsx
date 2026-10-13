@@ -1,3 +1,4 @@
+import { useSettingsLinks } from '../routes/settings/useSettingsLinks';
 import { Button, Dialog, SkipLink, Tooltip } from '@digdir/designsystemet-react';
 import {
   useCallback,
@@ -52,6 +53,8 @@ export type ShellProps = {
  * move between slots. Widths arrive as CSS custom properties; see viewModel.ts.
  */
 export function Shell({ routeOwnsMain = false }: ShellProps) {
+  // Old links to the hidden settings and flags menus land on the settings page.
+  useSettingsLinks();
   const { layout } = useLayout();
   // A panel dragged wider than the window is drawn at what fits (`fittedWidths`).
   const viewport = useViewportWidth();

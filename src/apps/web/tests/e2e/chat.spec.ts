@@ -101,59 +101,34 @@ test.describe('hovedkolonnen', () => {
   );
 
   /**
-   * Den skjulte innstillingsmenyen (valgt 30.09).
-   *
-   * «Standard er standard. Uten adressen ser ingen at menyen finnes.» Den er
-   * ikke i sida i det hele tatt før hashen ber om den, og valget står i
-   * nettleseren etterpå — ellers måtte den som vil ha det detaljerte nivået
-   * skrive adressen på nytt for hver tur.
+   * Innstillinger er en egen side, lenket fra foten i navigasjonspanelet. Den
+   * erstatter den skjulte menyen bak `#innstillinger`, og den gamle adressen
+   * lander her. Valget står i nettleseren etterpå.
    *
    * Uten svar i denne, med vilje: hva nivåene TEGNER er dekket over og i
    * enhetstestene, og et svar til koster sju sekunder av suiten.
    */
-  test('#innstillinger åpner menyen, og valget står etter en reload', MOCK, async ({ page }) => {
-    await expect(page.getByRole('dialog')).toHaveCount(0);
+  test('Innstillinger åpnes fra foten, og valget står etter en reload', MOCK, async ({ page }) => {
+    await page.getByRole('link', { name: 'Innstillinger' }).click();
+    await expect(page).toHaveURL(/\/innstillinger$/);
+    await expect(page.getByRole('radio', { name: /Standard/ })).toBeChecked();
 
-    await page.goto('/#innstillinger');
-    const dialog = page.getByRole('dialog');
-    await expect(dialog).toBeVisible();
-    await expect(dialog.getByRole('radio', { name: /Standard/ })).toBeChecked();
-
-    await dialog.getByRole('radio', { name: /Detaljert/ }).check();
-    await expectNoAxeViolations(page, 'innstillingsmenyen');
-
-    // Lukkingen tar hashen ut av adressen, så menyen ikke åpner seg igjen.
-    await dialog.getByRole('button', { name: 'Lukk' }).click();
-    await expect(page.getByRole('dialog')).toHaveCount(0);
-    await expect(page).toHaveURL(/\/$/);
+    await page.getByRole('radio', { name: /Detaljert/ }).check();
+    await expectNoAxeViolations(page, 'innstillingssiden');
 
     await page.reload();
+    await expect(page.getByRole('radio', { name: /Detaljert/ })).toBeChecked();
+  });
+
+  test('den gamle adressen #innstillinger lander på siden', MOCK, async ({ page }) => {
     await page.goto('/#innstillinger');
-    await expect(page.getByRole('dialog').getByRole('radio', { name: /Detaljert/ })).toBeChecked();
+    await expect(page).toHaveURL(/\/innstillinger$/);
+    await expect(page.getByRole('heading', { level: 1, name: 'Innstillinger' })).toBeVisible();
   });
 
   /*
-   * Closing the menu is a navigation, and the start page was keyed on every
-   * navigation for a while (#203): «Lukk» mounted the chat again and a
-   * half-written question was gone. Measured by KA CC on #208, round 1; the
-   * start page is keyed on «Ny tråd» since round 2.
-   */
-  test('å lukke menyen på startsiden beholder et halvskrevet spørsmål', MOCK, async ({ page }) => {
-    const field = composer(page);
-    await field.fill('Et halvskrevet spørsmål');
-
-    await page.goto('/#innstillinger');
-    const dialog = page.getByRole('dialog');
-    await expect(dialog).toBeVisible();
-    await dialog.getByRole('button', { name: 'Lukk' }).click();
-    await expect(page.getByRole('dialog')).toHaveCount(0);
-
-    await expect(field).toHaveValue('Et halvskrevet spørsmål');
-  });
-
-  /*
-   * The same menu, and the skip link, over a conversation started on the
-   * start page. Its address is written with `replaceState`, so the router
+   * The skip link over a conversation started on the start page (the hidden
+   * settings menu was measured here too, until it became a page). Its address is written with `replaceState`, so the router
    * first sees `/threads/<id>` when the hash moves, and the chat slot's key
    * went from `new:N` to the id: the conversation was mounted again and read
    * back from the backend, which keeps no chunks per message, so
@@ -166,16 +141,6 @@ test.describe('hovedkolonnen', () => {
    * a half-written follow-up is still in the field.
    */
   for (const [what, leave] of [
-    [
-      'å lukke menyen',
-      async (page: Page) => {
-        await page.goto(`${page.url()}#innstillinger`);
-        const dialog = page.getByRole('dialog');
-        await expect(dialog).toBeVisible();
-        await dialog.getByRole('button', { name: 'Lukk' }).click();
-        await expect(page.getByRole('dialog')).toHaveCount(0);
-      },
-    ],
     [
       'hopplenka til skrivefeltet',
       async (page: Page) => {

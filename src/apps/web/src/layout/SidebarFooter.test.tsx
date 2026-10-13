@@ -18,7 +18,7 @@ function open(at: string) {
 const links = () => screen.getByRole('list', { name: 'Om Kunnskapsassistenten' });
 
 describe('SidebarFooter', () => {
-  it('har de tre sidene, i rekkefølgen fra den gamle, med adressene deres', () => {
+  it('har Innstillinger først, så de tre sidene i rekkefølgen fra den gamle', () => {
     open('/');
 
     const found = within(links())
@@ -26,6 +26,7 @@ describe('SidebarFooter', () => {
       .map((link) => [link.textContent, link.getAttribute('href')]);
 
     expect(found).toEqual([
+      ['Innstillinger', '/innstillinger'],
       ['Onboarding', '/onboarding'],
       ['Endringslogg', '/endringslogg'],
       ['Om prosjektet', '/om-prosjektet'],
@@ -48,15 +49,9 @@ describe('SidebarFooter', () => {
     expect(within(links()).queryByRole('link', { current: 'page' })).toBeNull();
   });
 
-  it('har fargemodus under lenkene, ikke over', () => {
+  it('har ikke fargemodus lenger, den står på Innstillinger', () => {
     open('/');
 
-    const foot = links().parentElement;
-    const group = screen.getByRole('group', { name: 'Fargemodus' });
-
-    // `compareDocumentPosition` sier hva som kommer først i lesrekkefølgen,
-    // som er det denne påstanden handler om.
-    expect(foot?.contains(group)).toBe(true);
-    expect(links().compareDocumentPosition(group) & Node.DOCUMENT_POSITION_FOLLOWING).toBeTruthy();
+    expect(screen.queryByRole('group', { name: 'Fargemodus' })).toBeNull();
   });
 });

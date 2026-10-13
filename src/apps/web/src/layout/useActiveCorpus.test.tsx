@@ -87,13 +87,13 @@ describe('useActiveCorpus', () => {
     expect(read('description')).toBe('ingen');
   });
 
-  it('sier «standardkorpuset» når ingenting er satt opp', async () => {
+  it('sier «standardsamlingen» når ingenting er satt opp', async () => {
     // Live uten liste og uten nøkkel: backend velger datasett. Da er det
     // ingen nøkkel å vise og ingenting som navngir korpuset.
     await mount({ datasets: '' });
 
     expect(read('key')).toBe('ingen');
     expect(read('label')).toBe('ingen');
-    expect(read('name')).toBe('standardkorpuset');
+    expect(read('name')).toBe('standardsamlingen');
   });
 });

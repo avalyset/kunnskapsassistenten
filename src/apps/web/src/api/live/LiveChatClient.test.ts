@@ -564,7 +564,7 @@ describe('korpuset svaret ble hentet fra', () => {
   it('sier ingenting når kallet ikke sa noe: da valgte backend selv', async () => {
     // Uten tenant utelater `datasetArguments` begge verdiene, og ingenting på
     // denne sida vet hvilket datasett backend landet på. Undefined er «ikke
-    // kjent», ikke «standardkorpuset».
+    // kjent», ikke «standardsamlingen».
     vi.spyOn(console, 'warn').mockImplementation(() => {});
     const events = await askForCorpus({ datasetConfigKey: 'kudos-pilot' }, () => finalFrame({}));
 

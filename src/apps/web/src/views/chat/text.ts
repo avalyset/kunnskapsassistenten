@@ -26,7 +26,7 @@ export const KICKSTARTERS = [
     documents and not anything in them, since they must hold over a corpus
     this code has never seen. Whole questions, or the button reads broken. */
 export const GENERAL_KICKSTARTERS = [
-  'Hva handler dokumentene i dette korpuset om?',
+  'Hva handler dokumentene i denne samlingen om?',
   'Gi meg en oversikt over de viktigste temaene.',
   'Oppsummer det viktigste i noen få punkter.',
 ] as const;

@@ -22,7 +22,7 @@ describe('sourcesDisclaimer', () => {
 
   test('setningen om at ingenting er generert står i alle fire', () => {
     // Det er den halvdelen linja finnes for, og den er sann om ethvert korpus.
-    for (const name of ['Kudos', 'Wikipedia (NorQuAD)', 'standardkorpuset']) {
+    for (const name of ['Kudos', 'Wikipedia (NorQuAD)', 'standardsamlingen']) {
       for (const own of [false, true]) {
         expect(sourcesDisclaimer(name, own)).toContain('Ikke generert av kunstig intelligens.');
       }
@@ -33,7 +33,7 @@ describe('sourcesDisclaimer', () => {
     // Samme funksjon som overskriften over dokumentlista, så de to ikke kan
     // si hver sin ting om samme korpus.
     expect(sourcesDisclaimer(corpusDisplayName(undefined), false)).toBe(
-      'All tekst er sitater fra dokumentene fra standardkorpuset. Ikke generert av kunstig intelligens.',
+      'All tekst er sitater fra dokumentene fra standardsamlingen. Ikke generert av kunstig intelligens.',
     );
     expect(
       sourcesDisclaimer(

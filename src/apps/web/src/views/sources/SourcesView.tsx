@@ -336,7 +336,7 @@ export function SourcesView({
   const corpusKey = corpusKeyFor(activeAnswer?.corpusKey, activeCorpus.key);
   const corpusName = corpusDisplayNameFor(corpusKey);
 
-  // A link label takes no «standardkorpuset» stand-in, unlike the disclaimer.
+  // A link label takes no «standardsamlingen» stand-in, unlike the disclaimer.
   const linkCorpusName = corpusOption(corpusKey) === undefined ? undefined : corpusName;
 
   const content = panelContentFor(answerList, activeAnswer, activeCorpus.displayName);

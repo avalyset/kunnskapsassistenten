@@ -121,23 +121,23 @@ describe('Dine dokumenter', () => {
     expect(hook.remove).toHaveBeenCalledWith('b');
   });
 
-  it('live: sonen står, men inviterer ikke til noe tjenesten ikke kan', () => {
+  it('uten opplasting: sonen står, men er slått av, og sier «Kommer snart»', () => {
     hook.unavailable = 'unavailable';
     render(<OwnDocuments />);
 
-    // Seksjonen skjules ikke — leseren skal vite at dette finnes.
+    // Seksjonen skjules ikke: leseren skal vite at dette kommer.
     expect(screen.getByRole('heading', { name: 'Dine dokumenter' })).toBeTruthy();
-    // Ordlyden fra designet, og samme setning som binderset i skrivefeltet (#3).
-    expect(screen.getByText('Snart kan du laste opp dokumenter her')).toBeTruthy();
+    // «Kommer snart» der «Ny» står når opplasting virker.
     expect(screen.getByText('Kommer snart')).toBeTruthy();
-
-    // Men ingen kontroll som ikke kan virke, ingen etikett uten noe å navngi,
-    // og ingen «Ny» over den.
-    expect(screen.queryByText('Velg filer')).toBeNull();
-    expect(document.querySelector('input[type="file"]')).toBeNull();
-    expect(screen.queryByText('Last opp egne dokumenter')).toBeNull();
     expect(screen.queryByText('Ny')).toBeNull();
+
+    // Samme sone som når den virker, men slått av: fila kan ikke velges, og
+    // knappen sier at den er av.
+    const input = document.querySelector<HTMLInputElement>('input[type="file"]');
+    expect(input?.disabled).toBe(true);
+    expect(screen.getByText('Velg filer').getAttribute('aria-disabled')).toBe('true');
   });
+
   it('sier fra i en live-region når en fil kommer inn, blir klar og feiler', () => {
     /*
      * WCAG 4.1.3: raden byttet tekst i stillhet, så en skjermleserbruker fikk

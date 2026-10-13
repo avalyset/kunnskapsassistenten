@@ -11,11 +11,6 @@ const UPLOAD_ERROR_TEXT: Record<UploadErrorCode, string> = {
   unavailable: 'Opplasting er ikke tilgjengelig i denne tjenesten ennå.',
 };
 
-/** What the zone says while there is nowhere to upload to; not a refusal, as nothing was tried.
-    Word for word the compose field's (src/views/chat/attachmentText.ts); views may not import
-    each other, so change both. */
-export const UPLOAD_COMING_TEXT = 'Snart kan du laste opp dokumenter her';
-
 /** An upload failure in Norwegian, from one table for the file list and the drop zone.
     `unavailable` says there is no upload at all rather than «noe gikk galt», so the reader
     does not look for a mistake they did not make. */

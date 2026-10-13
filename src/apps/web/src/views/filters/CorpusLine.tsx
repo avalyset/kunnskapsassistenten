@@ -32,7 +32,9 @@ export function CorpusLine({ facets, corpus }: CorpusLineProps) {
             <Link asChild className="filters-view__corpus-toggle">
               <button
                 type="button"
-                aria-label={open ? 'Vis mindre om korpuset' : 'Vis mer om korpuset'}
+                aria-label={
+                  open ? 'Vis mindre om dokumentsamlingen' : 'Vis mer om dokumentsamlingen'
+                }
                 aria-expanded={open}
                 aria-controls={detailId}
                 onClick={() => setOpen((shown) => !shown)}

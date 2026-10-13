@@ -125,7 +125,9 @@ describe('kortet på en feilet tur', () => {
     content: '',
     createdAt: '2026-09-21T09:00:00Z',
     citations: [],
-    thinkingSteps: [{ id: 's1', kind: 'search', label: 'Jeg søker i korpuset.', durationMs: 900 }],
+    thinkingSteps: [
+      { id: 's1', kind: 'search', label: 'Jeg søker i dokumentene.', durationMs: 900 },
+    ],
     status: 'error',
   };
 
@@ -146,7 +148,7 @@ describe('kortet på en feilet tur', () => {
     show('a1');
 
     expect(screen.queryByText(FAILED_NOTE)).toBeNull();
-    expect(screen.getByText('Jeg søker i korpuset.')).toBeTruthy();
+    expect(screen.getByText('Jeg søker i dokumentene.')).toBeTruthy();
   });
 
   it('sier fra når varselet ikke lenger gjelder den', () => {
@@ -156,7 +158,7 @@ describe('kortet på en feilet tur', () => {
     show(undefined);
 
     expect(screen.getByText(FAILED_NOTE)).toBeTruthy();
-    expect(screen.getByText('Jeg søker i korpuset.')).toBeTruthy();
+    expect(screen.getByText('Jeg søker i dokumentene.')).toBeTruthy();
   });
 
   it('gir veien videre når varselet er borte, slik den stoppede turen har', () => {

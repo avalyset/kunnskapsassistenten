@@ -279,7 +279,11 @@ test.describe('skallet', () => {
     const foot = page
       .getByRole('navigation', { name: 'Tråder og filter' })
       .getByRole('list', { name: 'Om Kunnskapsassistenten' });
-    await expect(foot.getByRole('link')).toHaveText(INFO_PAGES.map((info) => info.title));
+    // Innstillinger first, then the three pages; Innstillinger has its own test in chat.spec.ts.
+    await expect(foot.getByRole('link')).toHaveText([
+      'Innstillinger',
+      ...INFO_PAGES.map((info) => info.title),
+    ]);
 
     for (const info of INFO_PAGES) {
       const link = foot.getByRole('link', { name: info.title });

@@ -835,7 +835,7 @@ describe('SourcesView, korpuset følger svaret og ikke valget', () => {
    *
    * Mock-miljøet kjenner bare ett korpus, «Kudos». Det er nok til å vise
    * saken: et svar merket med et korpus denne installasjonen ikke kjenner
-   * sier «standardkorpuset», mens et svar uten nøkkel faller tilbake på det
+   * sier «standardsamlingen», mens et svar uten nøkkel faller tilbake på det
    * valgte og sier «Kudos». Går valget foran svaret, blir begge «Kudos».
    * Selve valget mellom de to nøklene er testet for seg i `origin.test.ts`.
    */
@@ -855,7 +855,7 @@ describe('SourcesView, korpuset følger svaret og ikke valget', () => {
   it('navngir korpuset svaret kom fra, ikke det som er valgt', () => {
     render(<SourcesView answers={[answerFrom('et-annet-korpus')]} />);
 
-    expect(disclaimer()).toContain('fra standardkorpuset');
+    expect(disclaimer()).toContain('fra standardsamlingen');
     expect(disclaimer()).not.toContain('fra Kudos');
   });
 
@@ -897,7 +897,7 @@ describe('SourcesView, korpuset følger svaret og ikke valget', () => {
     // Ukjent korpus: fraskrivelsen tar stedfortrederen, lenka navngir
     // ingenting og sier bare hva den gjør.
     expect(screen.getAllByRole('link', { name: /^Les dokumentet,/ }).length).toBeGreaterThan(0);
-    expect(screen.queryByRole('link', { name: /på standardkorpuset/ })).toBeNull();
+    expect(screen.queryByRole('link', { name: /på standardsamlingen/ })).toBeNull();
     expect(screen.queryByRole('link', { name: /på Kudos/ })).toBeNull();
   });
 });

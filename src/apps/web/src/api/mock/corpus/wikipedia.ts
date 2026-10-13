@@ -100,7 +100,7 @@ export const wikipediaDocuments: CorpusDocument[] = [
  * switch changes the answer, sources and suggestions. Markers index the flat
  * excerpt list below, as for Kudos.
  */
-export const WIKIPEDIA_MOCK_ANSWER = `# Artikler i dette korpuset
+export const WIKIPEDIA_MOCK_ANSWER = `# Artikler i denne samlingen
 
 Korpuset er en liten samling artikler fra norsk Wikipedia, satt sammen for å
 vise hvordan assistenten oppfører seg over et annet korpus enn Kudos.
