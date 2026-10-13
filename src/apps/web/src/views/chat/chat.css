@@ -76,6 +76,11 @@
   padding-block: var(--ds-size-3);
   text-align: start;
   white-space: normal;
+  /* Support, not the main thing: the colour is already the subtlest text
+     token there is, so the button's medium weight and size are what step
+     down. Body weight, one size under the field's text. */
+  font-size: var(--ds-font-size-minus-1);
+  font-weight: var(--ds-font-weight-regular);
 }
 
 .ka-kickstarter__icon {
@@ -594,6 +599,42 @@
   padding-block-end: var(--ka-chat-room-inset);
 }
 
+/* The disclaimer on the front page, last in the column: the `auto` above
+   pushes it to the foot, and the shell's end padding is the room under it. */
+.ka-chat-disclaimer {
+  color: var(--ds-color-neutral-text-subtle);
+  text-align: center;
+}
+
+/* The first question: the field glides from the middle of the front page to
+   its place at the foot (ChatView's `submit`). The rest cross-fades as the
+   page root. Only the field is named, so only it moves. */
+/* stylelint-disable plugin/browser-compat -- an enhancement only: without
+   View Transitions these rules match nothing, and `submit` checks for
+   `document.startViewTransition` before it asks for one. */
+.ka-composer-area {
+  view-transition-name: ka-composer;
+}
+
+::view-transition-group(ka-composer) {
+  animation-duration: 350ms;
+  animation-timing-function: cubic-bezier(0.2, 0, 0, 1);
+}
+
+::view-transition-old(root),
+::view-transition-new(root) {
+  animation-duration: 200ms;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  ::view-transition-group(*),
+  ::view-transition-old(*),
+  ::view-transition-new(*) {
+    animation: none;
+  }
+}
+/* stylelint-enable plugin/browser-compat */
+
 /* What the compose field may not hide (WCAG 2.4.11). The field is left out,
    which is why this is not `scroll-padding` on the scroller: that covers the
    field too, and every keystroke then scrolls the column down. */
@@ -613,7 +654,7 @@
   scroll-margin-block-end: calc(var(--ka-composer-block-size, 0px) + var(--ka-composer-fade));
 }
 
-/* «Bla til nederst», in the sticky area so it stays in one place. Out of the
+/* «Bla til bunnen», in the sticky area so it stays in one place. Out of the
    flow, so nothing moves when it comes and goes, and on the page's own
    ground, because the secondary variant is transparent. */
 .ka-scroll-to-bottom {
@@ -625,7 +666,7 @@
   inset-inline-start: 50%;
   translate: -50% 0;
   /* On one line: a box that starts halfway across shrinks to fit the half
-     that is left, which breaks «Bla til nederst» over two lines. */
+     that is left, which breaks «Bla til bunnen» over two lines. */
   inline-size: max-content;
   box-shadow: var(--ds-shadow-sm);
 }

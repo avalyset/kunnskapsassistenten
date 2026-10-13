@@ -27,6 +27,10 @@ export function uploadRetryable(code: UploadErrorCode): boolean {
 
 /** The paperclip. It says what it takes, since the picker filters silently. */
 export const ATTACH_LABEL = 'Legg ved dokument (PDF eller .docx)';
+/** On the paperclip while upload is not ready. The name holds the visible
+    words, so speech control finds the button by what it says (WCAG 2.5.3). */
+export const ATTACH_SOON = 'Kommer snart';
+export const ATTACH_SOON_LABEL = 'Legg ved dokument, kommer snart';
 
 /** Why a question did not go while a file was on its way: only ready
     documents are sent, so sending now would drop the file the reader just

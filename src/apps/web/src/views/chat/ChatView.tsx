@@ -1,5 +1,6 @@
-import { Heading } from '@digdir/designsystemet-react';
+import { Heading, Paragraph } from '@digdir/designsystemet-react';
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
+import { flushSync } from 'react-dom';
 import { useLocation, useNavigate } from 'react-router';
 import { corpusDisplayNameFor, corpusOption, createChatClient, type ChatClient } from '../../api';
 import { ErrorState, PageTitle } from '../../components';
@@ -17,6 +18,7 @@ import { chatErrorText } from './errorText';
 import { answerScopeText } from './filterSummary';
 import {
   CLARIFICATION_PLACEHOLDER,
+  DISCLAIMER,
   NEW_THREAD_TITLE,
   READING_THREAD,
   kickstartersFor,
@@ -172,7 +174,7 @@ function ChatSession({ userName, thread, loading, client }: ChatViewProps) {
   }, []);
 
   // An answer on its way is followed down, if the reader is at the bottom,
-  // and «Bla til nederst» is drawn from the same measurement.
+  // and «Bla til bunnen» is drawn from the same measurement.
   const atBottom = useFollowAnswer(
     scrollRef,
     rootRef,
@@ -295,6 +297,10 @@ function ChatSession({ userName, thread, loading, client }: ChatViewProps) {
     if (active === document.body || active === null || inComposer) fieldRef.current?.focus();
   }, [clarificationId]);
 
+  // Nothing asked and nothing being read: the greeting, the field and the
+  // suggestions, in that order, with the field out of its sticky place.
+  const startPage = messages.length === 0 && !loading;
+
   function submit(question: string) {
     const query = question.trim();
     if (query.length === 0) return;
@@ -306,10 +312,23 @@ function ChatSession({ userName, thread, loading, client }: ChatViewProps) {
       .filter((item) => item.documentId !== undefined)
       .map((item) => item.name);
 
-    startThread(query);
-    send(query, ids.length > 0 ? { ids, names } : undefined);
-    setDraft('');
-    attachments.clear();
+    const ask = () => {
+      startThread(query);
+      send(query, ids.length > 0 ? { ids, names } : undefined);
+      setDraft('');
+      attachments.clear();
+    };
+
+    // From the front page the field moves from the middle to the foot, and a
+    // jump there loses the reader's eye. A view transition lets it glide;
+    // `flushSync` so the new layout is in the DOM when the browser takes its
+    // second picture. Without the API, or with reduced motion, it just goes.
+    const glide =
+      startPage &&
+      typeof document.startViewTransition === 'function' &&
+      !window.matchMedia('(prefers-reduced-motion: reduce)').matches;
+    if (glide) document.startViewTransition(() => flushSync(ask));
+    else ask();
   }
 
   // Where focus goes when a control disappears under the click that hit it.
@@ -348,10 +367,6 @@ function ChatSession({ userName, thread, loading, client }: ChatViewProps) {
 
     (retryRef.current ?? fieldRef.current)?.focus();
   }, [status]);
-
-  // Nothing asked and nothing being read: the greeting, the field and the
-  // suggestions, in that order, with the field out of its sticky place.
-  const startPage = messages.length === 0 && !loading;
 
   return (
     <div className="ka-chat" data-start={startPage || undefined} ref={rootRef}>
@@ -444,6 +459,7 @@ function ChatSession({ userName, thread, loading, client }: ChatViewProps) {
         onSubmit={() => submit(draft)}
         placeholder={awaitingClarification ? CLARIFICATION_PLACEHOLDER : undefined}
         ref={composerRef}
+        showDisclaimer={!startPage}
         showFollowUps={hasAnswer && !awaitingClarification && !foundNothing}
         status={status}
         value={draft}
@@ -463,6 +479,15 @@ function ChatSession({ userName, thread, loading, client }: ChatViewProps) {
           }}
           questions={kickstartersFor(corpusKey)}
         />
+      ) : null}
+
+      {/* At the foot of the front page rather than under the field, where it
+          stood between the field and the suggestions and drew the eye. The
+          shell's end padding is the room under it. */}
+      {startPage ? (
+        <Paragraph className="ka-chat-disclaimer" data-size="sm">
+          {DISCLAIMER}
+        </Paragraph>
       ) : null}
 
       {/* How the answer is coming along, for a screen reader. Polite, since

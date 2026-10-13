@@ -13,7 +13,7 @@ import { ChatView } from './ChatView';
 import { ScrollToBottom } from './ScrollToBottom';
 
 /**
- * «Bla til nederst» as one button for the column (runde 3, ekstra 5).
+ * «Bla til bunnen» as one button for the column (runde 3, ekstra 5).
  *
  * The column is a real element with its three numbers set by hand, since
  * jsdom lays nothing out: 2000 of content in a 500 window, scrolled to the
@@ -97,7 +97,7 @@ function Shell({ column, children }: { column: HTMLElement; children: ReactNode 
   );
 }
 
-describe('«Bla til nederst»', () => {
+describe('«Bla til bunnen»', () => {
   it('is one button over the field, and none in the answers', () => {
     const { container } = render(
       <Shell column={tallColumn()}>
@@ -105,12 +105,12 @@ describe('«Bla til nederst»', () => {
       </Shell>,
     );
 
-    const buttons = screen.getAllByRole('button', { name: 'Bla til nederst' });
+    const buttons = screen.getAllByRole('button', { name: 'Bla til bunnen' });
     expect(buttons).toHaveLength(1);
     expect(buttons[0].closest('.ka-composer-area')).not.toBeNull();
     for (const answer of container.querySelectorAll('.ka-message--assistant')) {
       expect(
-        within(answer as HTMLElement).queryByRole('button', { name: 'Bla til nederst' }),
+        within(answer as HTMLElement).queryByRole('button', { name: 'Bla til bunnen' }),
       ).toBeNull();
     }
   });
@@ -124,7 +124,7 @@ describe('«Bla til nederst»', () => {
       </Shell>,
     );
 
-    expect(screen.queryByRole('button', { name: 'Bla til nederst' })).toBeNull();
+    expect(screen.queryByRole('button', { name: 'Bla til bunnen' })).toBeNull();
   });
 
   it('scrolls the column, and hands the keyboard on to the field', () => {
@@ -135,7 +135,7 @@ describe('«Bla til nederst»', () => {
       </Shell>,
     );
 
-    const button = screen.getByRole('button', { name: 'Bla til nederst' });
+    const button = screen.getByRole('button', { name: 'Bla til bunnen' });
     button.focus();
     // A click the keyboard made has no pointer behind it: detail 0.
     fireEvent.click(button, { detail: 0 });
@@ -159,7 +159,7 @@ describe('«Bla til nederst»', () => {
       </Shell>,
     );
 
-    const button = screen.getByRole('button', { name: 'Bla til nederst' });
+    const button = screen.getByRole('button', { name: 'Bla til bunnen' });
     // Where a tap leaves it in a browser that focuses what it clicks.
     button.focus();
     // A click with a pointer behind it: detail 1.
@@ -173,7 +173,7 @@ describe('«Bla til nederst»', () => {
     const onScroll = vi.fn();
     render(<ScrollToBottom onScroll={onScroll} />);
 
-    fireEvent.click(screen.getByRole('button', { name: 'Bla til nederst' }), { detail: 1 });
+    fireEvent.click(screen.getByRole('button', { name: 'Bla til bunnen' }), { detail: 1 });
 
     expect(onScroll).toHaveBeenCalledExactlyOnceWith(false);
   });
