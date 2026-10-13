@@ -101,8 +101,10 @@ Fyll inn `DIGDIR_API_BASE` og `DIGDIR_API_KEY` i `apps/server/.env`. Er
 datasettet et annet enn standarden, også `DIGDIR_TENANT` og
 `DIGDIR_DATASET_CONFIG_KEY`. `KA_FILTER_FIELDS` og `KA_DATASETS` gir klienten
 feltene i filteret og navnet på korpuset. Typesense (`TYPESENSE_API_HOST`,
-`TYPESENSE_API_KEY_ADMIN` og `KUDOS_DOCS_COLLECTION`) er valgfritt. Nøkkelen
-blir i BFF-en og når aldri nettleseren.
+`TYPESENSE_API_KEY_ADMIN` og `KUDOS_DOCS_COLLECTION`) gir filtrene og utdragene
+i kildene. BFF-en bare søker der, så nøkkelen er en søkenøkkel, aldri
+adminnøkkelen, selv om variabelen heter `_ADMIN`. Nøklene blir i BFF-en og når
+aldri nettleseren.
 
 ```sh
 npm run doctor
@@ -111,7 +113,9 @@ npm run doctor
 `npm run doctor` er den raske måten å finne ut hvorfor ingenting virker.
 Den sjekker at nøkkelen autentiserer, at den gir tilgang til agenten som er
 satt opp, at samtale-API-et svarer, og at Typesense er tilgjengelig. Feiler
-noe, sier den hva du skal endre.
+noe, sier den hva du skal endre. Typesense-sjekken slår opp samlingen med
+`GET /collections/…`, og det har en søkenøkkel ikke lov til: målt 13.10 svarte
+det 401, mens søket BFF-en gjør, svarte 200.
 
 To backender, styrt av `DIGDIR_API_BASE`:
 
@@ -121,8 +125,8 @@ To backender, styrt av `DIGDIR_API_BASE`:
 | `http://localhost:8099`         | lokalt. Oppsett ligger i `digdir-headless-rag`.                                       |
 
 Nøkler gjelder per miljø: en som er laget lokalt autentiserer ikke mot den
-utrullede backenden. Typesense er valgfritt. Uten det kjører appen fint, men
-filterraden skjules og kildekortene viser ingen utdrag.
+utrullede backenden. Uten Typesense svarer appen, men filterraden skjules og
+kildekortene viser ingen utdrag.
 
 ### 4. BFF-en og klienten sammen
 
@@ -135,15 +139,26 @@ BFF-en starter på `PORT` fra `.env` (8787), og klienten på
 `KA_BFF_URL` må med, for ellers ser klienten etter BFF-en på 8788. Er 5173
 opptatt, velger Vite neste ledige port og skriver den ut.
 
-### 5. Klienten alene, uten backend
+### 5. Klienten alene, mot backenden
+
+```sh
+cp apps/web/.env.example apps/web/.env.local
+```
+
+Fyll inn `KA_API_URL` og `KA_API_KEY`, korpuset (`VITE_KA_TENANT` og
+`VITE_KA_DATASET_CONFIG_KEY`), Typesense (`TYPESENSE_URL`, `TYPESENSE_API_KEY`,
+`KA_FACET_COLLECTIONS` og `KA_CHUNK_COLLECTIONS`) og `VITE_KA_FILTER_FIELDS` i
+`apps/web/.env.local`. Typesense-nøkkelen er en søkenøkkel, aldri
+adminnøkkelen.
 
 ```sh
 npm run dev:web
 ```
 
-Klienten i mock på <http://localhost:5173>: svarene er skrevet på forhånd, men
-dokumentene er ekte, og filtrene virker. Den trenger verken `.env` eller
-backend.
+Klienten i live på <http://localhost:5173>, slik testmiljøet kjører:
+Vite-proxyen sender spørsmålene rett til headless-rag med nøkkelen, og filtrene
+og utdragene kommer fra Typesense. Mangler noe, skriver dev-serveren én linje
+ved oppstart om hva og hvor det settes. Mock er bare for testene under.
 
 ### 6. Testene
 
@@ -189,8 +204,8 @@ klient spør sin egen versjon av API-et: `apps/web-preact` `/api/*` og
 
 |                                         |                                                                                                               |
 | --------------------------------------- | ------------------------------------------------------------------------------------------------------------- |
-| `npm run dev`                           | BFF-en og klienten, med watch. Klienten går i mock uten `VITE_API_MODE=bff`, se [Komme i gang](#komme-i-gang) |
-| `npm run dev:web`                       | bare klienten, i mock                                                                                         |
+| `npm run dev`                           | BFF-en og klienten, med watch. Klienten går i live uten `VITE_API_MODE=bff`, se [Komme i gang](#komme-i-gang) |
+| `npm run dev:web`                       | bare klienten, i live                                                                                         |
 | `npm run doctor`                        | sjekk forbindelsen til backenden                                                                              |
 | `npm run build`                         | produksjonsbygg av klienten                                                                                   |
 | `npm test`                              | server (node:test) og web (vitest)                                                                            |
@@ -226,7 +241,7 @@ støtter](#hva-backenden-støtter).
 | Filtre når backenden ikke tar imot dem                            | panelet sier «Filtrering er ikke tilgjengelig ennå»                                                                     |
 | Genererte trådtitler                                              | faller tilbake på spørsmålet til backenden lager en                                                                     |
 | Mapper                                                            | droppet. Backenden har tagger, ikke mapper                                                                              |
-| Uten backend                                                      | mock med et utdrag av Kudos, til utvikling, demo og e2e                                                                 |
+| Uten backend                                                      | mock med et utdrag av Kudos, bare for de automatiske testene                                                            |
 | Oppsett                                                           | paneler som endrer bredde, skuffer på smal skjerm, og lys og mørk modus                                                 |
 
 ## Hva backenden støtter
