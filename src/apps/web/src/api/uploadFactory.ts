@@ -1,6 +1,6 @@
 import { LiveUploadClient } from './live/LiveUploadClient';
 import { MockUploadClient } from './mock/MockUploadClient';
-import { kaEnv } from './runtimeConfig';
+import { apiMode } from './apiMode';
 import type { UploadClient } from './uploadClient';
 
 let client: UploadClient | undefined;
@@ -11,8 +11,7 @@ let client: UploadClient | undefined;
  * read off one object, and a test that swaps the mode has one place to reset.
  */
 export function createUploadClient(): UploadClient {
-  client ??=
-    (kaEnv().VITE_API_MODE ?? 'mock') === 'mock' ? new MockUploadClient() : new LiveUploadClient();
+  client ??= apiMode() === 'mock' ? new MockUploadClient() : new LiveUploadClient();
   return client;
 }
 

@@ -38,8 +38,9 @@ export function createChatClient(): ChatClient {
   const env = kaEnv();
   // The rule in apiMode.ts, inlined so the build can fold it and drop the mock
   // and the live client from a bff build (with vite.config.ts). Don't call
-  // `apiMode()` here: nothing would be folded.
-  const mode = import.meta.env.VITE_API_MODE ?? (import.meta.env.PROD ? 'bff' : 'mock');
+  // `apiMode()` here: nothing would be folded. `kaEnv()` above has already
+  // refused a mode it does not know.
+  const mode = import.meta.env.VITE_API_MODE ?? (import.meta.env.PROD ? 'bff' : 'live');
   if (mode === 'bff') {
     const bff = new BffChatClient({ datasetConfigKey: activeCorpusKey });
     // The corpus's name comes from the BFF (src/decisions/0006); ask for it
@@ -47,7 +48,7 @@ export function createChatClient(): ChatClient {
     bff.prime();
     return bff;
   }
-  if (mode !== 'live') {
+  if (mode === 'mock') {
     // Slow and lifelike by default: an instant mock cannot show the skeleton,
     // the thinking panel or the streaming. The e2e suite sets `fast`.
     const speed = env.VITE_MOCK_SPEED ?? defaultMockSpeed;
