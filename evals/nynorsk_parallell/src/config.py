@@ -20,6 +20,10 @@ class ModelConfig(BaseModel):
     api_key_env: Optional[str] = None
     note: Optional[str] = None
 
+    # Some APIs reject temperature and seed. The model then runs with the
+    # sampling settings of the provider.
+    omit_sampling_params: bool = False
+
     # Optional cost cap for paid APIs (USD per million tokens)
     usd_per_mtok_input: Optional[float] = None
     usd_per_mtok_output: Optional[float] = None

@@ -44,7 +44,9 @@ def chrf_signature() -> str:
     Returns:
         Signature string.
     """
-    return str(CHRF().get_signature())
+    chrf = CHRF()
+    chrf.corpus_score(["a"], [["a"]])  # the signature needs the reference count
+    return str(chrf.get_signature())
 
 
 def score_translations(

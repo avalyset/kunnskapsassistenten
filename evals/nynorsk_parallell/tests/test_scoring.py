@@ -9,6 +9,7 @@ import pytest
 from src.fasit import FasitPair
 from src.scoring import (
     RepetitionScore,
+    chrf_signature,
     score_blinded_dir,
     score_copy_baseline,
     score_translations,
@@ -104,3 +105,11 @@ class TestSummarize:
         """Test that an empty list raises ValueError."""
         with pytest.raises(ValueError, match="without repetitions"):
             summarize([])
+
+
+class TestChrfSignature:
+    """Tests for chrf_signature function."""
+
+    def test_chrf_signature_names_the_metric_configuration(self) -> None:
+        """Test that the signature can be read without a previous scoring."""
+        assert "nc:6" in chrf_signature()

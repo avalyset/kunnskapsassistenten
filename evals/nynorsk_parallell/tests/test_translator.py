@@ -86,6 +86,16 @@ class TestTranslator:
         assert [call["seed"] for call in client.calls] == [10, 10, 11, 11]
         assert all(call["temperature"] == 0.3 for call in client.calls)
 
+    def test_translate_model_can_omit_sampling_params(self, tmp_path: Path) -> None:
+        """Test that temperature and seed are left out when the model rejects them."""
+        client = FakeClient()
+        translator = Translator(RunConfig(repetitions=1), BlindKey(), tmp_path)
+
+        translator.translate_model(_model(omit_sampling_params=True), FASIT, client)
+
+        assert all("temperature" not in call for call in client.calls)
+        assert all("seed" not in call for call in client.calls)
+
     def test_translate_model_skips_after_consecutive_errors(
         self, tmp_path: Path
     ) -> None:

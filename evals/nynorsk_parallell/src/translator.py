@@ -187,13 +187,19 @@ class Translator:
                 status.skipped_reason = "cost cap reached"
                 return None
 
+            sampling: Dict[str, Any] = {}
+            if not model.omit_sampling_params:
+                sampling = {
+                    "temperature": self.run.temperature,
+                    "seed": self.run.base_seed + repetition - 1,
+                }
+
             try:
                 response = client.chat.completions.create(
                     model=model.model,
                     messages=build_messages(pair.nb),
-                    temperature=self.run.temperature,
                     max_tokens=self.run.max_tokens,
-                    seed=self.run.base_seed + repetition - 1,
+                    **sampling,
                 )
                 translation = response.choices[0].message.content or ""
                 usage = getattr(response, "usage", None)
