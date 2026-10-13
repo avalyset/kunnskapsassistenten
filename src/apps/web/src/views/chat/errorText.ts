@@ -61,6 +61,13 @@ const BY_CODE: Record<Exclude<ChatErrorCode, 'aborted' | 'no-hits'>, ChatErrorTe
     advice: 'Endre filteret i filterpanelet, og spør på nytt.',
     retryable: false,
   },
+  'not-configured': {
+    title: 'Oppsettet mangler',
+    what: 'Utviklingsserveren vet ikke hvilken backend den skal spørre.',
+    advice:
+      'Linja den skrev ved oppstart sier hva som mangler i apps/web/.env.local. Start den på nytt når det er satt.',
+    retryable: false,
+  },
   'thread-not-found': {
     title: 'Tråden er borte',
     what: 'Tråden finnes ikke lenger, kanskje fordi den er slettet et annet sted.',

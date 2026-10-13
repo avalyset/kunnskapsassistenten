@@ -29,8 +29,7 @@ export const PLATFORM_USER_HEADER = 'x-ms-client-principal-id';
  * `KA_USER_ID_FROM`, read strictly.
  *
  * Unset is `browser`, so running locally is what it was. Anything that is
- * neither word stops the server, and that is the point: `KA_MODE` may fall
- * back to mock on a typo because mock costs nothing, but a misspelt
+ * neither word stops the server, as a misspelt `KA_MODE` does. A misspelt
  * `platform` falling back to `browser` would let the browser choose whose
  * threads it reads behind a login that was meant to prevent exactly that.
  */

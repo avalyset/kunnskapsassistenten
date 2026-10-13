@@ -10,7 +10,7 @@ kommandoer under gjelder fra mappa denne fila ligger i.
 | Kommando                | Hva                                                                          |
 | ----------------------- | ---------------------------------------------------------------------------- |
 | `npm ci`                | Avhengighetene, akkurat som i `package-lock.json`.                           |
-| `npm run dev`           | Utviklingsserver på http://localhost:5173, i mock.                           |
+| `npm run dev`           | Utviklingsserver på http://localhost:5173, mot backenden (live).             |
 | `npm run build`         | `tsc -b` og produksjonsbygg til `dist/`, for BFF-en uten `VITE_API_MODE`.    |
 | `npm run lint`          | oxlint med `jsx-a11y`, og stylelint på CSS-en. Den verste exit-koden vinner. |
 | `npm run format:check`  | Prettier. `npm run format` skriver.                                          |
@@ -54,13 +54,15 @@ som bestått.
 - **Ingen faste farger, størrelser eller fonter.** Bruk `var(--ds-*)` fra
   temaet.
 
-## Mock og live
+## Live, bff og mock
 
-Standard er mock: svar fra `src/api/mock/`, ingen backend, ingen nøkkel. Live
-lokalt trenger en kjørende backend og en nøkkel i `.env.local` (se
-`.env.example`), og startes med `VITE_API_MODE=live npm run dev`.
-`VITE_API_MODE=bff` går mot BFF-en i digdir/kunnskapsassistenten i stedet; se
-`docs/bff-modus.md`.
+Standard i utvikling er live, som i testmiljøet: Vite-proxyen sender `/api` til
+`KA_API_URL` med `KA_API_KEY`, og `/api/facets` og `/api/excerpts` svares fra
+Typesense med en søkenøkkel. Verdiene står i `.env.local` (se `.env.example`),
+og dev-serveren sier fra ved oppstart om noe mangler. `VITE_API_MODE=bff` går
+mot BFF-en i digdir/kunnskapsassistenten i stedet; se `docs/bff-modus.md`.
+`mock` er testenes modus, og Playwright og vitest setter den selv. En verdi
+som ikke er `live`, `bff` eller `mock`, stopper dev-serveren og bygget.
 
 ## Utrulling
 

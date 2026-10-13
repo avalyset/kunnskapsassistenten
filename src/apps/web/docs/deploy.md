@@ -466,7 +466,8 @@ az deployment group create --subscription "$SUB" -g $RG -n ka-frontend-app \
   --query properties.outputs.fqdn.value -o tsv
 ```
 
-Siste linje er adressen. Mock, ingen nøkkel.
+Siste linje er adressen. Appen står i live, men uten nøkkel, så spørsmål får
+401 til nøkkelen er satt (se [Bytte mellom mock og live](#bytte-mellom-mock-og-live)).
 
 ### Steg 6: roller på appen (krever rett til å gi roller)
 
@@ -652,8 +653,9 @@ Klient-ID uten secret stopper utrullingen med en melding i stedet for å falle
 tilbake til implisitt flyt, som Microsoft fraråder. Det er bygd, ikke prøvd
 mot ARM.
 
-Malen setter appen slik parameterne sier, også modus og nøkkel. Var live slått
-på for hånd, slås den på igjen etterpå. Kjøres malen senere uten
+Malen setter appen slik parameterne sier, også modus og nøkkel. Uten `kaMode`
+blir modusen live, men nøkkelen følger bare `digdirApiKey`. Var den satt for
+hånd, settes den igjen etterpå. Kjøres malen senere uten
 innloggingsparameterne, slår den innloggingen av, fordi den alltid tar med
 innloggingsoppsettet og da med `enabled: false`. Målt i Azure 28.09: et
 oppsett med bare det godtas.
@@ -668,7 +670,7 @@ curl -sS -o /dev/null -w '%{http_code} %{redirect_url}\n' "https://$FQDN/"
 curl -sS -o /dev/null -w '%{http_code}\n' -H 'X-MS-CLIENT-PRINCIPAL-ID: noen-andre' "https://$FQDN/api/conversations"
 ```
 
-Den første skal svare `{"ok":true,"mode":"mock"}`, den andre med en
+Den første skal svare `{"ok":true,"mode":"live"}`, den andre med en
 omdirigering til `login.microsoftonline.com`, og den tredje med en
 omdirigering og ikke `200`. Serverens oppstartslinje i loggen sier «bruker-id
 fra plattformens innlogging».
@@ -697,8 +699,7 @@ az containerapp auth update --subscription "$SUB" -n $APP -g $RG --enabled false
 ```
 
 Da er adressen åpen, og serveren sender ingenting til backenden. Klienten i
-bildet er bygget for live, så spørsmål får en feil til et bilde bygget for mock
-er rullet ut (se [Bytte mellom mock og live](#bytte-mellom-mock-og-live)).
+bildet er bygget for live, så spørsmål får en feil og ikke et svar.
 
 ## Rulle tilbake
 
@@ -742,7 +743,7 @@ Ett bilde, og modusen og korpuset er miljøvariabler.
 | Variabel                     | Hva                                                                                       | Standard                |
 | ---------------------------- | ----------------------------------------------------------------------------------------- | ----------------------- |
 | `PORT`                       | Porten serveren lytter på.                                                                | `8787`                  |
-| `KA_MODE`                    | `mock` eller `live`: om serveren sender kall videre. Alt annet enn `live` er mock.        | `mock`                  |
+| `KA_MODE`                    | `live` eller `mock`: om serveren sender kall videre. En annen verdi stopper serveren.     | `live`                  |
 | `DIGDIR_API_BASE`            | Backenden `/api/*` går til.                                                               | `http://localhost:8080` |
 | `DIGDIR_API_KEY`             | Nøkkelen. Container Apps-secret, aldri i repoet.                                          | tom                     |
 | `KA_USER_ID_FROM`            | `browser` eller `platform`, se [Innlogging](#innlogging). Annet stopper serveren.         | `browser`               |
@@ -902,19 +903,8 @@ VITE_API_MODE=live npm run build
 KA_MODE=live DIGDIR_API_BASE=http://localhost:8080 DIGDIR_API_KEY="$KEY" npm start
 ```
 
-Eller i container, fra `src/`, der lockfila ligger. I mock, med klienten
-bygget for mock:
-
-```sh
-docker build --file apps/web/Dockerfile --build-arg VITE_API_MODE=mock -t ka-frontend-test:mock .
-docker run --rm -p 8787:8787 -e KA_MODE=mock ka-frontend-test:mock
-curl -fsS localhost:8787/healthz
-```
-
-Den siste linja skal svare `{"ok":true,"mode":"mock"}`.
-
-Mot stacken på maskinen, med bildet bygget for live som i testmiljøet, også
-fra `src/`:
+Eller i container mot stacken på maskinen, med bildet bygget for live som i
+testmiljøet. Fra `src/`, der lockfila ligger:
 
 ```sh
 docker build --file apps/web/Dockerfile -t ka-frontend-test:local .
@@ -936,10 +926,9 @@ selv og treffer ingenting.
 **Spørsmål svarer ikke mot den hostede backenden.**
 `test.rag.digdir.cloud` avviser `agent-rag-graph-bundled` med
 `mode_not_allowed`, og det er agenten klienten spør. Målt med to
-nøkler, så det er backendens oppsett og ikke et nøkkelomfang. Til backenden
-åpner den, er et bilde bygget for mock det som gir et miljø der noen kan se produktet;
-alt annet enn selve svaret virker også i live: tråder, filter, korpusvelger og
-opplasting i ærlig utilgjengelig-tilstand.
+nøkler, så det er backendens oppsett og ikke et nøkkelomfang. Alt annet enn
+selve svaret virker i live: tråder, filter, korpusvelger og opplasting i ærlig
+utilgjengelig-tilstand.
 
 **Datasettnøkkelen er `kudos` hostet, ikke `default`.** Feil verdi feiler hvert
 kall med «API key is not allowed to access the requested dataset», som leser

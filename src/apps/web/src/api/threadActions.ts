@@ -2,7 +2,7 @@ import type { Thread } from '../model';
 import { deleteMockThread, renameMockThread } from './mock/sessionThreads';
 import { BFF_API } from './bff/api';
 import { resetSignIn, toLogin } from './bff/signIn';
-import { kaEnv } from './runtimeConfig';
+import { apiMode } from './apiMode';
 import { keepDraft } from './session';
 
 /**
@@ -79,10 +79,10 @@ function publishing(actions: ThreadActions): ThreadActions {
 
 /** The actions this deployment has; none in live, whose MCP endpoint has neither call. */
 export function createThreadActions(): ThreadActions | undefined {
-  const mode = kaEnv().VITE_API_MODE ?? 'mock';
+  const mode = apiMode();
   if (mode === 'bff') return publishing(bffThreadActions());
-  if (mode === 'live') return undefined;
-  return publishing(mockThreadActions);
+  if (mode === 'mock') return publishing(mockThreadActions);
+  return undefined;
 }
 
 // In bff mode the thread's own id is the BFF's conversation id (bff/mapping.ts).

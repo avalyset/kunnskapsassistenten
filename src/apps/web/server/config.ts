@@ -80,15 +80,21 @@ function value(raw: string | undefined): string | undefined {
 }
 
 /**
- * `live` only when it says so.
+ * `KA_MODE`, read strictly.
  *
- * Anything else is mock, including a typo. A misspelt `KA_MODE=liv` that fell
- * back to live would send real questions to a real backend because somebody
- * dropped a letter; falling back to fixtures is the direction where a mistake
- * costs nothing.
+ * Unset is `live`: the server forwards to the backend, as the test
+ * environment does. `mock` only when it is named, as CI names it for the
+ * image: its answers look real and are not, so nobody should get them by
+ * leaving a variable out. Anything else, blank included, stops the server at
+ * start. A typo guessed at in either direction is wrong without a word: to
+ * mock it gives invented answers, to live it sends questions somebody did not
+ * mean to send.
  */
 export function modeFrom(raw: string | undefined): KaMode {
-  return value(raw) === 'live' ? 'live' : 'mock';
+  if (raw === undefined) return 'live';
+  const trimmed = raw.trim();
+  if (trimmed === 'live' || trimmed === 'mock') return trimmed;
+  throw new Error(`KA_MODE må være «live» eller «mock», ikke «${trimmed}».`);
 }
 
 export function readConfig(

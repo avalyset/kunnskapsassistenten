@@ -8,8 +8,9 @@ Ny frontend for Kunnskapsassistenten (KA) i Digdir. Vite, React, TypeScript,
 React Router i klientmodus, og Designsystemet 1.21.0.
 
 Klienten har samtalen, trådlista, kildene med utdrag og filtreringen.
-`VITE_API_MODE` velger backend: `bff` (BFF-en i `src/apps/server`), `live`
-(rett mot headless-rag) eller `mock` (fixturene i `src/api/mock/`, standard).
+`VITE_API_MODE` velger backend: `live` (rett mot headless-rag, standard i
+utvikling), `bff` (BFF-en i `src/apps/server`, standard i produksjonsbygg) eller
+`mock` (fixturene i `src/api/mock/`, bare for testene).
 Hva som er ferdig, står under «Status» i [`src/README.md`](../../README.md#status).
 
 Navnereglene står under [Naming](#naming), og kortversjonen av arbeidsreglene i
@@ -879,31 +880,46 @@ rekker å trykke. En mock som strømmer momentant strømmer ikke.
 
 ## Ekte backend
 
-`VITE_API_MODE=live` bytter `createChatClient()` fra mock til `LiveChatClient`.
-Kopier `.env.example` til `.env.local` og fyll inn nøkkelen:
+Uten `VITE_API_MODE` går `npm run dev` i live: `createChatClient()` gir
+`LiveChatClient`, og dev-serveren er proxyen som holder nøkkelen. Kopier
+`.env.example` til `.env.local` og fyll inn backenden, korpuset og Typesense:
 
 ```sh
 KA_API_URL=http://localhost:8080
-KA_API_KEY=rag_…
+KA_API_KEY=
+VITE_KA_TENANT=
+VITE_KA_DATASET_CONFIG_KEY=
+TYPESENSE_URL=
+TYPESENSE_API_KEY=
+KA_FACET_COLLECTIONS=
+KA_CHUNK_COLLECTIONS=
+VITE_KA_FILTER_FIELDS=
 ```
+
+`TYPESENSE_API_KEY` er en søkenøkkel med tilgang til samlingene, aldri
+adminnøkkelen. Mangler noe av dette, skriver dev-serveren én linje ved oppstart
+om hva og hvor det settes. Ingenting fyller inn for det som mangler.
 
 **`VITE_API_MODE` skal ikke stå i `.env.local`.** Alle Vite-servere fra samme
-sjekkout leser den samme fila, så en live-modus lagt inn der slår inn for alle
-som kjører i treet. Sett den på kommandolinja for den ene kjøringen som skal
-bruke ekte backend:
+sjekkout leser den samme fila, så en modus lagt inn der slår inn for alle som
+kjører i treet. Sett den på kommandolinja for den ene kjøringen som skal noe
+annet enn live:
 
 ```sh
-VITE_API_MODE=live npm run dev
+VITE_API_MODE=bff npm run dev
 ```
+
+`mock` er testenes modus, og Playwright og vitest setter den selv. En verdi som
+ikke er `live`, `bff` eller `mock`, stopper dev-serveren og bygget.
 
 ### Hvilket korpus
 
 `VITE_KA_TENANT` og `VITE_KA_DATASET_CONFIG_KEY` peker live-modus på et bestemt
-datasett. De er **valgfrie**, og er de ikke satt skjer det som før: backenden
-velger selv, som på den lokale stacken er demokorpuset.
+datasett. Er de ikke satt, velger backenden selv, som på den lokale stacken er
+demokorpuset, men da har filterpanelet ikke noe datasett å telle.
 
 ```sh
-VITE_API_MODE=live VITE_KA_TENANT=demo VITE_KA_DATASET_CONFIG_KEY=kudos-pilot npm run dev
+VITE_KA_TENANT=demo VITE_KA_DATASET_CONFIG_KEY=kudos-pilot npm run dev
 ```
 
 De har `VITE_`-prefiks fordi de **skal** nå klientkoden, og det er greit: dette

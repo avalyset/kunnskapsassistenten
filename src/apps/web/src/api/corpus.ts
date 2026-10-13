@@ -1,3 +1,4 @@
+import { apiMode } from './apiMode';
 import { kaEnv } from './runtimeConfig';
 
 // Which corpus the assistant searches: the list from the environment, the
@@ -125,16 +126,18 @@ export function corpusForMode(
   datasets: string | undefined,
   configured: string | undefined,
 ): { options: CorpusOption[]; fallback: string | undefined } {
-  if (mode === 'live') return resolveCorpus(datasets, configured);
+  if (mode === 'mock') {
+    return { options: [MOCK_CORPUS, MOCK_WIKIPEDIA_CORPUS], fallback: MOCK_CORPUS.key };
+  }
   if (mode === 'bff') {
     const { options, fallback } = resolveCorpus(datasets, configured);
     return { options: options.filter((option) => option.key === fallback), fallback };
   }
-  return { options: [MOCK_CORPUS, MOCK_WIKIPEDIA_CORPUS], fallback: MOCK_CORPUS.key };
+  return resolveCorpus(datasets, configured);
 }
 
 const { options: corpusOptions, fallback } = corpusForMode(
-  env.VITE_API_MODE ?? 'mock',
+  apiMode(),
   env.VITE_KA_DATASETS,
   env.VITE_KA_DATASET_CONFIG_KEY,
 );

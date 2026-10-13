@@ -126,9 +126,9 @@ describe('/healthz', () => {
     expect(await response.json()).toEqual({ ok: true, mode: 'live' });
   });
 
-  it('sier mock når ingenting er satt', async () => {
+  it('sier live når ingenting er satt', async () => {
     await start();
-    expect(await (await fetch(`${base}/healthz`)).json()).toEqual({ ok: true, mode: 'mock' });
+    expect(await (await fetch(`${base}/healthz`)).json()).toEqual({ ok: true, mode: 'live' });
   });
 });
 
@@ -462,6 +462,17 @@ describe('hvem som spør', () => {
     // En skrivefeil som falt tilbake til nettleseren, ville latt den velge
     // hvem den er bak en innlogging som skulle hindre akkurat det.
     expect(() => readConfig({ KA_USER_ID_FROM: 'platfrom' }, '/dist')).toThrow(/KA_USER_ID_FROM/);
+  });
+
+  it('leser KA_MODE strengt, med live som standard og mock bare når den er nevnt', () => {
+    expect(readConfig({}, '/dist').mode).toBe('live');
+    expect(readConfig({ KA_MODE: 'live' }, '/dist').mode).toBe('live');
+    expect(readConfig({ KA_MODE: 'mock' }, '/dist').mode).toBe('mock');
+    // Falske svar fordi en bokstav falt ut, eller ekte spørsmål ingen mente å
+    // sende: begge gjetninger er feil, så serveren starter ikke.
+    for (const typo of ['liv', 'Live', 'mok', '', ' ']) {
+      expect(() => readConfig({ KA_MODE: typo }, '/dist')).toThrow(/KA_MODE må være/);
+    }
   });
 });
 

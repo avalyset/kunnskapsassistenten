@@ -5,6 +5,7 @@ import react from '@vitejs/plugin-react';
 import { defineConfig, loadEnv, type Plugin } from 'vite';
 import { EXCERPTS_PATH, excerptConfigFrom, excerptRoute } from './server/excerpts.ts';
 import { FACETS_PATH, facetConfigFrom, facetRoute } from './server/facets.ts';
+import { resolveApiMode, SETUP_MISSING_HEADER } from './shared/apiMode.ts';
 
 /**
  * The colour-scheme script, linked from `<head>` as a file of its own.
@@ -72,6 +73,60 @@ function facetsInDevelopment(env: Record<string, string>): Plugin {
 }
 
 /**
+ * What live is missing, said once when the dev server starts.
+ *
+ * Live is the default in development (shared/apiMode.ts), and without these
+ * the page asks a backend that is not there, or draws no filters and no
+ * excerpts, with nothing to say why. Nothing stands in for what is missing.
+ * The corpus pair and the filter fields are on the list because the live client
+ * asks for no facets without them (`listFacets`), Typesense or not.
+ */
+const LIVE_SETTINGS = [
+  'KA_API_URL',
+  'KA_API_KEY',
+  'VITE_KA_TENANT',
+  'VITE_KA_DATASET_CONFIG_KEY',
+  'TYPESENSE_URL',
+  'TYPESENSE_API_KEY',
+  'KA_FACET_COLLECTIONS',
+  'KA_CHUNK_COLLECTIONS',
+  'VITE_KA_FILTER_FIELDS',
+];
+
+function warnWhatLiveLacks(env: Record<string, string>): Plugin {
+  return {
+    name: 'ka-live-settings',
+    configureServer() {
+      const missing = LIVE_SETTINGS.filter((name) => !env[name]?.trim());
+      if (missing.length === 0) return;
+      console.warn(
+        `[ka] Live mangler ${missing.join(', ')}. Sett dem i apps/web/.env.local, se .env.example.`,
+      );
+    },
+  };
+}
+
+/**
+ * Live without `KA_API_URL`: `/api/*` answered here and marked, so the page
+ * says the setup is missing rather than offering a retry that cannot help
+ * (src/api/backendErrors.ts). After `facetsInDevelopment`, whose two routes
+ * are ours and answer anyway.
+ */
+function answerWithoutBackend(): Plugin {
+  return {
+    name: 'ka-no-backend',
+    configureServer(server) {
+      server.middlewares.use((request, response, next) => {
+        if (!(request.url ?? '').startsWith('/api/')) return next();
+        response.statusCode = 503;
+        response.setHeader(SETUP_MISSING_HEADER, 'KA_API_URL');
+        response.end();
+      });
+    },
+  };
+}
+
+/**
  * The dev server is also the proxy that holds the API key.
  *
  * The key never reaches the browser, and that is not a preference: the
@@ -93,39 +148,48 @@ function facetsInDevelopment(env: Record<string, string>): Plugin {
  * client took the 401 for a lapsed session (KA CC on #168). `/auth` goes
  * along, so a 401 from the BFF itself can lead to its sign-in.
  */
-export default defineConfig(({ mode }) => {
+export default defineConfig(({ command, mode }) => {
   const env = loadEnv(mode, process.cwd(), '');
-  const bff = env.VITE_API_MODE === 'bff';
-  const target = bff
-    ? env.KA_BFF_URL || 'http://localhost:8788'
-    : env.KA_API_URL || 'http://localhost:8080';
+  // Throws on a mode it does not know, so a misspelt one is refused here.
+  const apiMode = resolveApiMode(env.VITE_API_MODE, command === 'build');
+  const bff = apiMode === 'bff';
+  const target = bff ? env.KA_BFF_URL || 'http://localhost:8788' : env.KA_API_URL;
   const apiKey = bff ? undefined : env.KA_API_KEY;
-
-  if (env.VITE_API_MODE === 'live' && !apiKey) {
-    console.warn('[ka] VITE_API_MODE=live, men KA_API_KEY er ikke satt. Spørringer vil gi 401.');
-  }
+  // Vitest loads this file as well, and has no use for the line.
+  const live = apiMode === 'live' && !process.env.VITEST;
 
   return {
-    plugins: [react(), colorSchemeScript(), ...(bff ? [] : [facetsInDevelopment(env)])],
+    plugins: [
+      react(),
+      colorSchemeScript(),
+      ...(bff ? [] : [facetsInDevelopment(env)]),
+      ...(live ? [warnWhatLiveLacks(env)] : []),
+      ...(apiMode === 'live' && !target ? [answerWithoutBackend()] : []),
+    ],
     server: {
       proxy: {
         ...(bff ? { '/auth': { target, changeOrigin: true } } : {}),
-        '/api': {
-          target,
-          changeOrigin: true,
-          configure(proxy) {
-            proxy.on('proxyReq', (proxyRequest) => {
-              if (apiKey) proxyRequest.setHeader('X-API-Key', apiKey);
-              // No compression on the streaming route. A gzip stream buffers,
-              // and then the answer arrives all at once at the end.
-              proxyRequest.setHeader('Accept-Encoding', 'identity');
-            });
-            proxy.on('proxyRes', (proxyResponse) => {
-              // Tells any intermediate proxy not to buffer the event stream.
-              proxyResponse.headers['x-accel-buffering'] = 'no';
-            });
-          },
-        },
+        // No backend named, no forwarding: `answerWithoutBackend` answers instead.
+        ...(target
+          ? {
+              '/api': {
+                target,
+                changeOrigin: true,
+                configure(proxy) {
+                  proxy.on('proxyReq', (proxyRequest) => {
+                    if (apiKey) proxyRequest.setHeader('X-API-Key', apiKey);
+                    // No compression on the streaming route. A gzip stream buffers,
+                    // and then the answer arrives all at once at the end.
+                    proxyRequest.setHeader('Accept-Encoding', 'identity');
+                  });
+                  proxy.on('proxyRes', (proxyResponse) => {
+                    // Tells any intermediate proxy not to buffer the event stream.
+                    proxyResponse.headers['x-accel-buffering'] = 'no';
+                  });
+                },
+              },
+            }
+          : {}),
       },
     },
     build: {
@@ -162,6 +226,9 @@ export default defineConfig(({ mode }) => {
           test: {
             name: 'klient',
             environment: 'jsdom',
+            // The tests' mode, set once: development's default is live
+            // (shared/apiMode.ts), and a test that wants another stubs it.
+            env: { VITE_API_MODE: 'mock' },
             setupFiles: ['./src/test/setup.ts'],
             include: ['src/**/*.test.{ts,tsx}'],
           },
