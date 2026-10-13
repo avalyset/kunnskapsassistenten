@@ -199,6 +199,7 @@ class Translator:
                     model=model.model,
                     messages=build_messages(pair.nb),
                     max_tokens=self.run.max_tokens,
+                    extra_body=model.extra_body,
                     **sampling,
                 )
                 translation = response.choices[0].message.content or ""

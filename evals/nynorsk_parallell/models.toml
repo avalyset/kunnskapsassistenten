@@ -53,9 +53,9 @@ provider = "openai"
 model = "claude-haiku-5-5"
 base_url = "https://api.anthropic.com/v1/"
 api_key_env = "ANTHROPIC_API_KEY"
-note = "API-modell som referanse. API-et avviser temperatur, så modellen kjører med leverandørens standard."
+note = "API-modell som referanse, kjørt uten tenking. API-et avviser temperatur og seed, så modellen kjører med leverandørens standard."
 omit_sampling_params = true
-# Prisene er satt høyt med vilje, slik at kostnadstaket slår inn for tidlig heller enn for sent.
-usd_per_mtok_input = 5.0
-usd_per_mtok_output = 25.0
+extra_body = { thinking = { type = "disabled" } }
+usd_per_mtok_input = 0.10
+usd_per_mtok_output = 0.50
 max_cost_usd = 2.0

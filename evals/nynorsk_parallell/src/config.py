@@ -3,7 +3,7 @@
 
 import tomllib
 from pathlib import Path
-from typing import List, Optional
+from typing import Any, Dict, List, Optional
 
 from pydantic import BaseModel, Field
 
@@ -23,6 +23,9 @@ class ModelConfig(BaseModel):
     # Some APIs reject temperature and seed. The model then runs with the
     # sampling settings of the provider.
     omit_sampling_params: bool = False
+
+    # Extra request fields for one provider, for example to turn off thinking.
+    extra_body: Optional[Dict[str, Any]] = None
 
     # Optional cost cap for paid APIs (USD per million tokens)
     usd_per_mtok_input: Optional[float] = None

@@ -96,6 +96,16 @@ class TestTranslator:
         assert all("temperature" not in call for call in client.calls)
         assert all("seed" not in call for call in client.calls)
 
+    def test_translate_model_passes_extra_body(self, tmp_path: Path) -> None:
+        """Test that provider-specific request fields are sent with each request."""
+        client = FakeClient()
+        extra = {"thinking": {"type": "disabled"}}
+        translator = Translator(RunConfig(repetitions=1), BlindKey(), tmp_path)
+
+        translator.translate_model(_model(extra_body=extra), FASIT, client)
+
+        assert all(call["extra_body"] == extra for call in client.calls)
+
     def test_translate_model_skips_after_consecutive_errors(
         self, tmp_path: Path
     ) -> None:
