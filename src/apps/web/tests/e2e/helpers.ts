@@ -194,6 +194,30 @@ export function composer(page: Page): Locator {
   return page.locator('.ka-composer__field textarea');
 }
 
+/**
+ * Until the thread has stopped growing. A thread read from its address goes
+ * on laying itself out for a moment after its first answer shows: Inter comes
+ * from a CDN, and when it lands the text wraps anew. A column put somewhere
+ * before that has moved when it is read again. Measured: without this the
+ * column stood 4455 px short after sending at 390, and moved 31 px at 1440
+ * and 86 px at 390 with nobody typing.
+ */
+export async function settled(page: Page, main: Locator): Promise<void> {
+  await page.evaluate(() => document.fonts.ready);
+  let last = -1;
+  await expect
+    .poll(
+      async () => {
+        const height = await main.evaluate((element) => element.scrollHeight);
+        const still = height === last;
+        last = height;
+        return still;
+      },
+      { intervals: [250], timeout: 10_000 },
+    )
+    .toBe(true);
+}
+
 /** The `[n]` marker in the answer, by its number. */
 export function citation(page: Page, number: number): Locator {
   return page.locator(`main a[href="#excerpt-${number}"]`).first();

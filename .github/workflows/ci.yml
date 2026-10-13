@@ -89,3 +89,20 @@ jobs:
           curl -fsS --retry 15 --retry-all-errors --retry-delay 1 localhost:8787/api/health
           curl -fsS localhost:8787/ | grep -q '<html lang="nb"'
           docker stop ka
+
+  # The client's own image for the test environment, built from src/ as
+  # apps/web/docs/deploy.md builds it. In mock the server forwards nothing, so
+  # it needs no key. Nothing is pushed.
+  web-image:
+    if: github.event_name != 'push'
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    steps:
+      - uses: actions/checkout@v4
+      - run: docker build --file apps/web/Dockerfile --tag ka-web:ci .
+      - name: Start it and ask
+        run: |
+          docker run --detach --rm --name ka-web --publish 8787:8787 -e KA_MODE=mock ka-web:ci
+          curl -fsS --retry 15 --retry-all-errors --retry-delay 1 localhost:8787/healthz | grep -q '"mode":"mock"'
+          curl -fsS localhost:8787/ | grep -q '/config.js'
+          docker stop ka-web
