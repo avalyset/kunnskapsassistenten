@@ -41,6 +41,7 @@ const SHOWN: ChatErrorCode[] = [
   'question-too-long',
   'thread-not-found',
   'filter-refused',
+  'not-configured',
   'unknown',
 ];
 
@@ -81,6 +82,13 @@ describe('chatErrorText', () => {
     }
     // The same question with the same key fails the same way.
     expect(chatErrorText({ code: 'unauthorized' }).retryable).toBe(false);
+  });
+
+  it('says the setup is missing, and offers no retry that cannot help', () => {
+    const text = chatErrorText({ code: 'not-configured' });
+    expect(text.title).toBe('Oppsettet mangler');
+    expect(text.message).toContain('apps/web/.env.local');
+    expect(text.retryable).toBe(false);
   });
 
   it('offers no retry on a refused filter, which would send the same filter again', () => {

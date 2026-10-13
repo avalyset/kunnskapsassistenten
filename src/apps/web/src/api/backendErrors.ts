@@ -1,5 +1,16 @@
+import { SETUP_MISSING_HEADER } from '../../shared/apiMode.ts';
 import { chatErrorCode } from '../model';
 import type { ChatError } from '../model';
+
+/**
+ * A failed response, by its status, unless the dev server marked it as having
+ * no backend to send to (vite.config.ts). That one is a setting that is
+ * missing, and a retry cannot fix it.
+ */
+export function errorFromResponse(response: Response): ChatError {
+  if (response.headers.has(SETUP_MISSING_HEADER)) return { code: 'not-configured' };
+  return errorFromStatus(response.status);
+}
 
 /**
  * What an HTTP status establishes about the turn, and no more: a 5xx does not

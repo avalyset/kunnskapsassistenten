@@ -368,6 +368,14 @@ describe('LiveChatClient og feilkoder', () => {
     }
   });
 
+  it('sier at oppsettet mangler når dev-serveren ikke har noen backend', async () => {
+    const events = await askAgainst(
+      () => new Response(null, { status: 503, headers: { 'X-KA-Setup-Missing': 'KA_API_URL' } }),
+    );
+
+    expect(errorOf(events)).toEqual({ code: 'not-configured' });
+  });
+
   it('gjetter ikke modell mot korpus på en 5xx', async () => {
     const events = await askAgainst(() => new Response(null, { status: 503 }));
 

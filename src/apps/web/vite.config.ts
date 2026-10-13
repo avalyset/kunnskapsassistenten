@@ -5,7 +5,7 @@ import react from '@vitejs/plugin-react';
 import { defineConfig, loadEnv, type Plugin } from 'vite';
 import { EXCERPTS_PATH, excerptConfigFrom, excerptRoute } from './server/excerpts.ts';
 import { FACETS_PATH, facetConfigFrom, facetRoute } from './server/facets.ts';
-import { resolveApiMode } from './shared/apiMode.ts';
+import { resolveApiMode, SETUP_MISSING_HEADER } from './shared/apiMode.ts';
 
 /**
  * The colour-scheme script, linked from `<head>` as a file of its own.
@@ -107,6 +107,26 @@ function warnWhatLiveLacks(env: Record<string, string>): Plugin {
 }
 
 /**
+ * Live without `KA_API_URL`: `/api/*` answered here and marked, so the page
+ * says the setup is missing rather than offering a retry that cannot help
+ * (src/api/backendErrors.ts). After `facetsInDevelopment`, whose two routes
+ * are ours and answer anyway.
+ */
+function answerWithoutBackend(): Plugin {
+  return {
+    name: 'ka-no-backend',
+    configureServer(server) {
+      server.middlewares.use((request, response, next) => {
+        if (!(request.url ?? '').startsWith('/api/')) return next();
+        response.statusCode = 503;
+        response.setHeader(SETUP_MISSING_HEADER, 'KA_API_URL');
+        response.end();
+      });
+    },
+  };
+}
+
+/**
  * The dev server is also the proxy that holds the API key.
  *
  * The key never reaches the browser, and that is not a preference: the
@@ -144,11 +164,12 @@ export default defineConfig(({ command, mode }) => {
       colorSchemeScript(),
       ...(bff ? [] : [facetsInDevelopment(env)]),
       ...(live ? [warnWhatLiveLacks(env)] : []),
+      ...(apiMode === 'live' && !target ? [answerWithoutBackend()] : []),
     ],
     server: {
       proxy: {
         ...(bff ? { '/auth': { target, changeOrigin: true } } : {}),
-        // No backend named, no forwarding: the line at start says what is missing.
+        // No backend named, no forwarding: `answerWithoutBackend` answers instead.
         ...(target
           ? {
               '/api': {

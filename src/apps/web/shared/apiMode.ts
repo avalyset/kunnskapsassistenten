@@ -1,5 +1,12 @@
 export type ApiMode = 'mock' | 'live' | 'bff';
 
+/**
+ * On the dev server's answer to `/api/*` in live without `KA_API_URL`
+ * (vite.config.ts): a missing setting, which a retry cannot fix, and which the
+ * client then says is missing (src/api/backendErrors.ts).
+ */
+export const SETUP_MISSING_HEADER = 'x-ka-setup-missing';
+
 const modes: readonly string[] = ['mock', 'live', 'bff'] satisfies ApiMode[];
 
 /**

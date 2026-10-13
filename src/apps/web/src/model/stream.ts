@@ -4,7 +4,8 @@ import type { SourceDocument } from './source';
 
 // Why a turn ended; the view words each code. `aborted` and `no-hits` are not errors in the UI.
 // The two `-unavailable` codes only when the backend names the half that failed: a 5xx is
-// `unknown`, since a wrong guess sends the reader the wrong way.
+// `unknown`, since a wrong guess sends the reader the wrong way. `not-configured` only in
+// development, when the dev server has no backend to send to.
 const CHAT_ERROR_CODES = [
   'aborted',
   'model-unavailable',
@@ -16,6 +17,7 @@ const CHAT_ERROR_CODES = [
   'question-too-long',
   'thread-not-found',
   'filter-refused',
+  'not-configured',
   'unknown',
 ] as const;
 

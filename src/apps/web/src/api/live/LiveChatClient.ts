@@ -9,7 +9,7 @@ import {
   type Thread,
   type ThreadDetail,
 } from '../../model';
-import { errorFromBackend, errorFromStatus } from '../backendErrors';
+import { errorFromBackend, errorFromResponse } from '../backendErrors';
 import type { AskParams, ChatClient } from '../chatClient';
 import { CORPUS_TAG_PREFIX } from '../corpus';
 import { facetsFrom } from '../facets';
@@ -233,7 +233,7 @@ export class LiveChatClient implements ChatClient {
     }
 
     if (!response.ok) {
-      yield { type: 'error', error: errorFromStatus(response.status), ...askedOf };
+      yield { type: 'error', error: errorFromResponse(response), ...askedOf };
       return;
     }
     if (!response.body) {
