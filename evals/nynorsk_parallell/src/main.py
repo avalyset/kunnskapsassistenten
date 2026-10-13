@@ -7,20 +7,15 @@ import sys
 import time
 from datetime import datetime
 from pathlib import Path
-from typing import Any, Dict
+from typing import Dict
 
 from dotenv import load_dotenv
 
 from src.blinding import BlindKey
 from src.config import load_config
 from src.fasit import load_fasit, read_manifest
-from src.reporter import print_summary, save_results, unblind
-from src.scoring import (
-    COPY_BASELINE,
-    chrf_signature,
-    score_blinded_dir,
-    score_copy_baseline,
-)
+from src.reporter import build_results, print_summary, save_results, unblind
+from src.scoring import score_blinded_dir
 from src.translator import INSTRUCTION, ModelStatus, Translator
 
 logger = logging.getLogger(__name__)
@@ -90,36 +85,15 @@ def main() -> int:
     blind_key.write(run_dir / "blind_key.json")
     summaries = unblind(scores, blind_key.reveal())
 
-    models_by_name = {model.name: model for model in config.models}
-    results: Dict[str, Any] = {
-        "run_id": run_id,
-        "date": datetime.now().date().isoformat(),
-        "fasit_sha256": read_manifest(args.manifest),
-        "fasit_pairs": len(fasit),
-        "instruction": INSTRUCTION,
-        "metric": chrf_signature(),
-        "run": config.run.model_dump(),
-        "baseline": {
-            COPY_BASELINE: score_copy_baseline(fasit).model_dump(
-                exclude={"sentence_chrf"}
-            )
-        },
-        "models": {
-            name: {
-                "provider": models_by_name[name].provider,
-                "model": models_by_name[name].model,
-                "note": models_by_name[name].note,
-                "summary": summary.model_dump(),
-                "status": statuses[name].model_dump(),
-            }
-            for name, summary in summaries.items()
-        },
-        "not_completed": {
-            name: status.skipped_reason
-            for name, status in statuses.items()
-            if status.skipped_reason is not None
-        },
-    }
+    results = build_results(
+        run_id=run_id,
+        config=config,
+        fasit=fasit,
+        fasit_sha256=read_manifest(args.manifest),
+        instruction=INSTRUCTION,
+        summaries=summaries,
+        statuses=statuses,
+    )
     save_results(results, run_dir / "results.json")
     print_summary(results)
     return 0
