@@ -699,8 +699,7 @@ az containerapp auth update --subscription "$SUB" -n $APP -g $RG --enabled false
 ```
 
 Da er adressen åpen, og serveren sender ingenting til backenden. Klienten i
-bildet er bygget for live, så spørsmål får en feil til et bilde bygget for mock
-er rullet ut (se [Bytte mellom mock og live](#bytte-mellom-mock-og-live)).
+bildet er bygget for live, så spørsmål får en feil og ikke et svar.
 
 ## Rulle tilbake
 
@@ -904,19 +903,8 @@ VITE_API_MODE=live npm run build
 KA_MODE=live DIGDIR_API_BASE=http://localhost:8080 DIGDIR_API_KEY="$KEY" npm start
 ```
 
-Eller i container, fra `src/`, der lockfila ligger. I mock, med klienten
-bygget for mock:
-
-```sh
-docker build --file apps/web/Dockerfile --build-arg VITE_API_MODE=mock -t ka-frontend-test:mock .
-docker run --rm -p 8787:8787 -e KA_MODE=mock ka-frontend-test:mock
-curl -fsS localhost:8787/healthz
-```
-
-Den siste linja skal svare `{"ok":true,"mode":"mock"}`.
-
-Mot stacken på maskinen, med bildet bygget for live som i testmiljøet, også
-fra `src/`:
+Eller i container mot stacken på maskinen, med bildet bygget for live som i
+testmiljøet. Fra `src/`, der lockfila ligger:
 
 ```sh
 docker build --file apps/web/Dockerfile -t ka-frontend-test:local .
@@ -938,10 +926,9 @@ selv og treffer ingenting.
 **Spørsmål svarer ikke mot den hostede backenden.**
 `test.rag.digdir.cloud` avviser `agent-rag-graph-bundled` med
 `mode_not_allowed`, og det er agenten klienten spør. Målt med to
-nøkler, så det er backendens oppsett og ikke et nøkkelomfang. Til backenden
-åpner den, er et bilde bygget for mock det som gir et miljø der noen kan se produktet;
-alt annet enn selve svaret virker også i live: tråder, filter, korpusvelger og
-opplasting i ærlig utilgjengelig-tilstand.
+nøkler, så det er backendens oppsett og ikke et nøkkelomfang. Alt annet enn
+selve svaret virker i live: tråder, filter, korpusvelger og opplasting i ærlig
+utilgjengelig-tilstand.
 
 **Datasettnøkkelen er `kudos` hostet, ikke `default`.** Feil verdi feiler hvert
 kall med «API key is not allowed to access the requested dataset», som leser
