@@ -259,7 +259,9 @@ export function Composer({
                 variant="tertiary"
               >
                 <PaperclipIcon aria-hidden />
-                {ATTACH_SOON}
+                {/* The name already says it; a narrow box shows the icon
+                    alone (chat.css), or the send button goes off a phone. */}
+                <span className="ka-composer__attach-text">{ATTACH_SOON}</span>
               </Button>
             </>
           )}

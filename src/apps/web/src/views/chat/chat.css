@@ -693,6 +693,9 @@
      starts (issue 79); a raw 12px would stop following the size mode. */
   --ka-composer-glyph-inset: calc((var(--ds-size-12) - var(--ds-icon-size)) / 2);
 
+  /* So the row of controls can ask how wide the box is. */
+  container: ka-composer / inline-size;
+
   display: flex;
   flex-direction: column;
   gap: var(--ds-size-2);
@@ -854,6 +857,15 @@
    alone is squeezed to a few pixels on a phone. */
 .ka-composer__attach[data-icon] {
   flex-shrink: 0;
+}
+
+/* «Kommer snart» beside the paperclip while upload is not ready. In a box
+   too narrow for it and the agent and the send button, the paperclip stands
+   alone; its name still says «kommer snart». */
+@container ka-composer (inline-size < 400px) {
+  .ka-composer__attach-text {
+    display: none;
+  }
 }
 
 .ka-agent-picker__current {
