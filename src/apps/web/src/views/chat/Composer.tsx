@@ -247,13 +247,15 @@ export function Composer({
               />
 
               {/* Switched off with its words until upload is ready, so the
-                  reader sees it is coming rather than broken. */}
+                  reader sees it is coming rather than broken. `aria-disabled`
+                  and not `disabled`: it stays in the tab order, so keyboard
+                  and screen reader users meet it too and hear it is
+                  unavailable. No click handler, so it does nothing. */}
               <Button
+                aria-disabled="true"
                 aria-label={ATTACH_SOON_LABEL}
                 className="ka-composer__attach"
                 data-color="neutral"
-                disabled
-                onClick={() => fileInputRef.current?.click()}
                 variant="tertiary"
               >
                 <PaperclipIcon aria-hidden />

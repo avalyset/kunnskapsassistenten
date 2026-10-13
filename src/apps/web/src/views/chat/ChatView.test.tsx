@@ -18,7 +18,7 @@ import {
 } from '../../model';
 import { MOCK_AGENTS } from '../../api/mock/MockChatClient';
 import { AGENT_STORAGE_KEY } from '../../api/agentChoice';
-import { ATTACH_LABEL } from './attachmentText';
+import { ATTACH_SOON_LABEL } from './attachmentText';
 import { ChatView } from './ChatView';
 import {
   ABORTED_BEFORE_ANSWER,
@@ -858,7 +858,7 @@ describe('ChatView', () => {
     // turn fails — so the rescue must leave it alone. The rescue is about the
     // one control that changed meaning, not about the area it sits in
     // (KA CC on #59).
-    const paperclip = screen.getByRole('button', { name: ATTACH_LABEL });
+    const paperclip = screen.getByRole('button', { name: ATTACH_SOON_LABEL });
     paperclip.focus();
 
     await screen.findByText('Assistenten svarte ikke');
@@ -1121,7 +1121,8 @@ describe('ChatView', () => {
       </Shell>,
     );
 
-    const footer = document.querySelector('.ka-composer__disclaimer')!;
+    // At the foot of the front page, not under the field.
+    const footer = document.querySelector('.ka-chat-disclaimer')!;
     expect(footer.textContent).toBe(DISCLAIMER);
   });
 
