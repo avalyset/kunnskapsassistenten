@@ -11,6 +11,7 @@ import {
   walkWithTab,
   MOCK,
   REAL_ANSWER,
+  settled,
 } from './helpers';
 
 /**
@@ -632,6 +633,7 @@ test.describe('hovedkolonnen', () => {
         await expect(page.getByRole('button', { name: 'Kopier svaret' }).first()).toBeVisible();
 
         const main = page.locator('.main');
+        await settled(page, main);
         await main.evaluate((element) => {
           element.scrollTop = Math.round((element.scrollHeight - element.clientHeight) / 2);
         });
