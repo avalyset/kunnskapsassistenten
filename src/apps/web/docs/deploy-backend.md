@@ -403,7 +403,7 @@ DFØ-spørsmålet med filteret Årsrapport svarte på 38 s, med 915 tegn og DFØ
 19,8 s, med svar og kilde og 0 konsollfeil.
 
 **Kjøres `main.bicep` på nytt, må den få de samme verdiene**, ellers setter den
-frontenden tilbake til mock mot `test.rag.digdir.cloud`: `kaMode=live`,
+frontenden tilbake til `test.rag.digdir.cloud` uten nøkkel: `kaMode=live`,
 `digdirApiBase=http://ka-rag-test`, `tenant=kudos`,
 `datasetConfigKey=kudos-full`, `datasets` og `filterFields` som over, og
 `digdirApiKey` fra parameterfila. `filterFields` må ha nøkkelen `kudos-full`,

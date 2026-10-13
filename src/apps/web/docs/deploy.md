@@ -466,7 +466,8 @@ az deployment group create --subscription "$SUB" -g $RG -n ka-frontend-app \
   --query properties.outputs.fqdn.value -o tsv
 ```
 
-Siste linje er adressen. Mock, ingen nøkkel.
+Siste linje er adressen. Appen står i live, men uten nøkkel, så spørsmål får
+401 til nøkkelen er satt (se [Bytte mellom mock og live](#bytte-mellom-mock-og-live)).
 
 ### Steg 6: roller på appen (krever rett til å gi roller)
 
@@ -652,8 +653,9 @@ Klient-ID uten secret stopper utrullingen med en melding i stedet for å falle
 tilbake til implisitt flyt, som Microsoft fraråder. Det er bygd, ikke prøvd
 mot ARM.
 
-Malen setter appen slik parameterne sier, også modus og nøkkel. Var live slått
-på for hånd, slås den på igjen etterpå. Kjøres malen senere uten
+Malen setter appen slik parameterne sier, også modus og nøkkel. Uten `kaMode`
+blir modusen live, men nøkkelen følger bare `digdirApiKey`. Var den satt for
+hånd, settes den igjen etterpå. Kjøres malen senere uten
 innloggingsparameterne, slår den innloggingen av, fordi den alltid tar med
 innloggingsoppsettet og da med `enabled: false`. Målt i Azure 28.09: et
 oppsett med bare det godtas.
@@ -668,7 +670,7 @@ curl -sS -o /dev/null -w '%{http_code} %{redirect_url}\n' "https://$FQDN/"
 curl -sS -o /dev/null -w '%{http_code}\n' -H 'X-MS-CLIENT-PRINCIPAL-ID: noen-andre' "https://$FQDN/api/conversations"
 ```
 
-Den første skal svare `{"ok":true,"mode":"mock"}`, den andre med en
+Den første skal svare `{"ok":true,"mode":"live"}`, den andre med en
 omdirigering til `login.microsoftonline.com`, og den tredje med en
 omdirigering og ikke `200`. Serverens oppstartslinje i loggen sier «bruker-id
 fra plattformens innlogging».

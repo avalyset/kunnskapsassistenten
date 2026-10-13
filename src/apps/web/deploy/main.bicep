@@ -39,9 +39,9 @@ param githubRepository string = 'larsekhansen/kunnskapsassistenten-frontend'
 @description('Backenden serveren snakker med.')
 param digdirApiBase string = 'https://test.rag.digdir.cloud'
 
-@description('`mock` svarer fra fixturer og trenger ingen backend eller nøkkel. `live` spør på ekte.')
+@description('`live` spør på ekte, og er standarden. `mock` svarer fra fixturer og trenger ingen backend eller nøkkel, og må velges.')
 @allowed(['mock', 'live'])
-param kaMode string = 'mock'
+param kaMode string = 'live'
 
 @description('Hostet backend bruker `kudos`; en lokal bruker `default`.')
 param datasetConfigKey string = 'kudos'
@@ -170,6 +170,8 @@ var ipRules = [
 
 // Tomme verdier utelates av samme grunn. Serveren leser en tom variabel og en
 // manglende likt (`value()` i server/config.ts), så ingenting endrer mening.
+// Unntaket er KA_MODE, der en tom stopper serveren, men `@allowed` på `kaMode`
+// gjør at den aldri er tom her.
 var plainEnv = filter(
   [
     { name: 'PORT', value: '8787' }
