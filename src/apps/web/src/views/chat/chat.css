@@ -267,6 +267,13 @@
   list-style: none;
 }
 
+/* The ring is what makes a keyword a tag now that it is not filled, and
+   `subtle` is too faint to read as a shape against the tinted card. `default`
+   is the lightest step on the same scale that clears 3:1 in both themes. */
+.ka-procedure__keywords .ds-tag {
+  --dsc-tag-border-color: var(--ds-color-border-default);
+}
+
 /* ------------------------------------------------- sources in the answer */
 
 /* «Kilder brukt i svaret» (issue 113). Designsystemet's own Details
@@ -583,7 +590,11 @@
 
 /* The first question: the field glides from the middle of the front page to
    its place at the foot (ChatView's `submit`). The rest cross-fades as the
-   page root. Only the field is named, so only it moves. */
+   page root. Only the field is named, so only it moves.
+   The name cannot hang on `[data-start]`, tempting as it looks: the browser
+   takes its second picture after the flag is gone, and a name the element has
+   in only one of the two pictures leaves a half transition — measured as
+   `::view-transition-old(ka-composer)` alone, with no group and no new. */
 /* stylelint-disable plugin/browser-compat -- an enhancement only: without
    View Transitions these rules match nothing, and `submit` checks for
    `document.startViewTransition` before it asks for one. */

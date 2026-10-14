@@ -9,29 +9,22 @@ import { FilterContext } from '../../layout/filterContext';
 import { MainScrollContext } from '../../layout/scrollContext';
 import { ThreadContext } from '../../layout/threadContext';
 import { emptyFilterSelection, threadFromQuestion } from '../../model';
-import { uploadErrorText } from './attachmentText';
+import { ATTACH_SOON, ATTACH_SOON_LABEL, DROP_HINT, uploadErrorText } from './attachmentText';
 import { ChatView } from './ChatView';
 
 /**
- * Skrivefeltet der tjenesten ikke har opplasting i det hele tatt.
+ * Skrivefeltet der tjenesten ikke har opplasting i det hele tatt. Det er
+ * tilstanden i alle modusene en leser møter: ingen backend har et endepunkt,
+ * og klienten vet det før noen velger en fil (API-bestilling A3).
  *
  * Egen fil fordi `vi.mock` heises til toppen av fila den står i, og resten av
  * vedleggstestene skal kjøre mot den ekte mock-klienten. Samme oppdeling som
  * `FiltersView.corpus.test.tsx`.
  *
- * `unavailable` er kjent før noen velger en fil — klienten vet at det ikke
- * finnes noe endepunkt (API-bestilling A3). Bak BFF-en er det tilstanden som
- * gjelder, for den har ingen rute for opplasting, og da tegnes binderset
- * ikke i det hele tatt (anmeldelsen av #129).
- *
- * Det var en annen avgjørelse før: binderset sto med «Snart kan du laste opp
- * dokumenter her» på seg, fordi en kontroll som er på vei er verdt å vite om
- * (issue 79). Den er snudd. Et løfte som har stått i produksjon siden
- * september er ikke lenger en nyhet, og plassen det tar i den klebrige
- * bunnen er plass leseren kunne lest svaret i.
- *
- * Å slippe en fil på feltet er fortsatt ærlig avvist: det er det ene stedet
- * en leser kan prøve uten at noe inviterte til det.
+ * Binderset tegnes avslått med «Kommer snart» i stedet for å være borte, så
+ * leseren ser at det kommer og ikke at det mangler. Én tilstand styrer både
+ * knappen og slippet: det som ikke kan legges ved med knappen, kan ikke
+ * legges ved ved å slippes heller.
  */
 const upload = vi.hoisted(() => ({ calls: 0 }));
 
@@ -79,16 +72,39 @@ function Shell({ children }: { children: ReactNode }) {
 }
 
 describe('vedlegg der tjenesten ikke har opplasting', () => {
-  it('tegner ingen binders, og ingen filvelger', () => {
+  it('tegner binderset avslått, med ordene på seg', () => {
+    render(
+      <Shell>
+        <ChatView client={idleClient} />
+      </Shell>,
+    );
+
+    const attach = screen.getByRole('button', { name: ATTACH_SOON_LABEL });
+    expect(attach.classList.contains('ka-composer__attach')).toBe(true);
+    // `aria-disabled` og ikke `disabled`: knappen blir stående i
+    // tabrekkefølgen, så den som bruker tastatur eller skjermleser møter den
+    // og får vite at den ikke virker ennå.
+    expect(attach.getAttribute('aria-disabled')).toBe('true');
+    expect(attach.hasAttribute('disabled')).toBe(false);
+    expect(attach.textContent).toContain(ATTACH_SOON);
+    // Navnet rommer de synlige ordene (WCAG 2.5.3).
+    expect(ATTACH_SOON_LABEL.toLowerCase()).toContain(ATTACH_SOON.toLowerCase());
+  });
+
+  it('har ingen filvelger bak den avslåtte knappen', () => {
     const { container } = render(
       <Shell>
         <ChatView client={idleClient} />
       </Shell>,
     );
 
-    expect(container.querySelector('.ka-composer__attach')).toBeNull();
     expect(container.querySelector('input[type="file"]')).toBeNull();
-    expect(screen.queryByRole('button', { name: /vedlegg|last opp|binders/iu })).toBeNull();
+
+    // Et klikk har ingenting å åpne, og skal ikke be om en opplasting heller.
+    upload.calls = 0;
+    fireEvent.click(screen.getByRole('button', { name: ATTACH_SOON_LABEL }));
+    expect(upload.calls).toBe(0);
+    expect(screen.queryByRole('button', { name: /Fjern vedlegget/u })).toBeNull();
   });
 
   it('lar resten av raden stå', () => {
@@ -119,5 +135,21 @@ describe('vedlegg der tjenesten ikke har opplasting', () => {
     expect(screen.getByText(uploadErrorText('unavailable'))).toBeTruthy();
     expect(screen.queryByRole('button', { name: /Fjern vedlegget/u })).toBeNull();
     expect(upload.calls).toBe(0);
+  });
+
+  it('lover ikke et vedlegg mens filen dras over feltet', () => {
+    const { container } = render(
+      <Shell>
+        <ChatView client={idleClient} />
+      </Shell>,
+    );
+
+    const frame = container.querySelector('.ka-composer')!;
+    fireEvent.dragEnter(frame, { dataTransfer: { files: [], types: ['Files'] } });
+
+    // Rammen lyser opp, så leseren ser at filen er sett, men setningen om at
+    // den blir lagt ved står ikke der: slippet under den avviser.
+    expect(frame.getAttribute('data-dragging')).toBe('true');
+    expect(screen.queryByText(DROP_HINT)).toBeNull();
   });
 });

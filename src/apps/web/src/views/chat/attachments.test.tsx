@@ -1,7 +1,7 @@
 import { fireEvent, render, screen, waitFor } from '@testing-library/react';
 import { useRef, type ReactNode } from 'react';
 import { MemoryRouter } from 'react-router';
-import { afterEach, beforeEach, describe, expect, it } from 'vitest';
+import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import type { AskParams, ChatClient } from '../../api';
 import { resetUserDocumentsForTest } from '../../api/userDocuments';
 import { AnswerSourcesContext, inertAnswerSources } from '../../layout/answerSourcesContext';
@@ -10,7 +10,7 @@ import { FilterContext } from '../../layout/filterContext';
 import { MainScrollContext } from '../../layout/scrollContext';
 import { ThreadContext } from '../../layout/threadContext';
 import { emptyFilterSelection, threadFromQuestion, type StreamEvent } from '../../model';
-import { WAIT_FOR_UPLOADS, uploadErrorText } from './attachmentText';
+import { ATTACH_LABEL, WAIT_FOR_UPLOADS, uploadErrorText } from './attachmentText';
 import { ChatView } from './ChatView';
 
 /**
@@ -108,6 +108,20 @@ afterEach(() => {
 });
 
 describe('vedlegg i skrivefeltet', { timeout: 20000 }, () => {
+  it('åpner filvelgeren fra binderset, så ingenting avhenger av å dra', () => {
+    // WCAG 2.5.7: et slipp er snarveien, knappen er veien. Der opplasting
+    // virker, har binderset navnet sitt og noe bak seg.
+    const { container } = show();
+
+    const attach = screen.getByRole('button', { name: ATTACH_LABEL });
+    const input = container.querySelector<HTMLInputElement>('input[type="file"]')!;
+    const opened = vi.spyOn(input, 'click');
+
+    fireEvent.click(attach);
+
+    expect(opened).toHaveBeenCalledOnce();
+  });
+
   it('legger ved en fil, fra laster opp til klar', async () => {
     show();
 

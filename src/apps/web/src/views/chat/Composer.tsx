@@ -23,6 +23,7 @@ import {
 } from './text';
 import { Attachments } from './Attachments';
 import {
+  ATTACH_LABEL,
   ATTACH_SOON,
   ATTACH_SOON_LABEL,
   DROP_HINT,
@@ -217,10 +218,28 @@ export function Composer({
             tall enough to write in, the placeholder stands indented with a
             button low on either side (issue 79). */}
         <div className="ka-composer__controls">
-          {/* Nothing to upload to, nothing to upload with: the BFF has no
-              route for it, so the paperclip is left out rather than drawn
-              switched off. A dropped file is still refused honestly. */}
-          {unavailable ? null : (
+          {/* One state decides the paperclip, what it does and what a dropped
+              file meets: `unavailable` from the upload client. The button is
+              always drawn, so the reader sees attaching is coming rather than
+              gone; the drop above refuses with the same sentence. */}
+          {unavailable ? (
+            /* Switched off with its words. `aria-disabled` and not `disabled`:
+               it stays in the tab order, so keyboard and screen reader users
+               meet it too and hear it is unavailable. No picker and no click
+               handler, so there is nothing behind it to open. */
+            <Button
+              aria-disabled="true"
+              aria-label={ATTACH_SOON_LABEL}
+              className="ka-composer__attach"
+              data-color="neutral"
+              variant="tertiary"
+            >
+              <PaperclipIcon aria-hidden />
+              {/* The name already says it; a narrow box shows the icon alone
+                  (chat.css), or the send button goes off a phone. */}
+              <span className="ka-composer__attach-text">{ATTACH_SOON}</span>
+            </Button>
+          ) : (
             <>
               {/* The picker, hidden but real. A styled `<label>` is the other
                   way and loses the button semantics the row needs, since this
@@ -246,22 +265,17 @@ export function Composer({
                 type="file"
               />
 
-              {/* Switched off with its words until upload is ready, so the
-                  reader sees it is coming rather than broken. `aria-disabled`
-                  and not `disabled`: it stays in the tab order, so keyboard
-                  and screen reader users meet it too and hear it is
-                  unavailable. No click handler, so it does nothing. */}
+              {/* The way in where upload works, because WCAG 2.5.7 asks that
+                  nothing depend on dragging. */}
               <Button
-                aria-disabled="true"
-                aria-label={ATTACH_SOON_LABEL}
+                aria-label={ATTACH_LABEL}
                 className="ka-composer__attach"
                 data-color="neutral"
+                icon
+                onClick={() => fileInputRef.current?.click()}
                 variant="tertiary"
               >
                 <PaperclipIcon aria-hidden />
-                {/* The name already says it; a narrow box shows the icon
-                    alone (chat.css), or the send button goes off a phone. */}
-                <span className="ka-composer__attach-text">{ATTACH_SOON}</span>
               </Button>
             </>
           )}
@@ -303,7 +317,10 @@ export function Composer({
         </div>
       </div>
 
-      {dragDepth > 0 ? (
+      {/* Not while upload has nowhere to go: the hint promises the file will
+          be attached, and the drop under it refuses. The frame still lights
+          up, so the reader sees the file was seen, and the refusal says why. */}
+      {dragDepth > 0 && !unavailable ? (
         <p aria-hidden="true" className="ka-composer__drop-hint">
           {DROP_HINT}
         </p>
