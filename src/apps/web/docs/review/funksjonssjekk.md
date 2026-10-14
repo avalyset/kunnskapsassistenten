@@ -68,7 +68,7 @@ slik de ble anmeldt.
 | Beholder filtervalget gjennom veksling filter ↔ tråder     | `primary-sidebar.spec.ts`   |
 | Beholder filtervalget gjennom et ruteskifte til en tråd    | `primary-sidebar.spec.ts`   |
 | Måler layouten på 1280, 1440 og 1536 i lys og mørk         | `layout.spec.ts`            |
-| Ser skrivefeltet i bunnen av vinduet på fem flater         | `layout.spec.ts`            |
+| Ser feltet over forslagene, så i bunnen, på fem flater     | `layout.spec.ts`            |
 | Åpner og kollapser sidekolonnene i hver kombinasjon        | `layout.spec.ts`            |
 | Velger et filter og ser det nå spørringen                  | `samtale.spec.ts`           |
 | Får «Generer på nytt» etter et avbrudd, og et helt svar    | `samtale.spec.ts`           |

@@ -22,7 +22,13 @@ import {
   shortcutHint,
 } from './text';
 import { Attachments } from './Attachments';
-import { ATTACH_LABEL, DROP_HINT, WAIT_FOR_UPLOADS, uploadErrorText } from './attachmentText';
+import {
+  ATTACH_SOON,
+  ATTACH_SOON_LABEL,
+  DROP_HINT,
+  WAIT_FOR_UPLOADS,
+  uploadErrorText,
+} from './attachmentText';
 import type { Attachments as AttachmentsState } from './useAttachments';
 import type { ChatStatus } from './useChat';
 
@@ -30,7 +36,7 @@ type ComposerProps = {
   /** The sticky area around the field. The chat view measures it and asks it
       where focus is before moving the caret into the field. */
   ref?: Ref<HTMLDivElement>;
-  /** What stands over the area and moves with it: «Bla til nederst». First
+  /** What stands over the area and moves with it: «Bla til bunnen». First
       in the tab order, before the field. */
   above?: ReactNode;
   /** So a kickstarter can put the caret in the field after filling it. */
@@ -55,6 +61,9 @@ type ComposerProps = {
   /** The agent choice, beside the send button. Absent where there is nothing
       to choose. */
   agentPicker?: ReactNode;
+  /** The disclaimer under the field. Off on the front page, where `ChatView`
+      sets it at the foot of the page instead. */
+  showDisclaimer?: boolean;
 };
 
 /**
@@ -79,6 +88,7 @@ export function Composer({
   onFollowUp,
   attachments,
   agentPicker,
+  showDisclaimer = true,
 }: ComposerProps) {
   const busy = status === 'pending' || status === 'streaming';
   const fileInputRef = useRef<HTMLInputElement>(null);
@@ -236,15 +246,22 @@ export function Composer({
                 type="file"
               />
 
+              {/* Switched off with its words until upload is ready, so the
+                  reader sees it is coming rather than broken. `aria-disabled`
+                  and not `disabled`: it stays in the tab order, so keyboard
+                  and screen reader users meet it too and hear it is
+                  unavailable. No click handler, so it does nothing. */}
               <Button
-                aria-label={ATTACH_LABEL}
+                aria-disabled="true"
+                aria-label={ATTACH_SOON_LABEL}
                 className="ka-composer__attach"
                 data-color="neutral"
-                icon
-                onClick={() => fileInputRef.current?.click()}
                 variant="tertiary"
               >
                 <PaperclipIcon aria-hidden />
+                {/* The name already says it; a narrow box shows the icon
+                    alone (chat.css), or the send button goes off a phone. */}
+                <span className="ka-composer__attach-text">{ATTACH_SOON}</span>
               </Button>
             </>
           )}
@@ -309,9 +326,11 @@ export function Composer({
       {/* One line, and only the disclaimer on it: the shortcut sharing it
           wraps onto two at every width and is said three other ways. Last in
           the sticky area, which grows upwards, so this line never moves. */}
-      <Paragraph className="ka-composer__disclaimer" data-size="sm">
-        {DISCLAIMER}
-      </Paragraph>
+      {showDisclaimer ? (
+        <Paragraph className="ka-composer__disclaimer" data-size="sm">
+          {DISCLAIMER}
+        </Paragraph>
+      ) : null}
 
       <p className="ds-sr-only" id={descriptionId}>
         {SHORTCUT_DESCRIPTION}
