@@ -3,6 +3,14 @@
 Beslutninger og milepæler for klienten, med den nyeste øverst. Hvordan loggen
 føres, står i [README](README.md). PR-numrene uten repo foran er i dette repoet.
 
+## 2026-10-14
+
+- **Innstillinger er en egen side, lenket først i foten av navigasjonspanelet**
+  ([digdir#144](https://github.com/digdir/kunnskapsassistenten/pull/144)). Eksperimentene står der, synlige for alle, med lenke til saken
+  for hvert av dem, og fargemodus har flyttet dit fra foten. Den skjulte menyen
+  bak `#feature-flags` og dialogen bak `#innstillinger` er borte, og gamle lenker
+  lander på siden.
+
 ## 2026-10-07
 
 - **Mobil med knappene for panelene i en rad øverst**, i stedet for skinnene på
@@ -32,7 +40,8 @@ føres, står i [README](README.md). PR-numrene uten repo foran er i dette repoe
   `mobile-top-row`, som ikke gjorde noe før #276. De første som virket, var
   årsfilter med perioder og samlede merkelapper ([#272](https://github.com/larsekhansen/kunnskapsassistenten-frontend/pull/272),
   [digdir#115](https://github.com/digdir/kunnskapsassistenten/issues/115) og [digdir#116](https://github.com/digdir/kunnskapsassistenten/issues/116)), og filtrene over kildene i
-  høyre panel ([#274](https://github.com/larsekhansen/kunnskapsassistenten-frontend/pull/274), [digdir#84](https://github.com/digdir/kunnskapsassistenten/issues/84)).
+  høyre panel ([#274](https://github.com/larsekhansen/kunnskapsassistenten-frontend/pull/274), [digdir#84](https://github.com/digdir/kunnskapsassistenten/issues/84)). Fra 2026-10-14 står flaggene på
+  Innstillinger, synlige for alle, og menyen er borte.
 - **Ingen personnavn i det som deles** ([#268](https://github.com/larsekhansen/kunnskapsassistenten-frontend/pull/268)). Valg skrives med dato
   og grunn.
 - **Node 24 og TypeScript 6 over hele linja**, både her (`engines` `>=24`,
