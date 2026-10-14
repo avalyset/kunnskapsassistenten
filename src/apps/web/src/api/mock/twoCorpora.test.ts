@@ -121,7 +121,7 @@ describe('svaret og kildene kommer fra det valgte korpuset', () => {
       'Skottlands historie',
       'Nordlys',
     ]);
-    expect(answerIn(events)).toContain('Artikler i dette korpuset');
+    expect(answerIn(events)).toContain('Artikler i denne samlingen');
   });
 
   it('gir ingen Kudos-lenke på en artikkel, for dokumentet er oppdiktet', async () => {

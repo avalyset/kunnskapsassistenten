@@ -1,6 +1,5 @@
 import {
   Button,
-  Card,
   EXPERIMENTAL_FileUpload as FileUpload,
   Field,
   Heading,
@@ -8,17 +7,17 @@ import {
   Paragraph,
   Tag,
 } from '@digdir/designsystemet-react';
-import { CloudUpIcon, InformationSquareIcon, TrashIcon } from '@navikt/aksel-icons';
+import { CloudUpIcon, TrashIcon } from '@navikt/aksel-icons';
 import { useEffect, useId, useRef, useState } from 'react';
 import { useUserDocuments } from '../../layout/useUserDocuments';
 import { UPLOAD_ACCEPT, type UserDocument, type UserDocumentStatus } from '../../model';
-import { fileSize, MAX_UPLOAD_TEXT, UPLOAD_COMING_TEXT, uploadErrorText } from './uploadText';
+import { fileSize, MAX_UPLOAD_TEXT, uploadErrorText } from './uploadText';
 
 /** «PDF» and «DOCX», as a reader expects to see a file type written. */
 const TYPE_LABEL = { pdf: 'PDF', docx: 'DOCX' } as const;
 
-/** The reader's own documents: a place to drop files, and what they dropped. In live mode
- * there is no upload endpoint, and the zone says so up front. */
+/** The reader's own documents: a place to drop files, and what they dropped. No mode has an
+ * upload endpoint yet (src/api/uploadFactory.ts), so the zone is switched off up front. */
 export function OwnDocuments() {
   const { documents, unavailable, upload, remove } = useUserDocuments();
   const inputRef = useRef<HTMLInputElement>(null);
@@ -86,36 +85,44 @@ export function OwnDocuments() {
   );
 
   if (unavailable !== undefined) {
-    // No picker: a control that cannot work invites an action that fails. The zone looks
-    // switched off, without the hover that says «drop here», but its text keeps full colour
-    // (at least 4.5:1). «Kommer snart» comes first: it is about the whole box.
+    // The same zone as when upload works, switched off: the reader sees what is coming, and
+    // «Kommer snart» stands where «Ny» would. Designsystemet's read-only state greys the zone
+    // and takes the pointer away; our own icon keeps the upload arrow, where Designsystemet
+    // would draw a blocked sign. The input is `disabled`, so it is out of the tab order;
+    // `readOnly` is what that state keys on.
     return (
-      <Card
-        asChild
-        data-color="neutral"
-        className="documents-list own-documents own-documents--unavailable"
-      >
-        <section>
-          <Tag data-color="info" data-size="sm" className="own-documents__soon">
-            <InformationSquareIcon aria-hidden="true" />
-            Kommer snart
-          </Tag>
-
+      <section className="documents-list own-documents">
+        <div className="own-documents__heading">
           <Heading level={4} data-size="2xs">
             Dine dokumenter
           </Heading>
 
-          <FileUpload
-            data-size="sm"
-            className="own-documents__zone own-documents__zone--unavailable"
-          >
-            <CloudUpIcon aria-hidden="true" fontSize="1.5rem" />
-            <Paragraph data-size="sm">{UPLOAD_COMING_TEXT}</Paragraph>
-          </FileUpload>
+          <Tag data-color="info" data-size="sm">
+            Kommer snart
+          </Tag>
+        </div>
 
-          {status}
-        </section>
-      </Card>
+        <Field>
+          <Label>Last opp egne dokumenter</Label>
+
+          <FileUpload data-size="sm" className="own-documents__zone">
+            <CloudUpIcon aria-hidden="true" fontSize="1.5rem" />
+
+            <Field.Description>
+              Slipp filer her, eller velg dem selv. Kun PDF og .docx for øyeblikket, maks{' '}
+              {MAX_UPLOAD_TEXT}.
+            </Field.Description>
+
+            <Button asChild variant="secondary" data-size="sm" aria-disabled="true">
+              <span>Velg filer</span>
+            </Button>
+
+            <input type="file" disabled readOnly accept={UPLOAD_ACCEPT} />
+          </FileUpload>
+        </Field>
+
+        {status}
+      </section>
     );
   }
 
@@ -127,7 +134,7 @@ export function OwnDocuments() {
           Dine dokumenter
         </Heading>
 
-        {/* «Ny» only where upload works, not over a zone saying it does not. */}
+        {/* «Ny» only where upload works; the switched-off zone has «Kommer snart» here. */}
         <Tag data-color="info" data-size="sm">
           Ny
         </Tag>

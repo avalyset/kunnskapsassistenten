@@ -64,7 +64,7 @@ describe('FiltersView', () => {
 
   /*
    * The filters first and the documents under the line (issue 76,
-   * 30.09): the corpus line, then «Dokumenter» and «Fra Kudos», then «Dine
+   * 30.09): «Dokumenter», the corpus line under it, then «Fra Kudos» and «Dine
    * dokumenter». The line is decoration and says nothing to a screen reader;
    * the headings under it do that.
    */
@@ -84,7 +84,7 @@ describe('FiltersView', () => {
 
     expect(line?.getAttribute('aria-hidden')).toBe('true');
     // Top to bottom, in the order the reader tabs and reads.
-    const order = [screen.getByLabelText('Dokumenttype'), line, corpus, documents, own];
+    const order = [screen.getByLabelText('Dokumenttype'), line, documents, corpus, own];
     for (let index = 1; index < order.length; index += 1) {
       expect(
         order[index - 1]!.compareDocumentPosition(order[index] as Node) &

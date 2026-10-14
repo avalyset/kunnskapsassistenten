@@ -39,8 +39,8 @@
   inline-size: 100%;
 }
 
-/* The corpus line and its documents as one block, a small step apart, so the
-   line does not hang between the divider and «Dokumenter». */
+/* The documents block below the divider; the corpus line sits inside it, under
+   «Dokumenter» (DocumentsList.tsx). */
 .filters-view__documents {
   display: flex;
   flex-direction: column;
@@ -238,36 +238,6 @@
   flex-wrap: wrap;
   align-items: center;
   gap: var(--ds-size-2);
-}
-
-/* Not Card's tinted variant, which matches the zone inside. The default variant
-   sets `background` directly, not through a variable, so this does too. No
-   child margin, so the section's gap is the one distance. */
-.own-documents--unavailable {
-  --dsc-card-content-margin-block: 0;
-  --dsc-card-border-color: transparent;
-
-  gap: var(--ds-size-3);
-  background: var(--ds-color-background-tinted);
-}
-
-/* Across the box: Designsystemet gives a tag `width: max-content`, which keeps
-   the column from stretching it. More air under it than over the zone: it is a
-   note on the whole box. */
-.own-documents__soon {
-  inline-size: auto;
-  gap: var(--ds-size-1);
-  margin-block-end: var(--ds-size-3);
-}
-
-/* Switched off: no hover change, a subtle dash (not a control, so its edge
-   needs no 3:1), and the arrow, because Designsystemet's `:hover` sets a hand. */
-.own-documents__zone--unavailable {
-  --dsc-file-upload-background: var(--ds-color-surface-tinted);
-  --dsc-file-upload-background--hover: var(--ds-color-surface-tinted);
-  --dsc-file-upload-border-color: var(--ds-color-border-subtle);
-
-  cursor: default;
 }
 
 .own-documents__list {

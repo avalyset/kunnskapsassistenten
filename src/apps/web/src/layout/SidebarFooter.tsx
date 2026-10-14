@@ -1,10 +1,18 @@
 import { Link } from '@digdir/designsystemet-react';
+import { CogIcon } from '@navikt/aksel-icons';
 import { Link as RouterLink, useLocation } from 'react-router';
 import { infoPages } from '../routes/info/infoPages';
-import { ColorSchemeToggle } from './ColorSchemeToggle';
+import { SETTINGS_PATH, SETTINGS_TITLE } from '../routes/settings/SettingsPage';
+
+/** Settings first, then the pages about Kunnskapsassistenten. */
+const footerLinks = [
+  { path: SETTINGS_PATH, title: SETTINGS_TITLE, Icon: CogIcon },
+  ...infoPages.map(({ path, title, Icon }) => ({ path, title, Icon })),
+];
 
 /**
- * The foot of the navigation panel: the pages about Kunnskapsassistenten, then the colour scheme.
+ * The foot of the navigation panel: settings and the pages about Kunnskapsassistenten. The colour
+ * scheme moved to the settings page.
  * A named list, not a `nav`: the panel is already the navigation landmark, and a second one
  * would announce two places to navigate from.
  */
@@ -14,7 +22,7 @@ export function SidebarFooter() {
   return (
     <div className="sidebar-footer">
       <ul className="sidebar-footer__links" aria-label="Om Kunnskapsassistenten">
-        {infoPages.map(({ path, title, Icon }) => {
+        {footerLinks.map(({ path, title, Icon }) => {
           const to = `/${path}`;
           return (
             <li key={path}>
@@ -28,8 +36,6 @@ export function SidebarFooter() {
           );
         })}
       </ul>
-
-      <ColorSchemeToggle />
     </div>
   );
 }

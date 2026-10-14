@@ -218,25 +218,17 @@ describe('«Ny tråd» after a conversation started on this page', () => {
   it('keeps the conversation when the navigation was not «Ny tråd»', () => {
     /*
      * The bug this key was written around: `/` was keyed on `location.key`,
-     * and every navigation mints a new one — including the one that closes
-     * the hidden settings menu, which is `navigate({ hash: '' }, { replace:
-     * true })`. Writing half a question on `/`, opening `#innstillinger` and
-     * pressing «Lukk» left the field empty and the conversation remounted
-     * (KA CC on #208, with #203 in).
-     *
-     * Driven through the menu itself rather than through a bare `navigate`,
-     * because it is the closing that has to be safe, not a navigation in the
-     * abstract.
+     * and every navigation mints a new one, including one that only changes
+     * the hash, as closing the old hidden settings menu did. Writing half a
+     * question and then changing the hash left the field empty and the
+     * conversation remounted (KA CC on #208, with #203 in).
      */
     show();
     fireEvent.change(field(), { target: { value: 'Halvskrevet' } });
 
-    act(() => void go.navigate?.({ hash: '#innstillinger' }));
-    expect(screen.getByText('Innstillinger')).toBeTruthy();
+    act(() => void go.navigate?.({ hash: '#noe' }));
+    act(() => void go.navigate?.({ hash: '' }, { replace: true }));
 
-    act(() => fireEvent.click(screen.getByRole('button', { name: 'Lukk' })));
-
-    expect(screen.queryByText('Innstillinger')).toBeNull();
     expect(field().value).toBe('Halvskrevet');
   });
 

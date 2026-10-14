@@ -1,5 +1,5 @@
 import { Button, Heading, Link, List, Paragraph } from '@digdir/designsystemet-react';
-import { useEffect, useId, useRef, useState } from 'react';
+import { useEffect, useId, useRef, useState, type ReactNode } from 'react';
 import { corpusDisplayName } from '../../api';
 import { useCorpus } from '../../layout/useCorpus';
 import type { SourceDocument } from '../../model';
@@ -30,12 +30,14 @@ export type KudosDocumentsProps = {
   /** The documents behind the answer on screen (src/layout/answerSourcesContext.ts).
    * `undefined` («no answer yet») and `[]` both mean nothing to show here. */
   documents?: SourceDocument[];
+  /** What the corpus is (CorpusLine), under «Dokumenter»: it says what the list is drawn from. */
+  corpusLine?: ReactNode;
 };
 
 /** The corpus documents behind the answer; apart from {@link OwnDocuments} so the view can
  * show them above the facets, in sight. No «Velg dokumenter»: a disabled button, as Figma
  * draws it, cannot be reached by keyboard or say why (Designsystemet advises against it). */
-export function KudosDocuments({ documents }: KudosDocumentsProps) {
+export function KudosDocuments({ documents, corpusLine }: KudosDocumentsProps) {
   // useId, not a constant: views can move, and two in different slots would share an id.
   const kudosHeadingId = useId();
   const { option } = useCorpus();
@@ -70,6 +72,7 @@ export function KudosDocuments({ documents }: KudosDocumentsProps) {
       <Heading level={3} data-size="xs">
         Dokumenter
       </Heading>
+      {corpusLine}
       {/* The corpus line's short name, from the same function, so the two never
           disagree. It also names the list below. */}
       <Heading level={4} data-size="2xs" id={kudosHeadingId}>

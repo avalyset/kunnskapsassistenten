@@ -318,22 +318,6 @@
   color: var(--ds-color-neutral-text-subtle);
 }
 
-/* ----------------------------------------------------------------- settings */
-
-/* Space between two settings: Designsystemet puts none between a Fieldset
-   and what follows inside a Dialog.Block, and without it the second legend
-   reads as the last option of the first group. */
-.ka-settings__group {
-  margin-block-start: var(--ds-size-6);
-}
-
-/* The line under the choices. Same gap as above, or the note reads as a
-   third option's description. */
-.ka-settings__note {
-  margin-block-start: var(--ds-size-4);
-  color: var(--ds-color-neutral-text-subtle);
-}
-
 /* --------------------------------------------------------------- thinking */
 
 /* «Tenker …» over the answer card. Full width, so it reads as this turn's

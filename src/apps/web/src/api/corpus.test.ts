@@ -186,11 +186,11 @@ describe('corpusDisplayName', () => {
     );
   });
 
-  it('sier «standardkorpuset» når ingenting navngir korpuset', () => {
+  it('sier «standardsamlingen» når ingenting navngir korpuset', () => {
     // Live uten liste og uten nøkkel: backend velger datasett, og ingenting
     // på denne sida vet hvilket. Da er det den ene tingen vi kan si.
-    expect(corpusDisplayName(undefined)).toBe('standardkorpuset');
-    expect(corpusDisplayName({ key: 'k', label: '   ' })).toBe('standardkorpuset');
+    expect(corpusDisplayName(undefined)).toBe('standardsamlingen');
+    expect(corpusDisplayName({ key: 'k', label: '   ' })).toBe('standardsamlingen');
   });
 });
 
@@ -205,7 +205,7 @@ describe('corpusDisplayNameFor', () => {
   it('faller til reserveordet på en ukjent og på ingen nøkkel', () => {
     // En tur uten nøkkel er en tur ingen sa korpuset til, og en nøkkel lista
     // ikke har er et korpus som er tatt bort siden svaret kom.
-    expect(corpusDisplayNameFor(undefined)).toBe('standardkorpuset');
-    expect(corpusDisplayNameFor('borte-for-lenge-siden')).toBe('standardkorpuset');
+    expect(corpusDisplayNameFor(undefined)).toBe('standardsamlingen');
+    expect(corpusDisplayNameFor('borte-for-lenge-siden')).toBe('standardsamlingen');
   });
 });

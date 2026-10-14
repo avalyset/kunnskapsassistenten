@@ -1,19 +1,19 @@
 # Funksjonsflagg
 
 Flagg er forsøk som skal kunne prøves side om side og tas bort når valget er
-tatt. Innstillinger (`#innstillinger`) er valg som blir. Alle flagg er av til
+tatt. De andre innstillingene er valg som blir. Alle flagg er av til
 noen slår dem på, og de lagres per nettleser under `ka.flags.v1`. «Logg ut»
 sletter dem (`beforeLogout` i `src/api/session.ts`).
 
 ## Slå på et flagg
 
-- **Menyen:** legg `#feature-flags` til i adressen, for eksempel
-  `http://localhost:5173/#feature-flags`. Menyen heter «Eksperimenter» og har
-  en bryter per flagg. Å lukke den tar hashen ut igjen.
+- **Siden:** «Eksperimenter» på Innstillinger (`/innstillinger`), lenket fra
+  foten av navigasjonspanelet. Én bryter per flagg. Den gamle adressen
+  `#feature-flags` lander der.
 - **En lenke:** `?flagg=mobile-top-row`, eller flere med komma
   (`?flagg=a,b`). Lenken slår bare på. Parameteren tas ut av adressen, og
-  menyen åpnes, så den som fikk lenken ser hva som ble slått på og kan slå det
-  av. Ukjente id-er gjør ingenting.
+  Innstillinger åpnes, så den som fikk lenken ser hva som ble slått på og kan
+  slå det av. Ukjente id-er gjør ingenting.
 
 ## Flaggene
 
