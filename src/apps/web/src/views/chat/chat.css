@@ -267,6 +267,13 @@
   list-style: none;
 }
 
+/* The ring is what makes a keyword a tag now that it is not filled, and
+   `subtle` is too faint to read as a shape against the tinted card. `default`
+   is the lightest step on the same scale that clears 3:1 in both themes. */
+.ka-procedure__keywords .ds-tag {
+  --dsc-tag-border-color: var(--ds-color-border-default);
+}
+
 /* ------------------------------------------------- sources in the answer */
 
 /* «Kilder brukt i svaret» (issue 113). Designsystemet's own Details
