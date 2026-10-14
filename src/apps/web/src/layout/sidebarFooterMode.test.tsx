@@ -73,7 +73,7 @@ describe('hvor foten står', () => {
     setFooterMode('scrolls');
     open();
 
-    const links = screen.getByRole('list', { name: 'Om Kunnskapsassistenten' });
+    const links = screen.getByRole('list', { name: 'Innstillinger og om Kunnskapsassistenten' });
     expect(within(links).getAllByRole('link')).toHaveLength(4);
   });
 
@@ -112,9 +112,9 @@ describe('foten i skuffen', () => {
       // Én fot, én lenkeliste. To av noe her er feilen:
       // foten tegnet både i rullefeltet og under det.
       expect(drawer.querySelectorAll('.sidebar-footer')).toHaveLength(1);
-      expect(within(drawer).getAllByRole('list', { name: 'Om Kunnskapsassistenten' })).toHaveLength(
-        1,
-      );
+      expect(
+        within(drawer).getAllByRole('list', { name: 'Innstillinger og om Kunnskapsassistenten' }),
+      ).toHaveLength(1);
 
       cleanup();
       resetFooterMode();

@@ -15,7 +15,7 @@ function open(at: string) {
   );
 }
 
-const links = () => screen.getByRole('list', { name: 'Om Kunnskapsassistenten' });
+const links = () => screen.getByRole('list', { name: 'Innstillinger og om Kunnskapsassistenten' });
 
 describe('SidebarFooter', () => {
   it('har Innstillinger først, så de tre sidene i rekkefølgen fra den gamle', () => {
