@@ -18,7 +18,7 @@ import {
 } from '../../model';
 import { MOCK_AGENTS } from '../../api/mock/MockChatClient';
 import { AGENT_STORAGE_KEY } from '../../api/agentChoice';
-import { ATTACH_SOON_LABEL } from './attachmentText';
+import { ATTACH_LABEL } from './attachmentText';
 import { ChatView } from './ChatView';
 import {
   ABORTED_BEFORE_ANSWER,
@@ -853,12 +853,11 @@ describe('ChatView', () => {
     send.focus();
     fireEvent.click(send);
 
-    // The reader moves to the paperclip while the answer is on its way. It is
-    // inert, it says «Vedlegg kommer», and nothing about it changes when the
-    // turn fails — so the rescue must leave it alone. The rescue is about the
-    // one control that changed meaning, not about the area it sits in
-    // (KA CC on #59).
-    const paperclip = screen.getByRole('button', { name: ATTACH_SOON_LABEL });
+    // The reader moves to the paperclip while the answer is on its way.
+    // Nothing about it changes when the turn fails, so the rescue must leave
+    // it alone: the rescue is about the one control that changed meaning, not
+    // about the area it sits in (KA CC on #59).
+    const paperclip = screen.getByRole('button', { name: ATTACH_LABEL });
     paperclip.focus();
 
     await screen.findByText('Assistenten svarte ikke');
