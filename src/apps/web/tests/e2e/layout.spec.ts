@@ -842,12 +842,12 @@ async function scrollAnswerColumn(page: Page, to: 'top' | 'bottom'): Promise<voi
   }, to);
 }
 
-test.describe('skrivefeltet står i bunnen av vinduet i en samtale', () => {
+test.describe('skrivefeltet: over forslagene på startsiden, i bunnen i en samtale', () => {
   for (const surface of SURFACES) {
     const size = `${surface.width} × ${surface.height}`;
 
     test(`på startsiden står det over forslagene, ${size}`, async ({ page }, testInfo) => {
-      covers(testInfo, 'skrivefeltet i bunnen av vinduet');
+      covers(testInfo, 'feltet over forslagene, så i bunnen');
       await page.setViewportSize(surface);
       await page.goto('/');
       await expect(page.locator('.ka-composer-area')).toBeVisible();
@@ -877,7 +877,7 @@ test.describe('skrivefeltet står i bunnen av vinduet i en samtale', () => {
       `i en samtale, rullet til toppen og til bunnen, ${size}`,
       MOCK,
       async ({ page }, testInfo) => {
-        covers(testInfo, 'skrivefeltet i bunnen av vinduet');
+        covers(testInfo, 'feltet over forslagene, så i bunnen');
         await page.setViewportSize(surface);
         await page.goto('/threads/nkom-maaloppnaaelse');
         await expect(page.locator('.ka-answer-card').first()).toBeVisible();
