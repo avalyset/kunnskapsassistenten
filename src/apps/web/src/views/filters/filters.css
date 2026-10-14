@@ -40,16 +40,10 @@
 }
 
 /* The documents block below the divider; the corpus line sits inside it, under
-   «Dokumenter» (DocumentsList.tsx). */
+   «Dokumenter» (DocumentsList.tsx). One child, so only the width is set: the
+   view lays out with `align-items: start`. */
 .filters-view__documents {
-  display: flex;
-  flex-direction: column;
-  gap: var(--ds-size-3);
   inline-size: 100%;
-}
-
-.filters-view__documents[hidden] {
-  display: none;
 }
 
 /* Muted: context for the documents. A flex row, so «Vis mer» ends the name's
