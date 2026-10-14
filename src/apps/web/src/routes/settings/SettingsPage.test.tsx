@@ -70,9 +70,25 @@ describe('SettingsPage', () => {
   it('slår på et eksperiment med bryteren', () => {
     open();
 
-    fireEvent.click(screen.getByRole('switch', { name: /Årsfilter med perioder/u }));
+    const toggle = screen.getByRole('switch', {
+      name: /Årsfilter med perioder/u,
+    }) as HTMLInputElement;
+    expect(toggle.checked).toBe(false);
+    fireEvent.click(toggle);
 
     expect(isFlagOn('year-ranges')).toBe(true);
+    // Bryteren viser det den gjorde, ikke bare flagget.
+    expect(toggle.checked).toBe(true);
+  });
+
+  it('lenker til saken for eksperimentet, i ny fane og sagt i ord', () => {
+    open();
+
+    const link = screen.getByRole('link', { name: /^Sak 115 ?\(åpnes i ny fane\)$/u });
+    expect(link.getAttribute('target')).toBe('_blank');
+    expect(link.getAttribute('href')).toBe(
+      'https://github.com/digdir/kunnskapsassistenten/issues/115',
+    );
   });
 });
 
@@ -94,6 +110,9 @@ describe('gamle lenker', () => {
 
     expect(isFlagOn('year-ranges')).toBe(true);
     expect(screen.getByTestId('adresse').textContent).toBe('/innstillinger?annet=1');
+    expect(
+      (screen.getByRole('switch', { name: /Årsfilter med perioder/u }) as HTMLInputElement).checked,
+    ).toBe(true);
   });
 
   it('lar andre adresser være', () => {
