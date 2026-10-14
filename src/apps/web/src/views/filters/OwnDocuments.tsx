@@ -8,7 +8,7 @@ import {
   Tag,
 } from '@digdir/designsystemet-react';
 import { CloudUpIcon, TrashIcon } from '@navikt/aksel-icons';
-import { useEffect, useId, useRef, useState } from 'react';
+import { type DragEvent, useEffect, useId, useRef, useState } from 'react';
 import { useUserDocuments } from '../../layout/useUserDocuments';
 import { UPLOAD_ACCEPT, type UserDocument, type UserDocumentStatus } from '../../model';
 import { fileSize, MAX_UPLOAD_TEXT, uploadErrorText } from './uploadText';
@@ -25,6 +25,7 @@ export function OwnDocuments() {
   const removeRefs = useRef(new Map<string, HTMLButtonElement | null>());
   const focusAfterRemove = useRef<string | undefined>(undefined);
   const announcement = useUploadAnnouncement(documents);
+  const [refusal, setRefusal] = useState('');
 
   // A remove button that removes itself drops focus to `<body>` (WCAG 2.4.3). It goes to the
   // next row, else the previous, else the picker. In an effect, because that button exists
@@ -60,11 +61,21 @@ export function OwnDocuments() {
     if (inputRef.current) inputRef.current.value = '';
   }
 
+  // Switched off, the zone takes no pointer, so a file dropped on it lands on the field around
+  // it, and the browser would open the file in a new tab. The section takes the drop and says
+  // why, as the compose field does; `dragover` too, or the drop never fires. Where upload
+  // works, the file input takes the drop itself.
+  function refuse(event: DragEvent<HTMLElement>) {
+    if (unavailable === undefined || !hasFiles(event)) return;
+    event.preventDefault();
+    if (event.type === 'drop') setRefusal(uploadErrorText(unavailable));
+  }
+
   // The live region is mounted even when silent: one that appears together with
   // its text is not announced (`ErrorState` does the same).
   const status = (
     <>
-      <output className="ds-sr-only">{announcement}</output>
+      <output className="ds-sr-only">{refusal || announcement}</output>
 
       {documents.length > 0 && (
         <ul className="own-documents__list" id={listId}>
@@ -90,7 +101,7 @@ export function OwnDocuments() {
   const off = unavailable !== undefined;
 
   return (
-    <section className="documents-list own-documents">
+    <section className="documents-list own-documents" onDragOver={refuse} onDrop={refuse}>
       <div className="own-documents__heading">
         {/* Level 4, a sibling of «Fra <korpus>» under «Dokumenter», as the spec draws. */}
         <Heading level={4} data-size="2xs">
@@ -117,9 +128,12 @@ export function OwnDocuments() {
         >
           <CloudUpIcon aria-hidden="true" fontSize="1.5rem" />
 
+          {/* Off, it says what is coming, not what to do: a zone that asks for a drop it
+              cannot take invites an action that fails. */}
           <Field.Description>
-            Slipp filer her, eller velg dem selv. Kun PDF og .docx for øyeblikket, maks{' '}
-            {MAX_UPLOAD_TEXT}.
+            {off
+              ? `Snart kan du laste opp PDF og .docx her, maks ${MAX_UPLOAD_TEXT}.`
+              : `Slipp filer her, eller velg dem selv. Kun PDF og .docx for øyeblikket, maks ${MAX_UPLOAD_TEXT}.`}
           </Field.Description>
 
           {/* Off, `aria-disabled` marks «Velg filer» as part of a control that is off. A screen
@@ -142,9 +156,20 @@ export function OwnDocuments() {
         </FileUpload>
       </Field>
 
+      {/* Muted, not red: nothing went wrong that the reader can fix. */}
+      {refusal && (
+        <Paragraph data-size="xs" className="own-documents__refusal">
+          {refusal}
+        </Paragraph>
+      )}
+
       {status}
     </section>
   );
+}
+
+function hasFiles(event: DragEvent<HTMLElement>): boolean {
+  return [...event.dataTransfer.types].includes('Files');
 }
 
 /** What the live region says: a file taken in, there, or refused, never the percentage, which

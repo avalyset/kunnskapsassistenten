@@ -143,6 +143,53 @@ describe('Dine dokumenter', () => {
     expect(screen.getByText('Velg filer').getAttribute('aria-disabled')).toBe('true');
   });
 
+  it('uten opplasting: sonen sier at det kommer, og ber ikke om et slipp', () => {
+    hook.unavailable = 'unavailable';
+    render(<OwnDocuments />);
+
+    // En sone som ber om noe den ikke kan ta imot, inviterer til noe som
+    // feiler. Typer og størrelse står fortsatt, som når den virker.
+    expect(screen.getByText('Snart kan du laste opp PDF og .docx her, maks 20 MB.')).toBeTruthy();
+    expect(screen.queryByText(/Slipp filer her/u)).toBeNull();
+  });
+
+  it('uten opplasting: en fil som slippes, avvises med ord, og nettleseren åpner den ikke', () => {
+    hook.unavailable = 'unavailable';
+    const { container } = render(<OwnDocuments />);
+    const section = container.querySelector('section') as HTMLElement;
+    const field = document.querySelector('ds-field, .ds-field') ?? section;
+    const files = [new File(['a'], 'en.pdf', { type: 'application/pdf' })];
+    const dataTransfer = { types: ['Files'], files };
+
+    // Sonen tar ikke imot pekeren, så slippet treffer feltet rundt og bobler
+    // opp. Uten `preventDefault` på begge åpner nettleseren fila i en ny fane.
+    expect(fireEvent.dragOver(field, { dataTransfer })).toBe(false);
+    expect(fireEvent.drop(field, { dataTransfer })).toBe(false);
+
+    const said = 'Opplasting er ikke tilgjengelig i denne tjenesten ennå.';
+    expect(screen.getByText(said, { selector: 'p' })).toBeTruthy();
+    expect(container.querySelector('output.ds-sr-only')?.textContent).toBe(said);
+    expect(hook.upload).not.toHaveBeenCalled();
+  });
+
+  it('lar et slipp uten filer være, og et slipp der opplasting virker', () => {
+    hook.unavailable = 'unavailable';
+    const { container, unmount } = render(<OwnDocuments />);
+    const text = { dataTransfer: { types: ['text/plain'], files: [] } };
+
+    // Tekst som dras over panelet, er ikke et forsøk på å laste opp.
+    expect(fireEvent.drop(container.querySelector('section') as HTMLElement, text)).toBe(true);
+    expect(screen.queryByText(/ikke tilgjengelig/u)).toBeNull();
+    unmount();
+
+    // Der opplasting virker, tar filfeltet slippet selv; seksjonen skal ikke
+    // stoppe det.
+    hook.unavailable = undefined;
+    const { container: on } = render(<OwnDocuments />);
+    const files = { dataTransfer: { types: ['Files'], files: [] } };
+    expect(fireEvent.dragOver(on.querySelector('section') as HTMLElement, files)).toBe(true);
+  });
+
   it('sier fra i en live-region når en fil kommer inn, blir klar og feiler', () => {
     /*
      * WCAG 4.1.3: raden byttet tekst i stillhet, så en skjermleserbruker fikk

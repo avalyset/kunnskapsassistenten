@@ -293,7 +293,8 @@
   overflow-wrap: anywhere;
 }
 
-.own-documents__meta {
+.own-documents__meta,
+.own-documents__refusal {
   color: var(--ds-color-neutral-text-subtle);
 }
 
