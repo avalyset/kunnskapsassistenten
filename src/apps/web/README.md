@@ -698,10 +698,10 @@ ligger i `src/views/chat/displayLevel.ts`, `ProcedurePanel.tsx` og
 Innstillinger har et valg til, fra issue 123, men bare når appen kjører lokalt
 (`npm run dev`). Det er for oss som lager appen, ikke for leseren:
 
-| Valg         | Hva som skjer                                                               |
-| ------------ | --------------------------------------------------------------------------- |
-| `Festet`     | Standard. Lenkene står under rullefeltet, uansett hvor langt du har rullet. |
-| `Ruller med` | Alt ligger i én kolonne. Foten står sist i rullefeltet og følger lista ned. |
+| Valg         | Hva som skjer                                                                         |
+| ------------ | ------------------------------------------------------------------------------------- |
+| `Festet`     | Lenkene står under rullefeltet, uansett hvor langt du har rullet.                     |
+| `Ruller med` | Standard. Alt ligger i én kolonne. Foten står sist i rullefeltet og følger lista ned. |
 
 Valget er her for å kunne sammenlignes, ikke fordi det er avgjort. Målingene
 av begge står i PR-en som la det inn. Koden ligger i
