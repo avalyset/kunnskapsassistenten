@@ -188,9 +188,11 @@ describe('corpusLine med et valgt korpus', () => {
      * er «Dokumenter fra Kudos» den samme påstanden denne fila ble endret for
      * å slutte med (KA CC på #106).
      */
-    expect(corpusLine(undefined, undefined)).toEqual({ source: 'Dokumenter fra standardkorpuset' });
+    expect(corpusLine(undefined, undefined)).toEqual({
+      source: 'Dokumenter fra standardsamlingen',
+    });
     expect(corpusLine([types(['Årsrapport', 4])], undefined)).toEqual({
-      source: 'Dokumenter fra standardkorpuset',
+      source: 'Dokumenter fra standardsamlingen',
       detail: '4 dokumenter, årsrapporter',
     });
   });

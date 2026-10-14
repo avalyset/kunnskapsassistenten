@@ -8,7 +8,7 @@ import { resetFooterMode, setFooterMode } from './footerMode';
 
 /**
  * Foten sist i rullefeltet og rullende med lista, som er standard, eller
- * festet under rullefeltet når det er valgt i #innstillinger
+ * festet under rullefeltet når det er valgt på Innstillinger (bare lokalt)
  * (digdir/kunnskapsassistenten#123). Her måles hvor den havner, ikke hvordan
  * den ser ut; tallene for begge står i PR-en.
  */
@@ -73,9 +73,8 @@ describe('hvor foten står', () => {
     setFooterMode('scrolls');
     open();
 
-    const links = screen.getByRole('list', { name: 'Om Kunnskapsassistenten' });
-    expect(within(links).getAllByRole('link')).toHaveLength(3);
-    expect(screen.getAllByRole('group', { name: 'Fargemodus' })).toHaveLength(1);
+    const links = screen.getByRole('list', { name: 'Innstillinger og om Kunnskapsassistenten' });
+    expect(within(links).getAllByRole('link')).toHaveLength(4);
   });
 
   it('står ikke på skinnen, uansett valg', () => {
@@ -110,13 +109,12 @@ describe('foten i skuffen', () => {
     for (const mode of ['pinned', 'scrolls'] as const) {
       const drawer = openDrawer(mode);
 
-      // Én fot, én lenkeliste, én fargemodus. To av noe her er feilen:
+      // Én fot, én lenkeliste. To av noe her er feilen:
       // foten tegnet både i rullefeltet og under det.
       expect(drawer.querySelectorAll('.sidebar-footer')).toHaveLength(1);
-      expect(within(drawer).getAllByRole('list', { name: 'Om Kunnskapsassistenten' })).toHaveLength(
-        1,
-      );
-      expect(within(drawer).getAllByRole('group', { name: 'Fargemodus' })).toHaveLength(1);
+      expect(
+        within(drawer).getAllByRole('list', { name: 'Innstillinger og om Kunnskapsassistenten' }),
+      ).toHaveLength(1);
 
       cleanup();
       resetFooterMode();

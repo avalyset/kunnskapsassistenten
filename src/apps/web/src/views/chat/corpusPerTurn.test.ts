@@ -52,7 +52,7 @@ describe('korpus per tur', () => {
 
   it('tåler at ramma ikke sier noe', async () => {
     /*
-     * `undefined` betyr «ikke kjent», aldri «standardkorpuset». En live-stack
+     * `undefined` betyr «ikke kjent», aldri «standardsamlingen». En live-stack
      * uten tenant lar backend velge selv, og da kan ingenting på denne sida
      * navngi det som svarte.
      */

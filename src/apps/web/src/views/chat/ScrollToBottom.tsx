@@ -7,7 +7,7 @@ type ScrollToBottomProps = {
 };
 
 /**
- * «Bla til nederst», once for the whole column and over the compose field, so
+ * «Bla til bunnen», once for the whole column and over the compose field, so
  * it stays in one place. `detail` is 0 for a click the keyboard made, which
  * is how the chat view knows to hand the focus on.
  */
@@ -21,7 +21,7 @@ export function ScrollToBottom({ onScroll }: ScrollToBottomProps) {
       variant="secondary"
     >
       <ArrowDownIcon aria-hidden />
-      Bla til nederst
+      Bla til bunnen
     </Button>
   );
 }

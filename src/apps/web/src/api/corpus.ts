@@ -109,7 +109,8 @@ export const MOCK_CORPUS: CorpusOption = {
 export const MOCK_WIKIPEDIA_CORPUS: CorpusOption = {
   key: 'norquad-mock',
   label: 'Wikipedia (mock)',
-  description: 'Åtte artikler fra norsk Wikipedia, satt sammen for å vise korpusbytte.',
+  description:
+    'Åtte artikler fra norsk Wikipedia, satt sammen for å vise bytte av dokumentsamling.',
 };
 
 // `kaEnv()`, not `import.meta.env`: an image can be pointed at another corpus
@@ -185,7 +186,7 @@ function corpusName(corpus?: CorpusOption): string | undefined {
 }
 
 // For live with no dataset set: the backend picks, and this side cannot know which.
-const UNNAMED_CORPUS = 'standardkorpuset';
+const UNNAMED_CORPUS = 'standardsamlingen';
 
 /**
  * What to call the corpus on screen: its short name, or the stand-in above.

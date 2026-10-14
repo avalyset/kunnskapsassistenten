@@ -1,6 +1,5 @@
 import {
   Button,
-  Card,
   EXPERIMENTAL_FileUpload as FileUpload,
   Field,
   Heading,
@@ -8,17 +7,17 @@ import {
   Paragraph,
   Tag,
 } from '@digdir/designsystemet-react';
-import { CloudUpIcon, InformationSquareIcon, TrashIcon } from '@navikt/aksel-icons';
-import { useEffect, useId, useRef, useState } from 'react';
+import { CloudUpIcon, TrashIcon } from '@navikt/aksel-icons';
+import { type DragEvent, useEffect, useId, useRef, useState } from 'react';
 import { useUserDocuments } from '../../layout/useUserDocuments';
 import { UPLOAD_ACCEPT, type UserDocument, type UserDocumentStatus } from '../../model';
-import { fileSize, MAX_UPLOAD_TEXT, UPLOAD_COMING_TEXT, uploadErrorText } from './uploadText';
+import { fileSize, MAX_UPLOAD_TEXT, uploadErrorText } from './uploadText';
 
 /** «PDF» and «DOCX», as a reader expects to see a file type written. */
 const TYPE_LABEL = { pdf: 'PDF', docx: 'DOCX' } as const;
 
-/** The reader's own documents: a place to drop files, and what they dropped. In live mode
- * there is no upload endpoint, and the zone says so up front. */
+/** The reader's own documents: a place to drop files, and what they dropped. No mode has an
+ * upload endpoint yet (src/api/uploadFactory.ts), so the zone is switched off up front. */
 export function OwnDocuments() {
   const { documents, unavailable, upload, remove } = useUserDocuments();
   const inputRef = useRef<HTMLInputElement>(null);
@@ -26,6 +25,7 @@ export function OwnDocuments() {
   const removeRefs = useRef(new Map<string, HTMLButtonElement | null>());
   const focusAfterRemove = useRef<string | undefined>(undefined);
   const announcement = useUploadAnnouncement(documents);
+  const [refusal, setRefusal] = useState('');
 
   // A remove button that removes itself drops focus to `<body>` (WCAG 2.4.3). It goes to the
   // next row, else the previous, else the picker. In an effect, because that button exists
@@ -61,11 +61,21 @@ export function OwnDocuments() {
     if (inputRef.current) inputRef.current.value = '';
   }
 
+  // Switched off, the zone takes no pointer, so a file dropped on it lands on the field around
+  // it, and the browser would open the file in a new tab. The section takes the drop and says
+  // why, as the compose field does; `dragover` too, or the drop never fires. Where upload
+  // works, the file input takes the drop itself.
+  function refuse(event: DragEvent<HTMLElement>) {
+    if (unavailable === undefined || !hasFiles(event)) return;
+    event.preventDefault();
+    if (event.type === 'drop') setRefusal(uploadErrorText(unavailable));
+  }
+
   // The live region is mounted even when silent: one that appears together with
   // its text is not announced (`ErrorState` does the same).
   const status = (
     <>
-      <output className="ds-sr-only">{announcement}</output>
+      <output className="ds-sr-only">{refusal || announcement}</output>
 
       {documents.length > 0 && (
         <ul className="own-documents__list" id={listId}>
@@ -85,69 +95,52 @@ export function OwnDocuments() {
     </>
   );
 
-  if (unavailable !== undefined) {
-    // No picker: a control that cannot work invites an action that fails. The zone looks
-    // switched off, without the hover that says «drop here», but its text keeps full colour
-    // (at least 4.5:1). «Kommer snart» comes first: it is about the whole box.
-    return (
-      <Card
-        asChild
-        data-color="neutral"
-        className="documents-list own-documents own-documents--unavailable"
-      >
-        <section>
-          <Tag data-color="info" data-size="sm" className="own-documents__soon">
-            <InformationSquareIcon aria-hidden="true" />
-            Kommer snart
-          </Tag>
-
-          <Heading level={4} data-size="2xs">
-            Dine dokumenter
-          </Heading>
-
-          <FileUpload
-            data-size="sm"
-            className="own-documents__zone own-documents__zone--unavailable"
-          >
-            <CloudUpIcon aria-hidden="true" fontSize="1.5rem" />
-            <Paragraph data-size="sm">{UPLOAD_COMING_TEXT}</Paragraph>
-          </FileUpload>
-
-          {status}
-        </section>
-      </Card>
-    );
-  }
+  // No mode has an upload endpoint yet, so this is the zone the reader sees: the same zone as
+  // when upload works, switched off, so the reader sees what is coming. The input is `disabled`,
+  // which takes it out of the tab order, and filters.css draws the zone off from that.
+  const off = unavailable !== undefined;
 
   return (
-    <section className="documents-list own-documents">
+    <section className="documents-list own-documents" onDragOver={refuse} onDrop={refuse}>
       <div className="own-documents__heading">
         {/* Level 4, a sibling of «Fra <korpus>» under «Dokumenter», as the spec draws. */}
         <Heading level={4} data-size="2xs">
           Dine dokumenter
         </Heading>
 
-        {/* «Ny» only where upload works, not over a zone saying it does not. */}
+        {/* «Ny» only where upload works. */}
         <Tag data-color="info" data-size="sm">
-          Ny
+          {off ? 'Kommer snart' : 'Ny'}
         </Tag>
       </div>
 
       {/* «Velg filer» is a span: the real control is the file input CSS lays over the zone,
           and a button would be a second, dead tab stop. `EXPERIMENTAL_` FileUpload is only a
-          styled div, so a change costs the box, not the flow. */}
+          styled div, so a change costs the box, not the flow. Neutral when off, the colours
+          Designsystemet's read-only state would give it. */}
       <Field>
         <Label>Last opp egne dokumenter</Label>
 
-        <FileUpload data-size="sm" className="own-documents__zone">
+        <FileUpload
+          data-size="sm"
+          data-color={off ? 'neutral' : undefined}
+          className="own-documents__zone"
+        >
           <CloudUpIcon aria-hidden="true" fontSize="1.5rem" />
 
+          {/* Off, it says what is coming, not what to do: a zone that asks for a drop it
+              cannot take invites an action that fails. */}
           <Field.Description>
-            Slipp filer her, eller velg dem selv. Kun PDF og .docx for øyeblikket, maks{' '}
-            {MAX_UPLOAD_TEXT}.
+            {off
+              ? `Snart kan du laste opp PDF og .docx her, maks ${MAX_UPLOAD_TEXT}.`
+              : `Slipp filer her, eller velg dem selv. Kun PDF og .docx for øyeblikket, maks ${MAX_UPLOAD_TEXT}.`}
           </Field.Description>
 
-          <Button asChild variant="secondary" data-size="sm">
+          {/* Off, `aria-disabled` marks «Velg filer» as part of a control that is off. A screen
+              reader hears that from the input, but contrast checkers read it here: text in an
+              inactive control is exempt from 1.4.3, and without it axe flags the dimmed label.
+              Designsystemet dims it from the same attribute. */}
+          <Button asChild variant="secondary" data-size="sm" aria-disabled={off || undefined}>
             <span>Velg filer</span>
           </Button>
 
@@ -155,6 +148,7 @@ export function OwnDocuments() {
             ref={inputRef}
             type="file"
             multiple
+            disabled={off}
             accept={UPLOAD_ACCEPT}
             aria-describedby={listId}
             onChange={(event) => void choose(event.currentTarget.files)}
@@ -162,9 +156,20 @@ export function OwnDocuments() {
         </FileUpload>
       </Field>
 
+      {/* Muted, not red: nothing went wrong that the reader can fix. */}
+      {refusal && (
+        <Paragraph data-size="xs" className="own-documents__refusal">
+          {refusal}
+        </Paragraph>
+      )}
+
       {status}
     </section>
   );
+}
+
+function hasFiles(event: DragEvent<HTMLElement>): boolean {
+  return [...event.dataTransfer.types].includes('Files');
 }
 
 /** What the live region says: a file taken in, there, or refused, never the percentage, which

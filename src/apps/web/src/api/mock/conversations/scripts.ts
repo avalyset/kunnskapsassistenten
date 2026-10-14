@@ -13,7 +13,7 @@ const dssRegnskap: ScriptedConversation = {
   answer: `# Regnskap og bevilgning hos DSS
 
 Jeg finner ingen årsrapport fra Departementenes sikkerhets- og
-serviceorganisasjon for 2022 eller 2023 i dette korpuset. Den nyeste er
+serviceorganisasjon for 2022 eller 2023 blant dokumentene. Den nyeste er
 **årsrapporten for 2025**, og svaret under bygger på den og på et supplerende
 tildelingsbrev for 2026.
 
@@ -80,7 +80,7 @@ for eksempel tildelingsbrev fra de årene?`,
     {
       id: 'dss-2',
       kind: 'search',
-      label: 'Jeg søker i korpuset',
+      label: 'Jeg søker i dokumentene',
       queries: ['DSS årsrapport 2022', 'DSS årsrapport 2023', 'årsregnskap bevilgning'],
       durationMs: 1400,
     },
@@ -89,7 +89,7 @@ for eksempel tildelingsbrev fra de årene?`,
       kind: 'reasoning',
       label: 'Jeg finner ingen årsrapport for de årene',
       detail:
-        'Korpuset har årsrapporten for 2025. Jeg svarer på det som finnes, og sier hva som mangler i stedet for å tie om det.',
+        'Dokumentene har årsrapporten for 2025. Jeg svarer på det som finnes, og sier hva som mangler i stedet for å tie om det.',
       durationMs: 1100,
     },
     {

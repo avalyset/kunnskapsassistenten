@@ -53,7 +53,7 @@ describe('Dine dokumenter', () => {
     render(<OwnDocuments />);
 
     expect(screen.getByRole('heading', { name: 'Dine dokumenter' })).toBeTruthy();
-    expect(screen.getByText('Velg filer')).toBeTruthy();
+    expect(screen.getByText('Velg filer').hasAttribute('aria-disabled')).toBe(false);
     expect(screen.queryByRole('list')).toBeNull();
     // Merkelappen hører til noe som virker; se live-tilfellet under.
     expect(screen.getByText('Ny')).toBeTruthy();
@@ -121,23 +121,75 @@ describe('Dine dokumenter', () => {
     expect(hook.remove).toHaveBeenCalledWith('b');
   });
 
-  it('live: sonen står, men inviterer ikke til noe tjenesten ikke kan', () => {
+  it('uten opplasting: sonen står, men er slått av, og sier «Kommer snart»', () => {
     hook.unavailable = 'unavailable';
     render(<OwnDocuments />);
 
-    // Seksjonen skjules ikke — leseren skal vite at dette finnes.
+    // Seksjonen skjules ikke: leseren skal vite at dette kommer.
     expect(screen.getByRole('heading', { name: 'Dine dokumenter' })).toBeTruthy();
-    // Ordlyden fra designet, og samme setning som binderset i skrivefeltet (#3).
-    expect(screen.getByText('Snart kan du laste opp dokumenter her')).toBeTruthy();
+    // «Kommer snart» der «Ny» står når opplasting virker.
     expect(screen.getByText('Kommer snart')).toBeTruthy();
-
-    // Men ingen kontroll som ikke kan virke, ingen etikett uten noe å navngi,
-    // og ingen «Ny» over den.
-    expect(screen.queryByText('Velg filer')).toBeNull();
-    expect(document.querySelector('input[type="file"]')).toBeNull();
-    expect(screen.queryByText('Last opp egne dokumenter')).toBeNull();
     expect(screen.queryByText('Ny')).toBeNull();
+
+    // Samme sone som når den virker, men slått av: feltet er `disabled`, så
+    // fila kan ikke velges og skjermleseren hører at det er av. Det er også
+    // det filters.css tegner sonen avslått etter; fargene er de nøytrale.
+    const input = document.querySelector<HTMLInputElement>('input[type="file"]');
+    expect(input?.disabled).toBe(true);
+    expect(input?.closest('.own-documents__zone')?.getAttribute('data-color')).toBe('neutral');
+    // «Velg filer» er merket som en del av en kontroll som er av. Skjermleseren
+    // leser det ikke her, men kontrastsjekken gjør: tekst i en inaktiv kontroll
+    // er unntatt fra 1.4.3, og uten merket melder axe den nedtonede teksten.
+    expect(screen.getByText('Velg filer').getAttribute('aria-disabled')).toBe('true');
   });
+
+  it('uten opplasting: sonen sier at det kommer, og ber ikke om et slipp', () => {
+    hook.unavailable = 'unavailable';
+    render(<OwnDocuments />);
+
+    // En sone som ber om noe den ikke kan ta imot, inviterer til noe som
+    // feiler. Typer og størrelse står fortsatt, som når den virker.
+    expect(screen.getByText('Snart kan du laste opp PDF og .docx her, maks 20 MB.')).toBeTruthy();
+    expect(screen.queryByText(/Slipp filer her/u)).toBeNull();
+  });
+
+  it('uten opplasting: en fil som slippes, avvises med ord, og nettleseren åpner den ikke', () => {
+    hook.unavailable = 'unavailable';
+    const { container } = render(<OwnDocuments />);
+    const section = container.querySelector('section') as HTMLElement;
+    const field = document.querySelector('ds-field, .ds-field') ?? section;
+    const files = [new File(['a'], 'en.pdf', { type: 'application/pdf' })];
+    const dataTransfer = { types: ['Files'], files };
+
+    // Sonen tar ikke imot pekeren, så slippet treffer feltet rundt og bobler
+    // opp. Uten `preventDefault` på begge åpner nettleseren fila i en ny fane.
+    expect(fireEvent.dragOver(field, { dataTransfer })).toBe(false);
+    expect(fireEvent.drop(field, { dataTransfer })).toBe(false);
+
+    const said = 'Opplasting er ikke tilgjengelig i denne tjenesten ennå.';
+    expect(screen.getByText(said, { selector: 'p' })).toBeTruthy();
+    expect(container.querySelector('output.ds-sr-only')?.textContent).toBe(said);
+    expect(hook.upload).not.toHaveBeenCalled();
+  });
+
+  it('lar et slipp uten filer være, og et slipp der opplasting virker', () => {
+    hook.unavailable = 'unavailable';
+    const { container, unmount } = render(<OwnDocuments />);
+    const text = { dataTransfer: { types: ['text/plain'], files: [] } };
+
+    // Tekst som dras over panelet, er ikke et forsøk på å laste opp.
+    expect(fireEvent.drop(container.querySelector('section') as HTMLElement, text)).toBe(true);
+    expect(screen.queryByText(/ikke tilgjengelig/u)).toBeNull();
+    unmount();
+
+    // Der opplasting virker, tar filfeltet slippet selv; seksjonen skal ikke
+    // stoppe det.
+    hook.unavailable = undefined;
+    const { container: on } = render(<OwnDocuments />);
+    const files = { dataTransfer: { types: ['Files'], files: [] } };
+    expect(fireEvent.dragOver(on.querySelector('section') as HTMLElement, files)).toBe(true);
+  });
+
   it('sier fra i en live-region når en fil kommer inn, blir klar og feiler', () => {
     /*
      * WCAG 4.1.3: raden byttet tekst i stillhet, så en skjermleserbruker fikk

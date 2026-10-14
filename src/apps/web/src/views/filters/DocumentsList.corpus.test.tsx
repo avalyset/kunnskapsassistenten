@@ -72,11 +72,11 @@ describe('overskriften over dokumentlista', () => {
     expect(screen.queryByRole('heading', { name: 'Fra Kudos' })).toBeNull();
   });
 
-  it('sier «standardkorpuset» når ingen er kjent, som korpuslinja', () => {
+  it('sier «standardsamlingen» når ingen er kjent, som korpuslinja', () => {
     corpus.option = undefined;
     renderList();
 
-    expect(screen.getByRole('heading', { level: 4, name: 'Fra standardkorpuset' })).toBeTruthy();
+    expect(screen.getByRole('heading', { level: 4, name: 'Fra standardsamlingen' })).toBeTruthy();
   });
 
   it('lar lista hete det samme som overskriften', () => {

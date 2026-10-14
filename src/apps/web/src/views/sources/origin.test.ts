@@ -65,7 +65,7 @@ describe('corpusKeyFor', () => {
   });
 
   test('vet ingen av dem noe, sier den det', () => {
-    // `corpusDisplayNameFor` gjør undefined om til «standardkorpuset».
+    // `corpusDisplayNameFor` gjør undefined om til «standardsamlingen».
     expect(corpusKeyFor(undefined, undefined)).toBeUndefined();
   });
 });

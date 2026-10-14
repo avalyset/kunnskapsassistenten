@@ -5,6 +5,7 @@ import { infoPageElement, infoPages } from './routes/info/infoPages';
 import { NewConversation } from './routes/NewConversation';
 import { NotFound } from './routes/NotFound';
 import { PreviousClientThread } from './routes/PreviousClientThread';
+import { SETTINGS_PATH, SettingsPage } from './routes/settings/SettingsPage';
 import { Thread } from './routes/Thread';
 
 /**
@@ -25,6 +26,7 @@ export function App() {
           {infoPages.map((page) => (
             <Route key={page.path} path={page.path} element={infoPageElement(page)} />
           ))}
+          <Route path={SETTINGS_PATH} element={<SettingsPage />} />
           <Route path="*" element={<NotFound />} />
         </Route>
       </Routes>

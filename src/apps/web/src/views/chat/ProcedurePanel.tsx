@@ -1,6 +1,6 @@
-import { Details, Paragraph, Spinner, Tag } from '@digdir/designsystemet-react';
+import { Card, Details, Paragraph, Spinner, Tag } from '@digdir/designsystemet-react';
 import { useId, useState, useSyncExternalStore } from 'react';
-import { RobotIcon } from '@navikt/aksel-icons';
+import { RobotSmileIcon } from '@navikt/aksel-icons';
 import type { RetrievalDetails, ThinkingStep } from '../../model';
 
 /** Where the procedure has room to stand open. Written here and not imported
@@ -67,72 +67,81 @@ export function ProcedurePanel({ steps, status, retrieval, question }: Procedure
   const keywords = worthShowing(retrieval?.keywords ?? [], question);
   const lastIndex = steps.length - 1;
 
+  // Details in a Card, as Designsystemet shows it («Du kan bruke details i eit
+  // kort for å få ramme rundt innhaldet»): the card gives the frame and the
+  // rounded corners, and a tinted card makes the Details in it tinted.
   return (
-    <Details
-      className="ka-procedure"
-      data-color="neutral"
-      onToggle={(event) => setChosen((event.currentTarget as HTMLDetailsElement).open)}
-      open={open}
-    >
-      <Details.Summary>
-        <span className="ka-procedure__summary">
-          <RobotIcon aria-hidden className="ka-procedure__icon" />
-          Fremgangsmåte
-        </span>
-      </Details.Summary>
+    <Card className="ka-procedure-card" data-color="neutral" variant="tinted">
+      <Details
+        className="ka-procedure"
+        onToggle={(event) => setChosen((event.currentTarget as HTMLDetailsElement).open)}
+        open={open}
+      >
+        <Details.Summary>
+          <span className="ka-procedure__summary">
+            <RobotSmileIcon aria-hidden className="ka-procedure__icon" />
+            Fremgangsmåte
+          </span>
+        </Details.Summary>
 
-      <Details.Content>
-        <div className="ka-procedure__block">
-          <Paragraph className="ka-procedure__label" data-size="sm">
-            {thinking ? (
-              <>
-                <Spinner aria-hidden="true" data-size="xs" />
-                Tenker …
-              </>
-            ) : (
-              'Tenkte'
-            )}
-          </Paragraph>
-          <ol className="ka-procedure__steps">
-            {steps.map((step, index) => {
-              // The step being worked on right now. `aria-current` says so
-              // without a live region, so a reader who goes looking is told
-              // where the agent is and nobody is interrupted who is not.
-              const ongoing = thinking && index === lastIndex;
-              return (
-                <li
-                  aria-current={ongoing ? 'step' : undefined}
-                  className="ka-procedure__step"
-                  data-ongoing={ongoing ? 'true' : undefined}
-                  key={step.id}
-                >
-                  <Paragraph variant="long">{step.label}</Paragraph>
-                </li>
-              );
-            })}
-          </ol>
-        </div>
+        <Details.Content>
+          <div className="ka-procedure__block">
+            <Paragraph className="ka-procedure__label" data-size="sm">
+              {thinking ? (
+                <>
+                  <Spinner aria-hidden="true" data-size="xs" />
+                  Tenker …
+                </>
+              ) : (
+                'Tenkte'
+              )}
+            </Paragraph>
+            <ol className="ka-procedure__steps">
+              {steps.map((step, index) => {
+                // The step being worked on right now. `aria-current` says so
+                // without a live region, so a reader who goes looking is told
+                // where the agent is and nobody is interrupted who is not.
+                const ongoing = thinking && index === lastIndex;
+                return (
+                  <li
+                    aria-current={ongoing ? 'step' : undefined}
+                    className="ka-procedure__step"
+                    data-ongoing={ongoing ? 'true' : undefined}
+                    key={step.id}
+                  >
+                    <Paragraph variant="long">{step.label}</Paragraph>
+                  </li>
+                );
+              })}
+            </ol>
+          </div>
 
-        {/* The words the search actually ran on. Plain Tags, since they are
+          {/* The words the search actually ran on. Plain Tags, since they are
             not clickable, and the list carries the lead-in as its accessible
             name, so jumping by list hears what the list is. */}
-        {keywords.length ? (
-          <div className="ka-procedure__block ka-procedure__block--ruled">
-            <Paragraph className="ka-procedure__label" data-size="sm" id={keywordLabelId}>
-              Nøkkelord som ble brukt i søket
-            </Paragraph>
-            <ul aria-labelledby={keywordLabelId} className="ka-procedure__keywords">
-              {keywords.map((keyword) => (
-                <li key={keyword}>
-                  <Tag className="ka-tag--wrapping" data-color="neutral" data-size="sm">
-                    {keyword}
-                  </Tag>
-                </li>
-              ))}
-            </ul>
-          </div>
-        ) : null}
-      </Details.Content>
-    </Details>
+          {keywords.length ? (
+            <div className="ka-procedure__block ka-procedure__block--ruled">
+              <Paragraph className="ka-procedure__label" data-size="sm" id={keywordLabelId}>
+                Nøkkelord som ble brukt i søket
+              </Paragraph>
+              <ul aria-labelledby={keywordLabelId} className="ka-procedure__keywords">
+                {keywords.map((keyword) => (
+                  <li key={keyword}>
+                    <Tag
+                      className="ka-tag--wrapping"
+                      data-color="info"
+                      data-size="sm"
+                      variant="outline"
+                    >
+                      {keyword}
+                    </Tag>
+                  </li>
+                ))}
+              </ul>
+            </div>
+          ) : null}
+        </Details.Content>
+      </Details>
+    </Card>
   );
 }

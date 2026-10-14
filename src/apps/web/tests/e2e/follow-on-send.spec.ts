@@ -9,7 +9,7 @@ import { ANSWER_TIMEOUT, MOCK, composer, settled } from './helpers';
  * At the bottom, or so near it that it looks like the bottom, the column
  * follows the question and the answer down. Further up it stands where it is,
  * so a reader who sends and goes on reading an older answer is not taken away
- * from it, and «Bla til nederst» is there instead.
+ * from it, and «Bla til bunnen» is there instead.
  *
  * «Near» is 80 px: a line of the answer (30.6 px) and half a wheel step
  * (100 px in Chromium). jsdom has no layout, so the unit tests set the
@@ -48,7 +48,7 @@ for (const [width, height] of [
       await settled(page, page.locator('.main'));
     });
 
-    test('midt i tråden står kolonnen, og «Bla til nederst» vises', MOCK, async ({ page }) => {
+    test('midt i tråden står kolonnen, og «Bla til bunnen» vises', MOCK, async ({ page }) => {
       const main = page.locator('.main');
       await main.evaluate((element) => {
         element.scrollTop = Math.round((element.scrollHeight - element.clientHeight) / 2);
@@ -63,8 +63,8 @@ for (const [width, height] of [
         await main.evaluate((element) => element.scrollTop),
         'kolonnen skal stå der leseren leste',
       ).toBe(before);
-      await expect(page.getByRole('button', { name: 'Bla til nederst' })).toBeVisible();
-      await expectNoAxeViolations(page, `«Bla til nederst» etter sending midt i tråden, ${width}`);
+      await expect(page.getByRole('button', { name: 'Bla til bunnen' })).toBeVisible();
+      await expectNoAxeViolations(page, `«Bla til bunnen» etter sending midt i tråden, ${width}`);
     });
 
     test('fra bunnen følger kolonnen spørsmålet og svaret ned', MOCK, async ({ page }) => {
@@ -75,7 +75,7 @@ for (const [width, height] of [
       await send(page);
 
       expect(await distanceToBottom(main), 'kolonnen skal stå nederst').toBeLessThanOrEqual(1);
-      await expect(page.getByRole('button', { name: 'Bla til nederst' })).toHaveCount(0);
+      await expect(page.getByRole('button', { name: 'Bla til bunnen' })).toHaveCount(0);
     });
 
     test('30 px over bunnen, som ser ut som bunnen, følger den også', MOCK, async ({ page }) => {
@@ -88,7 +88,7 @@ for (const [width, height] of [
       await send(page);
 
       expect(await distanceToBottom(main), 'kolonnen skal stå nederst').toBeLessThanOrEqual(1);
-      await expect(page.getByRole('button', { name: 'Bla til nederst' })).toHaveCount(0);
+      await expect(page.getByRole('button', { name: 'Bla til bunnen' })).toHaveCount(0);
     });
   });
 }

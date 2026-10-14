@@ -814,6 +814,10 @@ test.describe('layouten', () => {
  * One pixel of slack, because the side padding is in `vw` and lands on half
  * pixels at 768 and 440.
  *
+ * Since 2026-10-13 the front page is the exception: the field stands over
+ * the suggestions, out of its sticky place, and the disclaimer takes the foot
+ * of the column. That test holds the order and the foot instead.
+ *
  * The conversation is measured scrolled to the top as well as to the bottom.
  * At the bottom a field that is not sticky at all would still pass; at the
  * top it is the stickiness alone that holds it there.
@@ -838,20 +842,35 @@ async function scrollAnswerColumn(page: Page, to: 'top' | 'bottom'): Promise<voi
   }, to);
 }
 
-test.describe('skrivefeltet står i bunnen av vinduet', () => {
+test.describe('skrivefeltet står i bunnen av vinduet i en samtale', () => {
   for (const surface of SURFACES) {
     const size = `${surface.width} × ${surface.height}`;
 
-    test(`på startsiden, ${size}`, async ({ page }, testInfo) => {
+    test(`på startsiden står det over forslagene, ${size}`, async ({ page }, testInfo) => {
       covers(testInfo, 'skrivefeltet i bunnen av vinduet');
       await page.setViewportSize(surface);
       await page.goto('/');
       await expect(page.locator('.ka-composer-area')).toBeVisible();
 
-      await expect
-        .poll(() => composerAreaBottom(page), { message: 'bunnkanten mot vinduets høyde' })
-        .toBeGreaterThanOrEqual(surface.height - 1);
-      expect(await composerAreaBottom(page)).toBeLessThanOrEqual(surface.height + 1);
+      // Nothing to scroll behind the field yet, so on the front page it stands
+      // between the greeting and the suggestions, and the disclaimer takes the
+      // foot of the column with the shell's end padding under it.
+      const fieldBottom = await composerAreaBottom(page);
+      const suggestionsTop = await page
+        .locator('.ka-kickstarters')
+        .evaluate((list) => Math.round(list.getBoundingClientRect().top));
+      expect(fieldBottom, 'feltet over forslagene').toBeLessThanOrEqual(suggestionsTop);
+
+      await scrollAnswerColumn(page, 'bottom');
+      const foot = await page.locator('.main').evaluate((main) => {
+        const disclaimer = main.querySelector('.ka-chat-disclaimer')!.getBoundingClientRect();
+        const box = main.getBoundingClientRect();
+        return {
+          gap: Math.round(box.bottom - disclaimer.bottom),
+          padding: Math.round(parseFloat(getComputedStyle(main).paddingBlockEnd)),
+        };
+      });
+      expect(Math.abs(foot.gap - foot.padding), 'forbeholdet i bunnen').toBeLessThanOrEqual(1);
     });
 
     test(

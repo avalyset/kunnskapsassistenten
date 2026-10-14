@@ -687,24 +687,21 @@ under `ka.display-level`, og `standard` er det alle får uten å velge noe.
 | `standard`  | «Fremgangsmåte», åpen: stegene i klartekst og søkeordene               | ingenting ekstra                       |
 | `detaljert` | tenkepanelet: «Tenkte i N sekunder», stegenes detaljer og søkestrenger | «Fremgangsmåte» med treff og nøkkelord |
 
-Nivået velges i en skjult meny. **Legg `#innstillinger` til i adressen**, for
-eksempel `http://localhost:5173/#innstillinger`, så åpner den seg; å lukke den
-tar hashen ut igjen. Ingen knapp peker på den, med vilje: standard er standard,
-og den som vil ha det tekniske, er en utvikler som har fått adressen.
-
-Hash og ikke spørring, fordi en hash aldri når serveren, ikke bytter rute, og
-ikke følger med en lenke til en tråd noen limer inn et annet sted. Bakgrunnen
-står i `src/decisions/0007-display-level.md`; koden ligger i
-`src/views/chat/displayLevel.ts`, `ProcedurePanel.tsx` og `SettingsDialog.tsx`.
+Nivået velges på **Innstillinger**, som er lenket først i foten av
+navigasjonspanelet (`/innstillinger`). Den gamle adressen `#innstillinger`
+lander der. Bakgrunnen står i `src/decisions/0007-display-level.md`; koden
+ligger i `src/views/chat/displayLevel.ts`, `ProcedurePanel.tsx` og
+`src/routes/settings/SettingsPage.tsx`.
 
 ### Foten i navigasjonspanelet
 
-Samme meny holder et valg til, fra issue 123:
+Innstillinger har et valg til, fra issue 123, men bare når appen kjører lokalt
+(`npm run dev`). Det er for oss som lager appen, ikke for leseren:
 
-| Valg         | Hva som skjer                                                                             |
-| ------------ | ----------------------------------------------------------------------------------------- |
-| `Festet`     | Standard. Lenkene og fargemodus står under rullefeltet, uansett hvor langt du har rullet. |
-| `Ruller med` | Alt ligger i én kolonne. Foten står sist i rullefeltet og følger lista ned.               |
+| Valg         | Hva som skjer                                                                         |
+| ------------ | ------------------------------------------------------------------------------------- |
+| `Festet`     | Lenkene står under rullefeltet, uansett hvor langt du har rullet.                     |
+| `Ruller med` | Standard. Alt ligger i én kolonne. Foten står sist i rullefeltet og følger lista ned. |
 
 Valget er her for å kunne sammenlignes, ikke fordi det er avgjort. Målingene
 av begge står i PR-en som la det inn. Koden ligger i

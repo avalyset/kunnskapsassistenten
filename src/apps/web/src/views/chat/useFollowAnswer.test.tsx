@@ -167,7 +167,7 @@ describe('useFollowAnswer', () => {
     expect(col.element.scrollTop).toBe(580);
   });
   /*
-   * «Bla til nederst» is drawn from what this returns. While the column is
+   * «Bla til bunnen» is drawn from what this returns. While the column is
    * held, a paragraph that has arrived and not yet been followed is not the
    * reader leaving the bottom: the button came and went 90 times in three
    * answers at 1440 × 900 when it had its own measurement.
@@ -234,7 +234,7 @@ describe('useFollowAnswer', () => {
       expect(col.element.scrollTop).toBe(840);
     });
 
-    it('stands still in the middle of the thread, and offers «Bla til nederst»', () => {
+    it('stands still in the middle of the thread, and offers «Bla til bunnen»', () => {
       const col = column(3000, 1000);
       const view = render(<Follow element={col.element} answering={false} />);
 

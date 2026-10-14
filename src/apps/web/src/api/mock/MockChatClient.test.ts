@@ -347,7 +347,7 @@ describe('MockChatClient husker samtalen', () => {
 
     expect(answer?.status).toBe('aborted');
     expect(answer?.thinkingSteps).toHaveLength(1);
-    expect(answer?.thinkingSteps?.[0]?.label).toBe('Jeg søker i korpuset');
+    expect(answer?.thinkingSteps?.[0]?.label).toBe('Jeg søker i dokumentene');
   });
 
   it('lar en stoppet avklaring beholde sitt', async () => {

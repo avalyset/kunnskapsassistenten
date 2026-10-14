@@ -71,10 +71,6 @@ const STORED_WIDE_LAYOUT = JSON.stringify({
   sourcesDismissed: false,
 });
 
-/** A file name with no space in it, longer than a phone is wide. */
-const LONG_FILE_NAME =
-  'Arsrapport_2024_Kommunikasjonsmyndigheten_endelig_versjon_med_vedlegg_og_merknader_fra_styret_2025-03-14_v7_godkjent.pdf';
-
 type Fit = {
   html: { x: number; y: number };
   moved: { x: number; y: number };
@@ -467,13 +463,9 @@ for (const flags of FLAG_STATES) {
           await closeOverlay(page, page.locator('dialog[open]'));
         }
 
-        await page.locator('.ka-composer__file-input').setInputFiles({
-          name: LONG_FILE_NAME,
-          mimeType: 'application/pdf',
-          buffer: Buffer.from('%PDF-1.4\n%%EOF\n'),
-        });
-        await expect(page.locator('.ka-attachments')).toBeVisible();
-        expectFits(await measure(page), 'vedlegg med et langt filnavn');
+        // No attachment with a long name: mock has no upload until a backend does
+        // (src/api/uploadFactory.ts), so the paperclip is not drawn. Put the step
+        // back with it.
 
         await page.evaluate(
           (stored) => localStorage.setItem('ka.layout.v1', stored),

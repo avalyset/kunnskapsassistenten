@@ -185,7 +185,7 @@ function failureThinkingStep(code: ChatErrorCode, query: string, thinkingMs: num
   return {
     id: 'mock-feil-1',
     kind: 'search',
-    label: 'Jeg søker i korpuset',
+    label: 'Jeg søker i dokumentene',
     queries: [query],
     ...(code === 'no-hits' ? { detail: 'Ingen utdrag kom over relevansterskelen.' } : {}),
     durationMs: thinkingMs,

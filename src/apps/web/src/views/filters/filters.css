@@ -39,17 +39,11 @@
   inline-size: 100%;
 }
 
-/* The corpus line and its documents as one block, a small step apart, so the
-   line does not hang between the divider and «Dokumenter». */
+/* The documents block below the divider; the corpus line sits inside it, under
+   «Dokumenter» (DocumentsList.tsx). One child, so only the width is set: the
+   view lays out with `align-items: start`. */
 .filters-view__documents {
-  display: flex;
-  flex-direction: column;
-  gap: var(--ds-size-3);
   inline-size: 100%;
-}
-
-.filters-view__documents[hidden] {
-  display: none;
 }
 
 /* Muted: context for the documents. A flex row, so «Vis mer» ends the name's
@@ -232,7 +226,7 @@
   display: none;
 }
 
-/* The zone is Designsystemet's `ds-file-upload`; nothing here redraws it. */
+/* The zone is Designsystemet's `ds-file-upload`; only its switched-off state is set here. */
 .own-documents__heading {
   display: flex;
   flex-wrap: wrap;
@@ -240,34 +234,15 @@
   gap: var(--ds-size-2);
 }
 
-/* Not Card's tinted variant, which matches the zone inside. The default variant
-   sets `background` directly, not through a variable, so this does too. No
-   child margin, so the section's gap is the one distance. */
-.own-documents--unavailable {
-  --dsc-card-content-margin-block: 0;
-  --dsc-card-border-color: transparent;
-
-  gap: var(--ds-size-3);
-  background: var(--ds-color-background-tinted);
-}
-
-/* Across the box: Designsystemet gives a tag `width: max-content`, which keeps
-   the column from stretching it. More air under it than over the zone: it is a
-   note on the whole box. */
-.own-documents__soon {
-  inline-size: auto;
-  gap: var(--ds-size-1);
-  margin-block-end: var(--ds-size-3);
-}
-
-/* Switched off: no hover change, a subtle dash (not a control, so its edge
-   needs no 3:1), and the arrow, because Designsystemet's `:hover` sets a hand. */
-.own-documents__zone--unavailable {
+/* Switched off (OwnDocuments.tsx): Designsystemet's read-only look, from the input's own
+   `disabled`. Its rule keys on `[readonly]`, which a file input does not have, and the colours
+   come from `data-color="neutral"` on the zone. No pointer, as there: the zone takes no click,
+   and its `:hover` would set a hand. Our icon keeps the upload arrow. */
+.own-documents__zone:has(> input:disabled) {
   --dsc-file-upload-background: var(--ds-color-surface-tinted);
   --dsc-file-upload-background--hover: var(--ds-color-surface-tinted);
-  --dsc-file-upload-border-color: var(--ds-color-border-subtle);
 
-  cursor: default;
+  pointer-events: none;
 }
 
 .own-documents__list {
@@ -312,7 +287,8 @@
   overflow-wrap: anywhere;
 }
 
-.own-documents__meta {
+.own-documents__meta,
+.own-documents__refusal {
   color: var(--ds-color-neutral-text-subtle);
 }
 

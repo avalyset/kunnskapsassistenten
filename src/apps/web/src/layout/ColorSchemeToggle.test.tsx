@@ -1,11 +1,8 @@
 import { act, fireEvent, render, screen, within } from '@testing-library/react';
-import { MemoryRouter, Route, Routes } from 'react-router';
 import { beforeEach, describe, expect, it } from 'vitest';
-import { resetViewport, setViewportWidth } from '../test/matchMedia';
+import { resetViewport } from '../test/matchMedia';
 import { ColorSchemeToggle } from './ColorSchemeToggle';
 import { setColorScheme, STORAGE_KEY } from './colorScheme';
-import { LayoutProvider } from './LayoutProvider';
-import { Shell } from './Shell';
 
 /**
  * Issue 85: lys og mørk modus valgt av leseren, ikke bare fulgt fra
@@ -73,45 +70,5 @@ describe('ColorSchemeToggle', () => {
 
     expect(scheme()).toBe('dark');
     expect((radio('Mørk') as HTMLInputElement).checked).toBe(true);
-  });
-});
-
-describe('hvor den står', () => {
-  function open(width: number) {
-    setViewportWidth(width);
-    render(
-      <MemoryRouter initialEntries={['/']}>
-        <LayoutProvider>
-          <Routes>
-            <Route path="/" element={<Shell />} />
-          </Routes>
-        </LayoutProvider>
-      </MemoryRouter>,
-    );
-  }
-
-  it('står nederst i navigasjonspanelet, og bare der', () => {
-    open(1440);
-
-    const nav = screen.getByRole('navigation', { name: 'Tråder og filter' });
-    expect(within(nav).getByRole('group', { name: 'Fargemodus' })).toBeDefined();
-    expect(screen.getAllByRole('group', { name: 'Fargemodus' })).toHaveLength(1);
-  });
-
-  it('står ikke på skinnen, der tre valg ikke får plass', () => {
-    open(1440);
-
-    fireEvent.click(screen.getByRole('button', { name: 'Skjul tråder og filter' }));
-
-    expect(screen.queryByRole('group', { name: 'Fargemodus' })).toBeNull();
-  });
-
-  it('står nederst i skuffen på en smal skjerm', () => {
-    open(440);
-
-    fireEvent.click(screen.getByRole('button', { name: 'Vis tråder og filter' }));
-
-    const drawer = screen.getByRole('dialog', { name: 'Tråder og filter' });
-    expect(within(drawer).getByRole('group', { name: 'Fargemodus' })).toBeDefined();
   });
 });

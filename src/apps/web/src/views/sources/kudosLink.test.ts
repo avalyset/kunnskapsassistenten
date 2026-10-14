@@ -52,7 +52,7 @@ describe('kudosLinkLabel navngir korpuset', () => {
 
 describe('lenketeksten uten et korpus å navngi', () => {
   test('sier bare hva den gjør', () => {
-    // «Les dokumentet på standardkorpuset» er et klossete navn på en kontroll.
+    // «Les dokumentet på standardsamlingen» er et klossete navn på en kontroll.
     // Fraskrivelsen tar stedfortrederen, lenka gjør det ikke (dirigenten 21.09).
     expect(kudosLinkLabel(LANDING, undefined, undefined)).toBe('Les dokumentet');
     expect(kudosLinkLabel(`${FILE}#page=41`, 41, undefined)).toBe('Les side 41');
