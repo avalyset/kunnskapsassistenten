@@ -84,47 +84,10 @@ export function OwnDocuments() {
     </>
   );
 
-  if (unavailable !== undefined) {
-    // The same zone as when upload works, switched off: the reader sees what is coming, and
-    // «Kommer snart» stands where «Ny» would. Designsystemet's read-only state greys the zone
-    // and takes the pointer away; our own icon keeps the upload arrow, where Designsystemet
-    // would draw a blocked sign. The input is `disabled`, so it is out of the tab order;
-    // `readOnly` is what that state keys on.
-    return (
-      <section className="documents-list own-documents">
-        <div className="own-documents__heading">
-          <Heading level={4} data-size="2xs">
-            Dine dokumenter
-          </Heading>
-
-          <Tag data-color="info" data-size="sm">
-            Kommer snart
-          </Tag>
-        </div>
-
-        <Field>
-          <Label>Last opp egne dokumenter</Label>
-
-          <FileUpload data-size="sm" className="own-documents__zone">
-            <CloudUpIcon aria-hidden="true" fontSize="1.5rem" />
-
-            <Field.Description>
-              Slipp filer her, eller velg dem selv. Kun PDF og .docx for øyeblikket, maks{' '}
-              {MAX_UPLOAD_TEXT}.
-            </Field.Description>
-
-            <Button asChild variant="secondary" data-size="sm" aria-disabled="true">
-              <span>Velg filer</span>
-            </Button>
-
-            <input type="file" disabled readOnly accept={UPLOAD_ACCEPT} />
-          </FileUpload>
-        </Field>
-
-        {status}
-      </section>
-    );
-  }
+  // No mode has an upload endpoint yet, so this is the zone the reader sees: the same zone as
+  // when upload works, switched off, so the reader sees what is coming. The input is `disabled`,
+  // which takes it out of the tab order, and filters.css draws the zone off from that.
+  const off = unavailable !== undefined;
 
   return (
     <section className="documents-list own-documents">
@@ -134,19 +97,24 @@ export function OwnDocuments() {
           Dine dokumenter
         </Heading>
 
-        {/* «Ny» only where upload works; the switched-off zone has «Kommer snart» here. */}
+        {/* «Ny» only where upload works. */}
         <Tag data-color="info" data-size="sm">
-          Ny
+          {off ? 'Kommer snart' : 'Ny'}
         </Tag>
       </div>
 
       {/* «Velg filer» is a span: the real control is the file input CSS lays over the zone,
           and a button would be a second, dead tab stop. `EXPERIMENTAL_` FileUpload is only a
-          styled div, so a change costs the box, not the flow. */}
+          styled div, so a change costs the box, not the flow. Neutral when off, the colours
+          Designsystemet's read-only state would give it. */}
       <Field>
         <Label>Last opp egne dokumenter</Label>
 
-        <FileUpload data-size="sm" className="own-documents__zone">
+        <FileUpload
+          data-size="sm"
+          data-color={off ? 'neutral' : undefined}
+          className="own-documents__zone"
+        >
           <CloudUpIcon aria-hidden="true" fontSize="1.5rem" />
 
           <Field.Description>
@@ -154,7 +122,11 @@ export function OwnDocuments() {
             {MAX_UPLOAD_TEXT}.
           </Field.Description>
 
-          <Button asChild variant="secondary" data-size="sm">
+          {/* Off, `aria-disabled` marks «Velg filer» as part of a control that is off. A screen
+              reader hears that from the input, but contrast checkers read it here: text in an
+              inactive control is exempt from 1.4.3, and without it axe flags the dimmed label.
+              Designsystemet dims it from the same attribute. */}
+          <Button asChild variant="secondary" data-size="sm" aria-disabled={off || undefined}>
             <span>Velg filer</span>
           </Button>
 
@@ -162,6 +134,7 @@ export function OwnDocuments() {
             ref={inputRef}
             type="file"
             multiple
+            disabled={off}
             accept={UPLOAD_ACCEPT}
             aria-describedby={listId}
             onChange={(event) => void choose(event.currentTarget.files)}

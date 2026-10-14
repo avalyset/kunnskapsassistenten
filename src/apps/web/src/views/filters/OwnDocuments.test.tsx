@@ -53,7 +53,7 @@ describe('Dine dokumenter', () => {
     render(<OwnDocuments />);
 
     expect(screen.getByRole('heading', { name: 'Dine dokumenter' })).toBeTruthy();
-    expect(screen.getByText('Velg filer')).toBeTruthy();
+    expect(screen.getByText('Velg filer').hasAttribute('aria-disabled')).toBe(false);
     expect(screen.queryByRole('list')).toBeNull();
     // Merkelappen hører til noe som virker; se live-tilfellet under.
     expect(screen.getByText('Ny')).toBeTruthy();
@@ -131,10 +131,15 @@ describe('Dine dokumenter', () => {
     expect(screen.getByText('Kommer snart')).toBeTruthy();
     expect(screen.queryByText('Ny')).toBeNull();
 
-    // Samme sone som når den virker, men slått av: fila kan ikke velges, og
-    // knappen sier at den er av.
+    // Samme sone som når den virker, men slått av: feltet er `disabled`, så
+    // fila kan ikke velges og skjermleseren hører at det er av. Det er også
+    // det filters.css tegner sonen avslått etter; fargene er de nøytrale.
     const input = document.querySelector<HTMLInputElement>('input[type="file"]');
     expect(input?.disabled).toBe(true);
+    expect(input?.closest('.own-documents__zone')?.getAttribute('data-color')).toBe('neutral');
+    // «Velg filer» er merket som en del av en kontroll som er av. Skjermleseren
+    // leser det ikke her, men kontrastsjekken gjør: tekst i en inaktiv kontroll
+    // er unntatt fra 1.4.3, og uten merket melder axe den nedtonede teksten.
     expect(screen.getByText('Velg filer').getAttribute('aria-disabled')).toBe('true');
   });
 

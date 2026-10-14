@@ -232,12 +232,23 @@
   display: none;
 }
 
-/* The zone is Designsystemet's `ds-file-upload`; nothing here redraws it. */
+/* The zone is Designsystemet's `ds-file-upload`; only its switched-off state is set here. */
 .own-documents__heading {
   display: flex;
   flex-wrap: wrap;
   align-items: center;
   gap: var(--ds-size-2);
+}
+
+/* Switched off (OwnDocuments.tsx): Designsystemet's read-only look, from the input's own
+   `disabled`. Its rule keys on `[readonly]`, which a file input does not have, and the colours
+   come from `data-color="neutral"` on the zone. No pointer, as there: the zone takes no click,
+   and its `:hover` would set a hand. Our icon keeps the upload arrow. */
+.own-documents__zone:has(> input:disabled) {
+  --dsc-file-upload-background: var(--ds-color-surface-tinted);
+  --dsc-file-upload-background--hover: var(--ds-color-surface-tinted);
+
+  pointer-events: none;
 }
 
 .own-documents__list {
