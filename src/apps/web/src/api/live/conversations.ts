@@ -238,7 +238,8 @@ export function threadDetailFrom(
   // useThreadFilterLock.ts) and goes on each answer. It is the filter the thread was started with,
   // and the backend keeps none per question: an answer asked after the reader changed the filter
   // is wrong here until this browser's record replaces it (`#withRemembered` in
-  // LiveChatClient.ts). On another device, or after the browser was cleared, it stays wrong.
+  // LiveChatClient.ts). On another device, or after the browser was cleared, it stays wrong
+  // (headless-rag #40).
   const turns = messagesFromApi(messages, thread.corpusKey).map((message) =>
     filter && message.role === 'assistant' ? { ...message, filter } : message,
   );
