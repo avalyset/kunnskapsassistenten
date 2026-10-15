@@ -49,6 +49,9 @@ param datasetConfigKey string = 'kudos'
 @description('Tenant og datasettnøkkel er begge eller ingen: backenden forkaster én alene.')
 param tenant string = 'digdir'
 
+@description('MCP-verktøyet live spør. Standard er headless-rag sitt; genki kaller sitt `kunnskapsassistenten__default`.')
+param tool string = 'builtin.agent-rag-agent__agent-rag-graph-bundled'
+
 @description('Korpusene velgeren tilbyr: "nøkkel=Navn|beskrivelse;nøkkel=Navn". Tom = ett korpus og ingen velger.')
 param datasets string = ''
 
@@ -179,6 +182,7 @@ var plainEnv = filter(
     { name: 'DIGDIR_API_BASE', value: digdirApiBase }
     { name: 'VITE_KA_TENANT', value: tenant }
     { name: 'VITE_KA_DATASET_CONFIG_KEY', value: datasetConfigKey }
+    { name: 'VITE_KA_TOOL', value: tool }
     { name: 'VITE_KA_DATASETS', value: datasets }
     { name: 'VITE_KA_FILTER_FIELDS', value: filterFields }
     { name: 'VITE_KA_DOCUMENT_URLS', value: documentUrls }
