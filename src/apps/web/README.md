@@ -18,6 +18,11 @@ Navnereglene står under [Naming](#naming), og kortversjonen av arbeidsreglene i
 
 ## Kom i gang
 
+Klienten mot den delte backenden er `npm run web` fra `src/`. Den går i live og
+leser `.env.local` her, som lages fra `.env.example` med de to nøklene fylt inn.
+Steg for steg, også for deg som ikke er utvikler:
+[Kjør lokalt](docs/kjor-lokalt.md).
+
 I monorepoet står oppskriften i
 [`src/README.md`, «Komme i gang»](../../README.md#komme-i-gang): Node 24,
 `npm ci` i `src/`, BFF-en og klienten, testene og bildet. Skriptene under
@@ -877,25 +882,16 @@ rekker å trykke. En mock som strømmer momentant strømmer ikke.
 
 ## Ekte backend
 
-Uten `VITE_API_MODE` går `npm run dev` i live: `createChatClient()` gir
-`LiveChatClient`, og dev-serveren er proxyen som holder nøkkelen. Kopier
-`.env.example` til `.env.local` og fyll inn backenden, korpuset og Typesense:
-
-```sh
-KA_API_URL=http://localhost:8080
-KA_API_KEY=
-VITE_KA_TENANT=
-VITE_KA_DATASET_CONFIG_KEY=
-TYPESENSE_URL=
-TYPESENSE_API_KEY=
-KA_FACET_COLLECTIONS=
-KA_CHUNK_COLLECTIONS=
-VITE_KA_FILTER_FIELDS=
-```
+`npm run web` fra `src/` går i live, og det gjør `npm run dev` her også uten
+`VITE_API_MODE`: `createChatClient()` gir `LiveChatClient`, og dev-serveren er
+proxyen som holder nøkkelen. Kopier `.env.example` til `.env.local` og fyll inn
+de to nøklene, `KA_API_KEY` og `TYPESENSE_API_KEY`. Resten står der for den
+delte backenden og Typesense. Mot stacken på maskinen er det
+`KA_API_URL=http://localhost:8080` og nøkkelen derfra.
 
 `TYPESENSE_API_KEY` er en søkenøkkel med tilgang til samlingene, aldri
-adminnøkkelen. Mangler noe av dette, skriver dev-serveren én linje ved oppstart
-om hva og hvor det settes. Ingenting fyller inn for det som mangler.
+adminnøkkelen. Mangler noe, skriver dev-serveren én linje ved oppstart om hva
+og hvor det settes. Ingenting fyller inn for det som mangler.
 
 **`VITE_API_MODE` skal ikke stå i `.env.local`.** Alle Vite-servere fra samme
 sjekkout leser den samme fila, så en modus lagt inn der slår inn for alle som
