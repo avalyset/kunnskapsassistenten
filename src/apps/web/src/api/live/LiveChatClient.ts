@@ -359,7 +359,8 @@ export class LiveChatClient implements ChatClient {
         // asked with.
         if (answer.filter) restored.filter = answer.filter;
         // The question back, drawn as one again. The backend stores it as an ordinary message,
-        // so on another device, or after the browser was cleared, it reads back as an answer.
+        // so on another device, or after the browser was cleared, it reads back as an answer
+        // (headless-rag #41).
         if (answer.outcome === 'needs-clarification') restored.status = answer.outcome;
         if (!message.sources?.length && answer.chunks.length > 0) {
           const documents = await this.#withTexts(
