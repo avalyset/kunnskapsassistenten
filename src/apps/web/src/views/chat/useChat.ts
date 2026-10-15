@@ -21,8 +21,9 @@ import {
 /* How long a turn may go without progress. Progress is a new step or new
   text in the stream; `: ping` from the backend is a comment line the decoder
   drops (api/live/sse.ts), so a quiet backend stays quiet here. `sources`
-  deliberately does not count: in every client it arrives with the frames
-  that close the stream, so it could not hold a stalled turn open anyway. */
+  deliberately does not count: where a client sends one at all, it arrives
+  with the frames that close the stream, so it could not hold a stalled turn
+  open anyway. */
 
 /** Without progress for this long, the reader is told the wait is unusual.
     The turn keeps running. */
