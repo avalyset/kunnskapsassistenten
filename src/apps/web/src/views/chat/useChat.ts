@@ -255,9 +255,9 @@ export function useChat(
         for await (const event of client.ask({
           query: question,
           conversationId: conversationRef.current,
-          // Part of the question, not a view decoration. The backend ignores
-          // it today (API-bestilling A2) and it is sent regardless: that is
-          // the contract.
+          // Part of the question, not a view decoration: each question is
+          // asked with the filter chosen when it is sent, and the backend
+          // narrows retrieval by it.
           filters,
           // Which of the reader's own documents THIS question is about.
           // Separate from `filters`, which narrows the corpus and follows the

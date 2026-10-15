@@ -384,16 +384,25 @@ describe('threadDetailFrom', () => {
     expect(detail.messages).toEqual([]);
   });
 
-  it('bærer filteret samtalen ble laget med, som låser den', () => {
+  it('låser ikke: filteret samtalen ble laget med, står på hvert svar og ikke på tråden', () => {
     const detail = threadDetailFrom(RECORDED.conversation, [
       ...RECORDED.messages,
       { id: 'f', role: null, filterValue: { 'document-type': ['Årsrapport'] } },
     ]);
-    expect(detail.filter?.documentType).toEqual(['Årsrapport']);
+    expect(detail.filter).toBeUndefined();
+
+    const answers = detail.messages.filter((message) => message.role === 'assistant');
+    expect(answers.length).toBeGreaterThan(0);
+    for (const answer of answers) expect(answer.filter?.documentType).toEqual(['Årsrapport']);
+    for (const question of detail.messages.filter((message) => message.role === 'user')) {
+      expect(question.filter).toBeUndefined();
+    }
   });
 
   it('har ikke noe filter når samtalen ble laget uten', () => {
-    expect(threadDetailFrom(RECORDED.conversation, RECORDED.messages).filter).toBeUndefined();
+    const detail = threadDetailFrom(RECORDED.conversation, RECORDED.messages);
+    expect(detail.filter).toBeUndefined();
+    expect(detail.messages.every((message) => message.filter === undefined)).toBe(true);
   });
 });
 

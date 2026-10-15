@@ -1,5 +1,6 @@
 import type { Facet } from '../../../shared/facets.ts';
 import {
+  emptyFilterSelection,
   isEmptySelection,
   type FilterFacet,
   type FilterSelection,
@@ -152,8 +153,9 @@ export class LiveChatClient implements ChatClient {
           // The thread's corpus, kept on the thread: the backend returns `tags` as given, so the
           // corpus is known on any machine. Prefixed, because `tags` is a shared list.
           ...(corpusKey ? { tags: [`${CORPUS_TAG_PREFIX}${corpusKey}`] } : {}),
-          // The filter locks the thread (issue 90). The backend keeps `filter-value` from the
-          // create call, but not the filter a turn is asked with. Not sent when empty (`lockOf`).
+          // What the thread was started with. The backend keeps `filter-value` from the create
+          // call, but not the filter a turn is asked with, so it is the only filter an answer read
+          // back can show without this browser's record (`threadDetailFrom`). Not sent when empty.
           ...(filter && !isEmptySelection(filter) ? { 'filter-value': filter } : {}),
         }),
       });
@@ -265,6 +267,8 @@ export class LiveChatClient implements ChatClient {
                 retrieval,
                 thinkingSteps: turn.thinkingSteps,
                 thoughtMs: turn.thoughtMs,
+                // Kept also when empty: «none» must not read back as the thread's first filter.
+                filter: params.filters ?? emptyFilterSelection,
               }),
           });
           // Through the recorder on their way out, so what was shown can be written down with the
@@ -350,6 +354,9 @@ export class LiveChatClient implements ChatClient {
         if (message.thoughtMs === undefined && answer.thoughtMs !== undefined) {
           restored.thoughtMs = answer.thoughtMs;
         }
+        // Over the thread's first filter (`threadDetailFrom`): this is what the question was
+        // asked with.
+        if (answer.filter) restored.filter = answer.filter;
         if (!message.sources?.length && answer.chunks.length > 0) {
           const documents = await this.#withTexts(
             toSourceDocuments(answer.chunks, detail.corpusKey),
