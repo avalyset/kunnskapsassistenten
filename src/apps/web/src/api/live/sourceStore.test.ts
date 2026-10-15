@@ -114,7 +114,40 @@ describe('rememberAnswer og recallThread', () => {
     );
   });
 
-  it('skriver ingenting uten tråd, uten tekst, eller uten både biter og steg', () => {
+  it('tar vare på filteret spørsmålet ble stilt med, også et tomt og uten biter og steg', () => {
+    const filter = { documentType: ['Evaluering'], organisation: [], year: ['2024'] };
+    const none = { documentType: [], organisation: [], year: [] };
+
+    rememberAnswer('conv-1', 'Første svar.', { chunks, filter });
+    rememberAnswer('conv-1', 'Andre svar.', { chunks: [], filter: none });
+
+    const remembered = recallThread('conv-1');
+    expect(remembered?.get(answerFingerprint('Første svar.'))?.filter).toEqual(filter);
+    expect(remembered?.get(answerFingerprint('Andre svar.'))).toEqual({ chunks: [], filter: none });
+  });
+
+  it('leser ikke et filter som mangler en dimensjon eller har annet enn tekst', () => {
+    localStorage.setItem(
+      SOURCES_STORAGE_KEY,
+      JSON.stringify({
+        threads: {
+          'conv-1': {
+            usedAt: 1,
+            answers: {
+              a: { chunks: [], filter: { documentType: ['Årsrapport'], organisation: [] } },
+              b: { chunks: [], filter: { documentType: [3], organisation: [], year: [] } },
+              c: { chunks: [], filter: ['Årsrapport'] },
+            },
+          },
+        },
+      }),
+    );
+
+    const remembered = recallThread('conv-1');
+    for (const key of ['a', 'b', 'c']) expect(remembered?.get(key)).toEqual({ chunks: [] });
+  });
+
+  it('skriver ingenting uten tråd, uten tekst, eller uten både biter, steg og filter', () => {
     rememberAnswer('', 'Svar.', { chunks });
     rememberAnswer('conv-1', '  ', { chunks });
     rememberAnswer('conv-1', 'Svar.', { chunks: [] });

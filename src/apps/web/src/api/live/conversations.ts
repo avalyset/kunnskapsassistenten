@@ -233,12 +233,18 @@ export function threadDetailFrom(
   messages: ApiMessage[] | null | undefined,
 ): ThreadDetail {
   const thread = threadFromConversation(conversation);
-  const turns = messagesFromApi(messages, thread.corpusKey);
   const filter = filterFromMessages(messages);
+  // Live does not lock a thread, so the filter stays off the thread (`lockOf` in
+  // useThreadFilterLock.ts) and goes on each answer. It is the filter the thread was started with,
+  // and the backend keeps none per question: an answer asked after the reader changed the filter
+  // is wrong here until this browser's record replaces it (`#withRemembered` in
+  // LiveChatClient.ts). On another device, or after the browser was cleared, it stays wrong
+  // (headless-rag #40).
+  const turns = messagesFromApi(messages, thread.corpusKey).map((message) =>
+    filter && message.role === 'assistant' ? { ...message, filter } : message,
+  );
   return {
     ...thread,
-    // What the thread is locked to; see `lockOf` in useThreadFilterLock.ts.
-    ...(filter ? { filter } : {}),
     // The last turn is the best «last activity» there is; the list endpoint returns no messages,
     // so only an opened thread can say this.
     updatedAt: turns.at(-1)?.createdAt ?? thread.updatedAt,
