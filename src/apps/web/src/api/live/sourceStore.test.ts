@@ -147,7 +147,42 @@ describe('rememberAnswer og recallThread', () => {
     for (const key of ['a', 'b', 'c']) expect(remembered?.get(key)).toEqual({ chunks: [] });
   });
 
-  it('skriver ingenting uten tråd, uten tekst, eller uten både biter, steg og filter', () => {
+  it('husker at svaret var et motspørsmål, også uten biter, steg og filter', () => {
+    rememberAnswer('conv-1', 'Mener du årsrapportene?', {
+      chunks: [],
+      outcome: 'needs-clarification',
+    });
+
+    expect(recallThread('conv-1')?.get(answerFingerprint('Mener du årsrapportene?'))).toEqual({
+      chunks: [],
+      outcome: 'needs-clarification',
+    });
+  });
+
+  it('leser ikke en annen utgang enn motspørsmål', () => {
+    // A stored `complete` or `error` would add nothing: the backend says
+    // whether a turn failed, and an answer is what is left.
+    localStorage.setItem(
+      SOURCES_STORAGE_KEY,
+      JSON.stringify({
+        threads: {
+          'conv-1': {
+            usedAt: 1,
+            answers: {
+              a: { chunks: [], outcome: 'complete' },
+              b: { chunks: [], outcome: 'error' },
+              c: { chunks: [], outcome: true },
+            },
+          },
+        },
+      }),
+    );
+
+    const remembered = recallThread('conv-1');
+    for (const key of ['a', 'b', 'c']) expect(remembered?.get(key)).toEqual({ chunks: [] });
+  });
+
+  it('skriver ingenting uten tråd, uten tekst, eller uten både biter, steg, filter og utgang', () => {
     rememberAnswer('', 'Svar.', { chunks });
     rememberAnswer('conv-1', '  ', { chunks });
     rememberAnswer('conv-1', 'Svar.', { chunks: [] });
