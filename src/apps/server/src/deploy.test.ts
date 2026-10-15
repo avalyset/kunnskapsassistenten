@@ -39,3 +39,11 @@ test("the template's default dataset name is Kudos", () => {
   const dataset = defaultOf('digdirDatasetConfigKey') ?? '';
   assert.equal(parseDataset(`${dataset}=${defaultOf('kaDataset')}`, dataset)?.label, 'Kudos');
 });
+
+test('the template passes the tool, agent and tenant, and keeps headless-rag as the default', () => {
+  for (const name of ['DIGDIR_TOOL', 'DIGDIR_AGENT_ID', 'DIGDIR_TENANT'])
+    assert.match(template, new RegExp(`name: '${name}', value: digdir`));
+  assert.equal(defaultOf('digdirApiBase'), 'https://test.rag.digdir.cloud');
+  assert.equal(defaultOf('digdirTool'), 'builtin.agent-rag-agent__agent-rag-graph-bundled');
+  assert.equal(defaultOf('digdirAgentId'), 'builtin/agent-rag-agent');
+});

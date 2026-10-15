@@ -6,10 +6,18 @@ param location string = resourceGroup().location
 param image string
 param acrLoginServer string
 
-@description('Backend the BFF talks to.')
+@description('Backend the BFF talks to: headless-rag (`https://test.rag.digdir.cloud`) or genki (`https://api.genki-test.digdir.cloud`).')
 param digdirApiBase string = 'https://test.rag.digdir.cloud'
 
-@description('Hosted uses `kudos`; a local backend uses `default`.')
+@description('The tool the BFF asks. genki: `kunnskapsassistenten__default`.')
+param digdirTool string = 'builtin.agent-rag-agent__agent-rag-graph-bundled'
+
+@description('The agent new conversations belong to. genki: `kunnskapsassistenten`.')
+param digdirAgentId string = 'builtin/agent-rag-agent'
+
+param digdirTenant string = 'public-sector-knowledge'
+
+@description('Hosted headless-rag uses `kudos`; a local backend and genki use `default`.')
 param digdirDatasetConfigKey string = 'kudos'
 
 @description('The dataset\'s filter fields, as `id:field[:valueType[:label]]|…` with id documentType, organisation or year. The year needs `integer`, or it finds nothing. Empty: no filter panel.')
@@ -112,6 +120,9 @@ resource app 'Microsoft.App/containerApps@2024-03-01' = {
             [
               { name: 'PORT', value: '8787' }
               { name: 'DIGDIR_API_BASE', value: digdirApiBase }
+              { name: 'DIGDIR_TOOL', value: digdirTool }
+              { name: 'DIGDIR_AGENT_ID', value: digdirAgentId }
+              { name: 'DIGDIR_TENANT', value: digdirTenant }
               { name: 'DIGDIR_DATASET_CONFIG_KEY', value: digdirDatasetConfigKey }
               { name: 'APP_ORIGIN', value: 'https://${appHost}' }
               { name: 'DIGDIR_API_KEY', secretRef: 'digdir-api-key' }

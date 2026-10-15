@@ -124,9 +124,44 @@ To backender, styrt av `DIGDIR_API_BASE`:
 | `https://test.rag.digdir.cloud` | utrullet testmiljø. Ingenting å kjøre selv, men du trenger en nøkkel for det miljøet. |
 | `http://localhost:8099`         | lokalt. Oppsett ligger i `digdir-headless-rag`.                                       |
 
+Eller genki, se [Mot genki](#mot-genki).
+
 Nøkler gjelder per miljø: en som er laget lokalt autentiserer ikke mot den
 utrullede backenden. Uten Typesense svarer appen, men filterraden skjules og
 kildekortene viser ingen utdrag.
+
+### Mot genki
+
+genki er den nye backenden ([`decisions/0010`](decisions/0010-genki-as-backend.md)).
+BFF-en snakker med den på samme måte som med `digdir-headless-rag`, så byttet
+er bare innstillinger i `apps/server/.env`:
+
+```sh
+DIGDIR_API_BASE=https://api.genki-test.digdir.cloud
+DIGDIR_API_KEY=<tjenestenøkkel fra genki>
+DIGDIR_TOOL=kunnskapsassistenten__default
+DIGDIR_AGENT_ID=kunnskapsassistenten
+DIGDIR_TENANT=public-sector-knowledge
+DIGDIR_DATASET_CONFIG_KEY=default
+```
+
+genki kaller verktøy `<tjeneste>__<variant>` og knytter samtaler til
+tjenesten, så `DIGDIR_TOOL` og `DIGDIR_AGENT_ID` må endres. Tenanten og
+datasettnøkkelen over gjør genki om til Kudos-datasettet sitt.
+
+Nøkkelen er en tjenestenøkkel for `kunnskapsassistenten`, laget under
+«API-nøkler for tjenesten» i portalen (`https://portal.genki-test.digdir.cloud`).
+genki-test er låst for modellkall, så nøkkelen må lages av en som har logget
+inn med Entra ID, ikke TestID. En nøkkel laget av andre svarer
+`urn:genai:problem:locked-environment`. Lokalt er adressen
+`http://localhost:8080`, med en nøkkel fra den lokale genki-en.
+
+`npm run doctor` sjekker oppsettet mot genki på samme måte.
+
+Filtermålingen ([Hva backenden støtter](#hva-backenden-støtter)) spør
+headless-rags `builtin.retrieve-only-agent__retrieve-only`, som genki ikke har.
+Mot genki får den ikke svar, og etter forsøkene er filterpanelet av.
+`KA_CAPABILITIES=filters` slår det på. Lest i koden, ikke målt.
 
 ### 4. BFF-en og klienten sammen
 
@@ -283,7 +318,8 @@ framfor `/v1`. 0004–0008 kom med klienten i `apps/web`: hvor kunnskapen om et
 korpus skal bo, klienten bak BFF-en, filterfelt og korpusnavn fra BFF-en,
 visningsnivået, og teksten i utdragene og kildene etter ny innlasting. 0009 er
 API-et i to versjoner: `/api/*` i formatet fra main for klienten i
-`apps/web-preact`, og `/api/v2/*` for klienten i `apps/web`.
+`apps/web-preact`, og `/api/v2/*` for klienten i `apps/web`. 0010 er genki som
+backend.
 
 [`deploy/README.md`](deploy/README.md) dekker utrulling til Azure og
 innlogging.
