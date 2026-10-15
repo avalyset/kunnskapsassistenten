@@ -149,6 +149,16 @@ describe('/config.js', () => {
     expect(body).not.toContain('rag_hemmelig_verdi');
   });
 
+  it('skriver verktøyet containeren er satt opp med, og ikke et tomt', async () => {
+    const { clientConfig } = readConfig({ VITE_KA_TOOL: 'kunnskapsassistenten__default' }, '/dist');
+    await start({ clientConfig });
+
+    const body = await (await fetch(`${base}/config.js`)).text();
+
+    expect(body).toContain('"VITE_KA_TOOL":"kunnskapsassistenten__default"');
+    expect(readConfig({ VITE_KA_TOOL: ' ' }, '/dist').clientConfig.VITE_KA_TOOL).toBeUndefined();
+  });
+
   it('bryter ikke ut av script-taggen på en etikett med spisse klammer', async () => {
     // Verdiene kommer fra en containers miljø og havner inne i en <script>.
     await start({ clientConfig: { VITE_KA_DATASETS: 'k=</script><script>alert(1)' } });

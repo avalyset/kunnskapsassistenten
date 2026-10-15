@@ -58,6 +58,7 @@ export function createChatClient(): ChatClient {
   // Tenant and dataset: both or neither (the client drops a lone one); unset,
   // the backend picks. A function, so each request reads the current choice.
   return new LiveChatClient({
+    toolName: env.VITE_KA_TOOL,
     tenant: env.VITE_KA_TENANT,
     datasetConfigKey: activeCorpusKey,
   });

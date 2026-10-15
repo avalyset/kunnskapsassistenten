@@ -42,6 +42,7 @@ import { currentUserId } from './userId';
 export type LiveChatClientOptions = {
   /** Where the proxy lives. Relative on purpose: same origin, no CORS. */
   basePath?: string;
+  /** The MCP tool to call, `VITE_KA_TOOL`. Blank or unset is `DEFAULT_TOOL_NAME`. */
   toolName?: string;
   /** Which corpus to ask; both or neither. Dataset names, not credentials, so `VITE_` is fine. */
   tenant?: string;
@@ -77,7 +78,8 @@ export class LiveChatClient implements ChatClient {
 
   constructor(options: LiveChatClientOptions = {}) {
     this.#basePath = options.basePath ?? '/api';
-    this.#toolName = options.toolName ?? DEFAULT_TOOL_NAME;
+    // `VITE_KA_TOOL=` in an .env file arrives as '', and an empty name would be sent as is.
+    this.#toolName = options.toolName?.trim() || DEFAULT_TOOL_NAME;
     this.#tenant = options.tenant;
     this.#corpusKey =
       typeof options.datasetConfigKey === 'function'

@@ -37,7 +37,7 @@ async function askAndReadBody(
   const call = fetchMock.mock.calls.find(([url]) => String(url).endsWith('/mcp'));
   const init = call?.[1] as RequestInit;
   return JSON.parse(String(init.body)) as {
-    params: { arguments: Record<string, unknown> };
+    params: { name?: string; arguments: Record<string, unknown> };
   };
 }
 
@@ -183,14 +183,69 @@ describe('LiveChatClient og datasettvalg', () => {
  */
 function createdConversationBody(
   fetchMock: ReturnType<typeof vi.fn>,
-): { tags?: string[] } | undefined {
+): { tags?: string[]; 'agent-id'?: string } | undefined {
   const calls = fetchMock.mock.calls as unknown as [unknown, RequestInit | undefined][];
   const created = calls.find(
     ([url, init]) => String(url).endsWith('/conversations') && init?.method === 'POST',
   );
   const body = created?.[1]?.body;
-  return body === undefined ? undefined : (JSON.parse(String(body)) as { tags?: string[] });
+  return body === undefined
+    ? undefined
+    : (JSON.parse(String(body)) as { tags?: string[]; 'agent-id'?: string });
 }
+
+/**
+ * Verktøyet, `VITE_KA_TOOL`.
+ *
+ * Navnet står to steder i kallet, i kroppen og i `Mcp-Name`, og serveren
+ * svarer 400 når de er ulike. Samtalen lages hos agenten verktøyet hører til,
+ * og genki vil ha `kunnskapsassistenten` for `kunnskapsassistenten__default`.
+ */
+describe('LiveChatClient og verktøyet', () => {
+  beforeEach(() => resetLiveConversation());
+  afterEach(() => vi.unstubAllGlobals());
+
+  async function askAndReadTool(client: LiveChatClient) {
+    const fetchMock = captureRequest();
+    const body = await askAndReadBody(client, fetchMock);
+    const calls = fetchMock.mock.calls as unknown as [unknown, RequestInit | undefined][];
+    const call = calls.find(([url]) => String(url).endsWith('/mcp'));
+    const headers = call?.[1]?.headers as Record<string, string>;
+    return {
+      name: body.params.name,
+      header: headers['Mcp-Name'],
+      agentId: createdConversationBody(fetchMock)?.['agent-id'],
+    };
+  }
+
+  it('spør headless-rag sitt standardverktøy når ingenting er satt', async () => {
+    expect(await askAndReadTool(new LiveChatClient())).toEqual({
+      name: 'builtin.agent-rag-agent__agent-rag-graph-bundled',
+      header: 'builtin.agent-rag-agent__agent-rag-graph-bundled',
+      agentId: 'builtin/agent-rag-agent',
+    });
+  });
+
+  it('spør verktøyet som er satt, og lager samtalen hos agenten det hører til', async () => {
+    const client = new LiveChatClient({ toolName: 'kunnskapsassistenten__default' });
+
+    expect(await askAndReadTool(client)).toEqual({
+      name: 'kunnskapsassistenten__default',
+      header: 'kunnskapsassistenten__default',
+      agentId: 'kunnskapsassistenten',
+    });
+  });
+
+  it('tar en tom verdi som ikke satt', async () => {
+    // `VITE_KA_TOOL=` i en .env-fil kommer fram som '', ikke som undefined.
+    for (const toolName of ['', '  ']) {
+      resetLiveConversation();
+      const tool = await askAndReadTool(new LiveChatClient({ toolName }));
+      expect(tool.name).toBe('builtin.agent-rag-agent__agent-rag-graph-bundled');
+      expect(tool.header).toBe(tool.name);
+    }
+  });
+});
 
 describe('korpuset leseren har valgt, per spørsmål', () => {
   afterEach(() => vi.unstubAllGlobals());

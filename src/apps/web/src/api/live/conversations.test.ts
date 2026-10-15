@@ -79,6 +79,11 @@ describe('agentIdFromToolName', () => {
     );
   });
 
+  it('gir genki sin agent for genki sitt verktøy', () => {
+    // Uten punktum er det ingenting å gjøre om til skråstrek.
+    expect(agentIdFromToolName('kunnskapsassistenten__default')).toBe('kunnskapsassistenten');
+  });
+
   it('lar et navn uten skillegraf være', () => {
     expect(agentIdFromToolName('builtin.agent-rag-agent')).toBe('builtin/agent-rag-agent');
   });

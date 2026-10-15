@@ -934,6 +934,21 @@ konsollen. Se `datasetArguments()` i `src/api/live/mcp.ts`.
 På tråden sendes de som `tenant` og `dataset_config_key` i `tools/call`-
 argumentene, ved siden av `query`.
 
+### Hvilket verktøy
+
+`VITE_KA_TOOL` er MCP-verktøyet live spør. Uten den er det headless-rag sitt,
+`builtin.agent-rag-agent__agent-rag-graph-bundled`. genki kaller sitt
+`kunnskapsassistenten__default`:
+
+```sh
+VITE_KA_TOOL=kunnskapsassistenten__default
+```
+
+Navnet går både i `tools/call` og i `Mcp-Name`, og samtalen lages hos agenten
+verktøyet hører til (se «Agent-id-en utledes av verktøynavnet» under). Det er
+ikke en hemmelighet, og containeren tar den samme variabelen
+(`docs/deploy.md`).
+
 ### Flere korpus å velge mellom
 
 `VITE_KA_DATASETS` lister korpusene denne oppsettinga når, og gjør korpus til
@@ -1070,7 +1085,8 @@ med den innloggede brukeren (`server/identity.ts`, «Innlogging» i
 bare én virker hvert sted: `builtin.agent-rag-agent__agent-rag-graph-bundled`
 navngir verktøyet, `builtin/agent-rag-agent` navngir agenten. `POST
 /api/conversations` krever `agent-id` så snart nøkkelen når mer enn én agent.
-Se `agentIdFromToolName()`.
+Mot genki gir `kunnskapsassistenten__default` agenten `kunnskapsassistenten`,
+tjenesten samtalene hører til. Se `agentIdFromToolName()`.
 
 **Dette mangler backenden, og frontenden later ikke som noe annet:**
 
