@@ -44,14 +44,14 @@ export function askRoute<E>(present: Present<E>) {
       typeof (body as { model?: unknown }).model === 'string'
         ? (body as { model: string }).model
         : undefined;
-    const userId = c.get('userId');
+    const caller = c.get('caller');
     let conversationId =
       typeof body.conversationId === 'string' ? body.conversationId : undefined;
 
     // Discarded on purpose: detail() is the ownership check.
     if (conversationId) {
       try {
-        await convos.detail(userId, conversationId);
+        await convos.detail(caller, conversationId);
       } catch {
         return c.json({ error: 'Fant ikke samtalen.' }, 404);
       }
@@ -60,7 +60,7 @@ export function askRoute<E>(present: Present<E>) {
     let created: { id: string; topic: string } | null = null;
     if (!conversationId) {
       try {
-        const conv = await convos.create(userId, convos.topicFrom(query));
+        const conv = await convos.create(caller, convos.topicFrom(query));
         conversationId = conv.id;
         created = { id: conv.id, topic: conv.topic };
         // Now, not after the answer: the client reads the thread when
@@ -89,7 +89,7 @@ export function askRoute<E>(present: Present<E>) {
           if (created) send({ type: 'conversation', ...created });
           const events = ask(
             query,
-            userId,
+            caller,
             conversationId,
             upstreamAbort.signal,
             model,

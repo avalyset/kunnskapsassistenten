@@ -1,0 +1,52 @@
+/** Who the backend is asked on behalf of, and the headers that say so. */
+import { config } from './config.ts';
+
+/**
+ * `userId` is the session's. With Ansattporten, `token` is the person's
+ * access token and `actingFor` the organisation they chose, if they had a choice.
+ */
+export interface Caller {
+  userId: string;
+  token?: string;
+  actingFor?: string;
+}
+
+export function backendHeaders(caller: Caller): Record<string, string> {
+  if (caller.token)
+    return {
+      Authorization: `Bearer ${caller.token}`,
+      ...(caller.actingFor ? { 'GenAI-Acting-For': caller.actingFor } : {}),
+    };
+  return { 'X-API-Key': config.apiKey, 'X-User-Id': caller.userId };
+}
+
+/** As `backendHeaders`, but a service key is sent without `X-User-Id`, as before. */
+export function appHeaders(caller: Caller): Record<string, string> {
+  return caller.token ? backendHeaders(caller) : { 'X-API-Key': config.apiKey };
+}
+
+/** genki's refusals a person can be told about, by problem type, in our words. */
+const PROBLEMS: Record<string, { code: string; message: string }> = {
+  'urn:genai:problem:locked-environment': {
+    code: 'locked_environment',
+    message:
+      'Testmiljøet er låst. Bare Digdir-ansatte som logger inn med Entra ID, kan bruke språkmodellene der.',
+  },
+  'urn:genai:problem:entra-not-trusted': {
+    code: 'entra_not_trusted',
+    message: 'Entra ID-kontoen din er ikke blant dem som slipper inn i testmiljøet.',
+  },
+};
+
+/** A known problem in a refused response from genki, or `undefined`. Reads the body. */
+export async function knownProblem(
+  res: Response,
+): Promise<{ code: string; message: string } | undefined> {
+  if (res.status !== 401 && res.status !== 403) return undefined;
+  try {
+    const body = (await res.json()) as { type?: unknown };
+    return typeof body.type === 'string' ? PROBLEMS[body.type] : undefined;
+  } catch {
+    return undefined;
+  }
+}

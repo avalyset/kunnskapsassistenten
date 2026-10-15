@@ -47,3 +47,21 @@ test('the template passes the tool, agent and tenant, and keeps headless-rag as 
   assert.equal(defaultOf('digdirTool'), 'builtin.agent-rag-agent__agent-rag-graph-bundled');
   assert.equal(defaultOf('digdirAgentId'), 'builtin/agent-rag-agent');
 });
+
+test('with Ansattporten the template passes its settings, the secret as a secret, and keeps sessions sticky', () => {
+  for (const name of [
+    'ANSATTPORTEN_ISSUER',
+    'ANSATTPORTEN_CLIENT_ID',
+    'ANSATTPORTEN_REDIRECT_URI',
+    'ANSATTPORTEN_AUDIENCE',
+    'ANSATTPORTEN_ALTINN_RESOURCE',
+  ])
+    assert.match(template, new RegExp(`name: '${name}', value: `));
+  assert.match(
+    template,
+    /name: 'ANSATTPORTEN_CLIENT_SECRET', secretRef: 'ansattporten-client-secret'/,
+  );
+  assert.match(template, /name: 'AUTH_MODE', value: authMode/);
+  assert.match(template, /affinity: ansattporten \? 'sticky' : 'none'/);
+  assert.equal(defaultOf('authMode'), 'entra');
+});

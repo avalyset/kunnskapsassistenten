@@ -37,6 +37,7 @@ const SHOWN: ChatErrorCode[] = [
   'retrieval-unavailable',
   'timeout',
   'unauthorized',
+  'locked',
   'rate-limited',
   'question-too-long',
   'thread-not-found',

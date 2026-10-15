@@ -96,6 +96,8 @@ export interface DoneEvent {
   type: 'done';
   conversationId: string;
   insufficient: boolean;
+  /** The backend's id for the run, which `POST …/feedback` rates. genki only. */
+  taskId?: string;
 }
 
 export interface ErrorEvent {
@@ -243,6 +245,8 @@ export interface Message {
    * answer (digdir/digdir-headless-rag#22). The text is then empty. `/api/v2` only.
    */
   failed?: boolean;
+  /** The run behind an assistant turn, for `POST …/feedback`. genki only. */
+  taskId?: string;
 }
 
 /** `GET …/conversations/:id`. */
@@ -305,6 +309,29 @@ export interface MeResponse {
   backend: string;
   /** The tool the BFF asks with when `POST …/ask` names none it allows. */
   tool: string;
+  /** With Ansattporten: the organisations the person may act for. */
+  organisations?: Organisation[];
+  /** With Ansattporten: the one chosen, when there are several. */
+  actingFor?: string | null;
+}
+
+export interface Organisation {
+  orgNumber: string;
+  name: string;
+}
+
+/** `POST …/feedback`: a rating of one answer, by its run. */
+export interface FeedbackRequest {
+  conversationId: string;
+  taskId: string;
+  rating: 'up' | 'down';
+  comment?: string;
+}
+
+/** `unavailable` when the backend takes no feedback, as headless-rag. */
+export interface FeedbackResponse {
+  ok: boolean;
+  unavailable?: boolean;
 }
 
 export interface Capabilities {
