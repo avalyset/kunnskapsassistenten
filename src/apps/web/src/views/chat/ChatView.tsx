@@ -97,10 +97,12 @@ function ChatSession({ userName, thread, loading, client }: ChatViewProps) {
   // from the ANSWER's key: the chooser's belongs to a different answer.
   const filterSummary = useCallback(
     (messageId: string) => {
-      // An answer read back from a locked thread was asked with the lock
-      // (ThreadDetail.filter); one asked here carries what it was asked with.
-      const applied = appliedFilters[messageId] ?? thread?.filter ?? emptyFilterSelection;
+      // One asked here carries what it was asked with. One read back says
+      // its own (Message.filter, live), or was asked with the thread's lock
+      // (ThreadDetail.filter, the BFF).
       const answer = messages.find((message) => message.id === messageId);
+      const applied =
+        appliedFilters[messageId] ?? answer?.filter ?? thread?.filter ?? emptyFilterSelection;
       // `corpusOption` is not ceremony: `corpusDisplayNameFor` answers
       // «standardsamlingen» for a key it does not know, which says something
       // about a default rather than about this answer. No name, no line.

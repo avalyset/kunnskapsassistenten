@@ -25,7 +25,8 @@ export interface Thread {
    */
   corpusKey?: string;
   /**
-   * The filter every question in it uses. Absent if none or not known (src/decisions/0006).
+   * The filter every question in it uses: the lock. Absent if none or not known
+   * (src/decisions/0006). Only the BFF locks; in live each answer says its own (`Message.filter`).
    */
   filter?: FilterSelection;
 }

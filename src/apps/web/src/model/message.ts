@@ -1,4 +1,5 @@
 import type { Citation } from './citation';
+import type { FilterSelection } from './filter';
 import type { RetrievalDetails, ThinkingStep } from './retrieval';
 import type { SourceDocument } from './source';
 
@@ -38,6 +39,11 @@ export interface Message {
    * Which corpus answered (`dataset_config_key`), not the one selected now. Undefined: unknown.
    */
   corpusKey?: string;
+  /**
+   * What an answer read back was asked with, where the thread has no filter of its own to say it.
+   * An empty selection is «none»; undefined is «not known».
+   */
+  filter?: FilterSelection;
   /** «Fremgangsmåte»: what the search did. Placeholder data for now. */
   retrieval?: RetrievalDetails;
   /** Progress from the agent, in arrival order. Shown while the answer builds. */

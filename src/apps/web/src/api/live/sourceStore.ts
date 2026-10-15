@@ -1,4 +1,10 @@
-import type { RetrievalDetails, ThinkingStep, ThinkingStepKind } from '../../model';
+import {
+  filterDimensions,
+  type FilterSelection,
+  type RetrievalDetails,
+  type ThinkingStep,
+  type ThinkingStepKind,
+} from '../../model';
 import type { McpChunk } from './mcp';
 
 // What each answer was built from and how, kept in this browser because the backend keeps only
@@ -29,6 +35,8 @@ export type StoredAnswer = {
   retrieval?: RetrievalDetails;
   /** From the first step to the first word of the answer. See `Message.thoughtMs`. */
   thoughtMs?: number;
+  /** What the question was asked with; empty is «none». See `Message.filter`. */
+  filter?: FilterSelection;
 };
 
 /** What the client hands over when an answer is done. */
@@ -37,6 +45,7 @@ export type AnswerRecord = {
   thinkingSteps?: ThinkingStep[];
   retrieval?: RetrievalDetails;
   thoughtMs?: number;
+  filter?: FilterSelection;
 };
 
 type StoredThread = {
@@ -120,6 +129,14 @@ function retrievalFrom(value: unknown): RetrievalDetails | undefined {
   return { hitCount, documentCount, keywords };
 }
 
+/** Every dimension, each a list of strings, or nothing: a part of a filter would say less. */
+function filterFrom(value: unknown): FilterSelection | undefined {
+  if (!isRecord(value)) return undefined;
+  const entries = filterDimensions.map((dimension) => [dimension, strings(value[dimension])]);
+  if (entries.some(([, values]) => values === undefined)) return undefined;
+  return Object.fromEntries(entries) as FilterSelection;
+}
+
 /** One stored answer, or nothing, from whatever was in storage. */
 function answerFrom(value: unknown): StoredAnswer | undefined {
   if (!isRecord(value) || !Array.isArray(value.chunks)) return undefined;
@@ -130,9 +147,11 @@ function answerFrom(value: unknown): StoredAnswer | undefined {
     : [];
   const retrieval = retrievalFrom(value.retrieval);
   const thoughtMs = count(value.thoughtMs);
+  const filter = filterFrom(value.filter);
   if (steps.length > 0) answer.thinkingSteps = steps;
   if (retrieval) answer.retrieval = retrieval;
   if (thoughtMs !== undefined) answer.thoughtMs = thoughtMs;
+  if (filter) answer.filter = filter;
   return answer;
 }
 
@@ -186,7 +205,7 @@ function write(store: Store): void {
 
 /**
  * Stores what one answer was built from, through the same checks as reading, so what is written
- * can be read back. Nothing is stored for an answer with neither chunks nor steps.
+ * can be read back. Nothing is stored for an answer with neither chunks, steps nor a filter.
  */
 export function rememberAnswer(
   threadId: string,
@@ -196,7 +215,7 @@ export function rememberAnswer(
 ): void {
   const steps = record.thinkingSteps ?? [];
   if (!threadId || answerText.trim() === '') return;
-  if (record.chunks.length === 0 && steps.length === 0) return;
+  if (record.chunks.length === 0 && steps.length === 0 && !record.filter) return;
 
   const answer = answerFrom({
     ...record,
