@@ -750,6 +750,7 @@ Ett bilde, og modusen og korpuset er miljøvariabler.
 | `KA_ACCESS_SECRET`           | Den delte hemmeligheten, se [Delt hemmelighet](#delt-hemmelighet). Container Apps-secret. | tom                     |
 | `VITE_KA_TENANT`             | Tenant. Begge eller ingen, se under.                                                      | tom                     |
 | `VITE_KA_DATASET_CONFIG_KEY` | Datasettnøkkel. `kudos` hostet, `default` lokalt.                                         | tom                     |
+| `VITE_KA_TOOL`               | MCP-verktøyet live spør. Tom gir headless-rag sitt, se under.                             | tom                     |
 | `VITE_KA_DATASETS`           | Korpusene velgeren tilbyr: `nøkkel=Navn\|beskrivelse;…`.                                  | tom                     |
 | `VITE_KA_FILTER_FIELDS`      | Feltnavn per datasett: `datasett=dimensjon:felt:type\|…`.                                 | tom                     |
 | `VITE_KA_DOCUMENT_URLS`      | Lenke til dokumentet per datasett: `datasett=mal for tall\|mal for UUID;…`.               | tom                     |
@@ -772,6 +773,13 @@ sin adresse, og API-et deres gir nå bare UUID:
 Et nummer i en annen form, eller et datasett uten oppføring, gir ingen lenke,
 og da viser kildepanelet at dokumentet ikke har noen offentlig lenke. Koden
 er `src/api/documentUrls.ts`.
+
+`VITE_KA_TOOL` er verktøyet `tools/call` går til, og samtalene lages hos
+agenten det hører til (`agentIdFromToolName()` i
+`src/api/live/conversations.ts`). Tom gir headless-rag sitt,
+`builtin.agent-rag-agent__agent-rag-graph-bundled`. genki kaller sitt
+`kunnskapsassistenten__default`. I `deploy/main.bicep` er den parameteren
+`tool`, med headless-rag sitt som standard.
 
 `VITE_KA_TENANT` og `VITE_KA_DATASET_CONFIG_KEY` er **begge eller ingen**.
 Backenden bygger datasett-scopet bare når den har begge, så én alene blir
