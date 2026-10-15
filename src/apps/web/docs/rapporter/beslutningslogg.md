@@ -5,6 +5,16 @@ føres, står i [README](README.md). PR-numrene uten repo foran er i dette repoe
 
 ## 2026-10-15
 
+- **To tidsgrenser for et svar som aldri kommer: beskjed etter 30 sekunder,
+  slutt etter 2 minutter**
+  ([digdir#161](https://github.com/digdir/kunnskapsassistenten/pull/161)). Ingen
+  ledd i kjeden hadde en samlet frist, og keep-alive fra backenden nullstiller
+  tidsgrensene for tomgang underveis, så en tur kunne stå åpen uten ende.
+  Tallene er satt etter målte turer: en lang, ekte tur brukte 65 sekunder, med
+  9,4 sekunder som lengste opphold mellom to rammer. Fremgang er et nytt steg
+  eller ny tekst, og hver fremgang nullstiller klokka. Grensen stopper turen
+  slik «Avbryt» gjør, så avbruddet når backenden og svaret kan ikke dukke opp
+  senere.
 - **I live er en tråd ikke lenger låst til filteret den ble startet med**
   ([digdir#155](https://github.com/digdir/kunnskapsassistenten/pull/155)). Filterfeltene står i panelet også i en tråd som er i gang,
   og endres filteret, kommer beskjeden med «Ny tråd». Saken
