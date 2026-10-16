@@ -122,6 +122,15 @@ Parameters the template needs are declared with `@description` in
 `kudos` on the hosted backend and `default` locally, and `publicHost` is the
 custom domain, which decides `APP_ORIGIN` and the Entra callback.
 
+`digdirApiBase`, `digdirTool` and `digdirAgentId` choose the backend. They
+default to headless-rag. For genki-test: `https://api.genki-test.digdir.cloud`,
+`kunnskapsassistenten__default` and `kunnskapsassistenten`, with
+`digdirDatasetConfigKey` set to `default` and `digdirApiKey` a genki service key
+for `kunnskapsassistenten`, made by an Entra ID login (genki-test is locked).
+On a running deployment the same switch is
+`--set-env-vars DIGDIR_API_BASE=… DIGDIR_TOOL=… DIGDIR_AGENT_ID=… DIGDIR_DATASET_CONFIG_KEY=default`
+and the key with `secret set` as above.
+
 `kaFilterFields` and `kaDataset` are the dataset's filter fields and its name,
 passed as `KA_FILTER_FIELDS` and `KA_DATASETS` under `digdirDatasetConfigKey`.
 They default to Kudos: `documentType:type|organisation:orgs_long|year:concerned_years:integer`
