@@ -36,7 +36,7 @@ v2.get('/capabilities', (c) =>
 v2.get('/conversations/:id', async (c) => {
   try {
     const thread: ConversationDetail = await rememberedThread(
-      c.get('userId'),
+      c.get('caller'),
       c.req.param('id'),
     );
     return c.json(thread);

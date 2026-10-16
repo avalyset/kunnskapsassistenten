@@ -39,3 +39,30 @@ test("the template's default dataset name is Kudos", () => {
   const dataset = defaultOf('digdirDatasetConfigKey') ?? '';
   assert.equal(parseDataset(`${dataset}=${defaultOf('kaDataset')}`, dataset)?.label, 'Kudos');
 });
+
+test('the template passes the tool, agent and tenant, and keeps headless-rag as the default', () => {
+  for (const name of ['DIGDIR_TOOL', 'DIGDIR_AGENT_ID', 'DIGDIR_TENANT'])
+    assert.match(template, new RegExp(`name: '${name}', value: digdir`));
+  assert.equal(defaultOf('digdirApiBase'), 'https://test.rag.digdir.cloud');
+  assert.equal(defaultOf('digdirTool'), 'builtin.agent-rag-agent__agent-rag-graph-bundled');
+  assert.equal(defaultOf('digdirAgentId'), 'builtin/agent-rag-agent');
+});
+
+test('with Ansattporten the template passes its settings, the secret as a secret, and keeps sessions sticky', () => {
+  for (const name of [
+    'ANSATTPORTEN_ISSUER',
+    'ANSATTPORTEN_CLIENT_ID',
+    'ANSATTPORTEN_REDIRECT_URI',
+    'ANSATTPORTEN_AUDIENCE',
+    'ANSATTPORTEN_ALTINN_RESOURCE',
+  ])
+    assert.match(template, new RegExp(`name: '${name}', value: `));
+  assert.match(
+    template,
+    /name: 'ANSATTPORTEN_CLIENT_SECRET', secretRef: 'ansattporten-client-secret'/,
+  );
+  assert.match(template, /name: 'AUTH_MODE', value: authMode/);
+  assert.match(template, /affinity: ansattporten \? 'sticky' : 'none'/);
+  assert.match(template, /maxReplicas: ansattporten \? 1 : 3/);
+  assert.equal(defaultOf('authMode'), 'entra');
+});
