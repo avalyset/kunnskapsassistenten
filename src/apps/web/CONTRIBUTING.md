@@ -35,17 +35,19 @@ See [README, Naming](README.md#naming) for the reasoning.
 Never touch a folder you do not own. If you need something there, report the
 need to the conductor, who gives it to the owner.
 
-| Folder                                                                                       | Owner             |
-| -------------------------------------------------------------------------------------------- | ----------------- |
-| `src/api/`, `src/model/`, `src/layout/`, `src/components/`, `vite.config.ts`, `package.json` | foundation        |
-| `src/routes/`, `src/App.tsx`, `src/main.tsx`                                                 | foundation (#5)   |
-| `src/views/threads/`, `src/views/filters/`                                                   | primary sidebar   |
-| `src/views/chat/`                                                                            | main              |
-| `src/views/sources/`                                                                         | secondary sidebar |
-| `docs/review/`                                                                               | reviewer          |
+| Worker | Role                                     | Owns                                                                                                                                       |
+| ------ | ---------------------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------ |
+| KA CC  | Reviewer, design system guard, e2e tests | `tests/`, `playwright.config.ts`, `docs/review/`; no feature code                                                                          |
+| #5     | Foundation                               | `src/api/`, `src/model/`, `src/layout/`, `src/routes/`, `src/components/`, `src/App.tsx`, `src/main.tsx`, `vite.config.ts`, `package.json` |
+| #2     | Primary sidebar                          | `src/views/threads/`, `src/views/filters/`                                                                                                 |
+| #3     | Main                                     | `src/views/chat/`                                                                                                                          |
+| #4     | Secondary sidebar                        | `src/views/sources/`                                                                                                                       |
 
-- **Only the foundation adds dependencies.** Others report a need.
-- Shared types live in `src/model/`. Code against them, ask for changes.
+- **Only #5 adds dependencies.** Others report a need. The exception: KA CC
+  adds test dependencies in a small PR of its own.
+- Route pages (`src/routes/`) and the route setup (`App.tsx`) are #5's; a view
+  exports a component that #5 mounts in the right slot and route.
+- Shared types live in `src/model/` (#5). Code against them, ask for changes.
 - Before the foundation is merged: use mock data from `src/api/mock/`, or
   fixtures of your own in your own folder.
 
@@ -151,17 +153,25 @@ get around it.
 
 ## Git and PRs
 
-- Branch `feat/<area>` from `main`, with an English name. Small commits.
+- Branch `feat/<area>` from `main`, with an English name, and the PR has base
+  `main`. Never rename the branch of an open PR: that closes the PR, and a PR
+  cannot change its branch. Small commits.
 - Commit messages in **English**, with the trailer
-  `Co-Authored-By: Claude Opus 5 <noreply@anthropic.com>`.
-- Push to origin, **open the PR as a draft early**, and keep it updated.
-- **Never merge.** The conductor merges. Rebase on `main` when the conductor
-  says so.
+  `Co-Authored-By: Claude <the model you actually run> <noreply@anthropic.com>`,
+  for example `Claude Opus 5.5 (1M context)`. Look at the model name in your
+  status line; not everyone runs the same model.
+- Push your own branch, **open the PR against `main` as a draft early**, and
+  keep it updated. CI runs only on PRs. When every check-run is green, CodeQL
+  included, report to the conductor, and KA CC reviews. After the approval you
+  mark the PR as ready.
+- **Never merge.** The repo's maintainer merges, not the conductor and not
+  you. Never push to `main` or to someone else's branch. Rebase on `main` when
+  the conductor says so.
 - The PR description covers **only** what is in the PR, in English. Short. No
   AI attribution, no «follow-up» or «test plan» — tell the conductor that
   instead.
-- Comments in your own PR are fine. No other GitHub posts without a yes via
-  the conductor.
+- Comments in your own PR are fine. No other GitHub posts (issues, reviews on
+  someone else's PR) without a yes from the maintainer via the conductor.
 
 ## Green before you push
 
@@ -226,10 +236,17 @@ you skip here meets you there.
 
 ## Shared resources
 
-- Dev server: 5173 is the foundation's. The primary sidebar uses 5174, main
-  5175, the secondary sidebar 5176 (`--port`). Check
-  `lsof -nP -iTCP -sTCP:LISTEN | grep 517` before you start, and **stop after
-  yourself**.
+- Dev server: 5173 is #5's. #2 uses 5174, #3 5175, #4 5176 (`--port`).
+- E2E: KA CC 4173, #2 4174, #3 4175, #4 4176, #5 4177. Run
+  `KA_E2E_PORT=<yours> CI=true npm run test:e2e`. Without it everyone ends up
+  on 4173, and then startup fails with the port named, because
+  `playwright.config.ts` has `reuseExistingServer: false` and `--strictPort`.
+- **Your own port and your own PID only.** Check that the port is free
+  (`lsof -ti tcp:<port> -sTCP:LISTEN`) before you start, start with
+  `--strictPort`, and stop only the PID that listens on your port. Never
+  `pkill -f`, and never a loop over ports: a command line such as
+  `npm run dev` is the same in every worktree, and either one stops someone
+  else's server. **Stop after yourself.**
 - No browser windows on the screen. Headless.
 - Don't touch the RAG stack (8080 and 3030). Read, don't restart.
 

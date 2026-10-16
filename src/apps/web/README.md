@@ -100,16 +100,19 @@ undermappe eies av én arbeider, se `CONTRIBUTING.md`.
 
 ## Naming
 
-Regelen ble satt 2026-09-11:
+The rule was set on 2026-09-11, and the language part was widened on
+2026-10-16:
 
-- **Kode, filnavn, mapper, CSS-klasser, CSS-variabler, typer og ruter:
-  engelsk.**
-- **Alt brukeren ser eller hører: norsk bokmål med ekte æøå.** UI-tekst,
-  `aria-label`, `title`, feilmeldinger, `lang="nb"`.
-- **Plasser heter etter posisjon, innhold heter etter innhold**, som i VS Code.
+- **Code, file names, folders, CSS classes, CSS variables, types, routes,
+  comments and test names: English.** So are commit messages, branch names,
+  PRs, issues, reviews and docs.
+- **Everything users see or hear: Norwegian bokmål with real æøå.** UI text,
+  `aria-label`, `title`, error messages, `lang="nb"`.
+- **Slots are named for position, content is named for content**, as in VS
+  Code.
 
-Denne fila og `CONTRIBUTING.md` er på norsk. Kommentarer i koden er på engelsk,
-siden de er kode.
+`CONTRIBUTING.md` is in English. Most of this file is still in Norwegian from
+before 2026-10-16, and it is translated as PRs touch it.
 
 ### Plasser og views
 
