@@ -6,10 +6,18 @@ param location string = resourceGroup().location
 param image string
 param acrLoginServer string
 
-@description('Backend the BFF talks to.')
+@description('Backend the BFF talks to: headless-rag (`https://test.rag.digdir.cloud`) or genki (`https://api.genki-test.digdir.cloud`).')
 param digdirApiBase string = 'https://test.rag.digdir.cloud'
 
-@description('Hosted uses `kudos`; a local backend uses `default`.')
+@description('The tool the BFF asks. genki: `kunnskapsassistenten__default`.')
+param digdirTool string = 'builtin.agent-rag-agent__agent-rag-graph-bundled'
+
+@description('The agent new conversations belong to. genki: `kunnskapsassistenten`.')
+param digdirAgentId string = 'builtin/agent-rag-agent'
+
+param digdirTenant string = 'public-sector-knowledge'
+
+@description('Hosted headless-rag uses `kudos`; a local backend and genki use `default`.')
 param digdirDatasetConfigKey string = 'kudos'
 
 @description('The dataset\'s filter fields, as `id:field[:valueType[:label]]|…` with id documentType, organisation or year. The year needs `integer`, or it finds nothing. Empty: no filter panel.')
@@ -18,17 +26,32 @@ param kaFilterFields string = 'documentType:type|organisation:orgs_long|year:con
 @description('The dataset\'s name in the client, as `Name` or `Name|description`.')
 param kaDataset string = 'Kudos'
 
-@description('Entra ID app registration. Sign-in is always on; `off` is local development only.')
+@description('Sign-in: `entra` (Entra ID, the service key to the backend) or `ansattporten` (the person\'s token to genki). `off` is local development only.')
+@allowed(['entra', 'ansattporten'])
+param authMode string = 'entra'
+
+@description('Entra ID app registration, for `authMode` `entra`.')
 param azureTenantId string = tenant().tenantId
-param azureClientId string
+param azureClientId string = ''
+
+@description('Ansattporten, for `authMode` `ansattporten`. The client is confidential (client_secret_basic), with the redirect URI `https://<host>/auth/callback`.')
+param ansattportenIssuer string = 'https://test.ansattporten.no'
+param ansattportenClientId string = ''
+@description('The API the token is for, sent as `resource`.')
+param ansattportenAudience string = 'digdir:genai'
+@description('The Altinn resource in `authorization_details`. genki-test: `urn:altinn:resource:digdir-genai-platform-test`.')
+param ansattportenAltinnResource string = ''
 
 @description('Custom domain users reach the app on. Empty uses the Container Apps default domain.')
 param publicHost string = ''
 
+@description('Required with `entra`. With `ansattporten` only the capability probe uses it, and it may be empty.')
 @secure()
-param digdirApiKey string
+param digdirApiKey string = ''
 @secure()
-param azureClientSecret string
+param azureClientSecret string = ''
+@secure()
+param ansattportenClientSecret string = ''
 @secure()
 param sessionSecret string
 @secure()
@@ -45,6 +68,7 @@ param kaCapabilities string = ''
 param kaDefaultClient string = ''
 
 var appHost = empty(publicHost) ? '${name}.${containerEnv.properties.defaultDomain}' : publicHost
+var ansattporten = authMode == 'ansattporten'
 
 resource logs 'Microsoft.OperationalInsights/workspaces@2023-09-01' = {
   name: '${name}-logs'
@@ -88,17 +112,20 @@ resource app 'Microsoft.App/containerApps@2024-03-01' = {
         external: true
         targetPort: 8787
         transport: 'auto'
-        stickySessions: { affinity: 'none' }
+        // The Ansattporten tokens are kept in the replica that signed the person in.
+        stickySessions: { affinity: ansattporten ? 'sticky' : 'none' }
       }
       registries: [
         { server: acrLoginServer, identity: identity.id }
       ]
       secrets: concat(
         [
-          { name: 'digdir-api-key', value: digdirApiKey }
           { name: 'session-secret', value: sessionSecret }
-          { name: 'azure-client-secret', value: azureClientSecret }
         ],
+        empty(digdirApiKey) ? [] : [ { name: 'digdir-api-key', value: digdirApiKey } ],
+        ansattporten
+          ? [ { name: 'ansattporten-client-secret', value: ansattportenClientSecret } ]
+          : [ { name: 'azure-client-secret', value: azureClientSecret } ],
         empty(typesenseApiKey) ? [] : [ { name: 'typesense-key', value: typesenseApiKey } ]
       )
     }
@@ -112,13 +139,27 @@ resource app 'Microsoft.App/containerApps@2024-03-01' = {
             [
               { name: 'PORT', value: '8787' }
               { name: 'DIGDIR_API_BASE', value: digdirApiBase }
+              { name: 'DIGDIR_TOOL', value: digdirTool }
+              { name: 'DIGDIR_AGENT_ID', value: digdirAgentId }
+              { name: 'DIGDIR_TENANT', value: digdirTenant }
               { name: 'DIGDIR_DATASET_CONFIG_KEY', value: digdirDatasetConfigKey }
               { name: 'APP_ORIGIN', value: 'https://${appHost}' }
-              { name: 'DIGDIR_API_KEY', secretRef: 'digdir-api-key' }
               { name: 'SESSION_SECRET', secretRef: 'session-secret' }
               { name: 'TYPESENSE_API_HOST', value: typesenseHost }
               { name: 'KUDOS_DOCS_COLLECTION', value: kudosDocsCollection }
-              { name: 'AUTH_MODE', value: 'entra' }
+              { name: 'AUTH_MODE', value: authMode }
+            ],
+            empty(digdirApiKey) ? [] : [
+              { name: 'DIGDIR_API_KEY', secretRef: 'digdir-api-key' }
+            ],
+            ansattporten ? [
+              { name: 'ANSATTPORTEN_ISSUER', value: ansattportenIssuer }
+              { name: 'ANSATTPORTEN_CLIENT_ID', value: ansattportenClientId }
+              { name: 'ANSATTPORTEN_CLIENT_SECRET', secretRef: 'ansattporten-client-secret' }
+              { name: 'ANSATTPORTEN_REDIRECT_URI', value: 'https://${appHost}/auth/callback' }
+              { name: 'ANSATTPORTEN_AUDIENCE', value: ansattportenAudience }
+              { name: 'ANSATTPORTEN_ALTINN_RESOURCE', value: ansattportenAltinnResource }
+            ] : [
               { name: 'AZURE_TENANT_ID', value: azureTenantId }
               { name: 'AZURE_CLIENT_ID', value: azureClientId }
               { name: 'AZURE_CLIENT_SECRET', secretRef: 'azure-client-secret' }
@@ -150,7 +191,7 @@ resource app 'Microsoft.App/containerApps@2024-03-01' = {
           ]
         }
       ]
-      scale: { minReplicas: 1, maxReplicas: 3 }
+      scale: { minReplicas: 1, maxReplicas: ansattporten ? 1 : 3 }
     }
   }
 }

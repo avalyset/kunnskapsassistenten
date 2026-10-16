@@ -37,6 +37,7 @@ const SHOWN: ChatErrorCode[] = [
   'retrieval-unavailable',
   'timeout',
   'unauthorized',
+  'locked',
   'rate-limited',
   'question-too-long',
   'thread-not-found',
@@ -82,6 +83,7 @@ describe('chatErrorText', () => {
     }
     // The same question with the same key fails the same way.
     expect(chatErrorText({ code: 'unauthorized' }).retryable).toBe(false);
+    expect(chatErrorText({ code: 'locked' }).retryable).toBe(false);
   });
 
   it('says the setup is missing, and offers no retry that cannot help', () => {
