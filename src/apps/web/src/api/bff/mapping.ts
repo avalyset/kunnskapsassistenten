@@ -178,6 +178,10 @@ export function chatErrorFromBff(code: string | undefined, message: string): Cha
     // The stream ended before the answer did.
     case 'stream_broken':
       return { code: 'unknown', message: 'Forbindelsen brøt sammen mens svaret kom.' };
+    // genki refused the person, not the question (apps/server/src/backend.ts).
+    case 'locked_environment':
+    case 'entra_not_trusted':
+      return { code: 'locked' };
     default:
       return errorFromBackend(message, code);
   }

@@ -9,7 +9,9 @@ serve({ fetch: app.fetch, port: config.port }, (info) => {
   console.log(
     config.auth.mode === 'entra'
       ? `innlogging: Entra ID, tenant ${config.auth.tenantId}`
-      : 'innlogging: AV. Usignert utviklings-id, ikke bruk dette utenfor egen maskin.',
+      : config.auth.mode === 'ansattporten'
+        ? `innlogging: Ansattporten, ${config.auth.ansattporten.issuer}, personens token til backenden`
+        : 'innlogging: AV. Usignert utviklings-id, ikke bruk dette utenfor egen maskin.',
   );
   if (!typesenseConfigured) {
     console.log('Typesense er ikke satt opp: ingen filtre og ingen utdrag i kildepanelet.');
