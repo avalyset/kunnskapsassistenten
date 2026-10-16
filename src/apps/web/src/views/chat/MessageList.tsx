@@ -105,10 +105,12 @@ export function MessageList({
               <span className="ds-sr-only">Kunnskapsassistenten spurte:</span>
               {/* The same line as over an answer (AnswerMessage): the agent
                   searched with the filter before it asked, so the question
-                  back was narrowed by it too. */}
+                  back was narrowed by it too. The hidden words are about the
+                  documents and not the question, because the line can also
+                  be «Hentet fra Kudos», and the question was not fetched. */}
               {narrowedTo ? (
                 <p className="ka-filter-summary">
-                  <span className="ds-sr-only">Spørsmålet er </span>
+                  <span className="ds-sr-only">Spørsmålet bygger på dokumenter </span>
                   {narrowedTo}
                 </p>
               ) : null}

@@ -40,19 +40,29 @@ function show(filterSummary?: (messageId: string) => string | undefined) {
   );
 }
 
-describe('linja over et motspørsmål', () => {
-  it('sier hva motspørsmålet ble stilt med, over kortet', () => {
+describe('the line over a clarifying question', () => {
+  it('says what the clarifying question was asked with, over the card', () => {
     const { container } = show((id) => (id === 'a1' ? 'Avgrenset til: Evaluering' : undefined));
 
     const line = container.querySelector('.ka-filter-summary');
-    expect(line?.textContent).toBe('Spørsmålet er Avgrenset til: Evaluering');
+    expect(line?.textContent).toBe('Spørsmålet bygger på dokumenter Avgrenset til: Evaluering');
     // Over the card, as over an answer: a fact about what was searched, not
     // part of the question back.
     const card = screen.getByText(CLARIFICATION_TAG).closest('.ka-answer-card');
     expect(line?.compareDocumentPosition(card as Node)).toBe(Node.DOCUMENT_POSITION_FOLLOWING);
   });
 
-  it('står ikke der når spørsmålet gikk mot hele samlingen', () => {
+  it('is heard as documents from another corpus, not as a question fetched from it', () => {
+    // Asked of the whole of another corpus, the line is «Hentet fra Kudos».
+    // «Spørsmålet er hentet fra Kudos» would say the question was fetched.
+    const { container } = show(() => 'Hentet fra Kudos');
+
+    expect(container.querySelector('.ka-filter-summary')?.textContent).toBe(
+      'Spørsmålet bygger på dokumenter Hentet fra Kudos',
+    );
+  });
+
+  it('is absent when the question was asked of the whole corpus', () => {
     const { container } = show(() => undefined);
 
     expect(container.querySelector('.ka-filter-summary')).toBeNull();
