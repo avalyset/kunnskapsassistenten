@@ -51,7 +51,7 @@ repo.
   watch over it ([#270](https://github.com/larsekhansen/kunnskapsassistenten-frontend/pull/270)).
 - **Feature flags in a hidden menu, `#feature-flags`** ([#269](https://github.com/larsekhansen/kunnskapsassistenten-frontend/pull/269)), for
   experiments that are to be tried side by side before they are chosen. The
-  first flag was `mobile-top-row`, which did nothing before #276. The first
+  first flag was `mobile-top-row`, which did nothing before [#276](https://github.com/larsekhansen/kunnskapsassistenten-frontend/pull/276). The first
   ones that worked were a year filter with periods and combined labels ([#272](https://github.com/larsekhansen/kunnskapsassistenten-frontend/pull/272),
   [digdir#115](https://github.com/digdir/kunnskapsassistenten/issues/115) and [digdir#116](https://github.com/digdir/kunnskapsassistenten/issues/116)), and the filters above the sources in
   the sources panel ([#274](https://github.com/larsekhansen/kunnskapsassistenten-frontend/pull/274), [digdir#84](https://github.com/digdir/kunnskapsassistenten/issues/84)). From 2026-10-14 the flags are on
@@ -159,4 +159,4 @@ repo.
   agents.
 - **Where the knowledge about a corpus should live** is proposed, but not chosen
   ([ADR 0004](../../../../decisions/0004-corpus-knowledge-and-facets.md), written 24.09
-  and merged with #163).
+  and merged with [#163](https://github.com/larsekhansen/kunnskapsassistenten-frontend/pull/163)).

@@ -35,19 +35,21 @@ See [README, Naming](README.md#naming) for the reasoning.
 Never touch a folder you do not own. If you need something there, report the
 need to the conductor, who gives it to the owner.
 
-| Worker | Role                                     | Owns                                                                                                                                       |
-| ------ | ---------------------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------ |
-| KA CC  | Reviewer, design system guard, e2e tests | `tests/`, `playwright.config.ts`, `docs/review/`; no feature code                                                                          |
-| #5     | Foundation                               | `src/api/`, `src/model/`, `src/layout/`, `src/routes/`, `src/components/`, `src/App.tsx`, `src/main.tsx`, `vite.config.ts`, `package.json` |
-| #2     | Primary sidebar                          | `src/views/threads/`, `src/views/filters/`                                                                                                 |
-| #3     | Main                                     | `src/views/chat/`                                                                                                                          |
-| #4     | Secondary sidebar                        | `src/views/sources/`                                                                                                                       |
+| Role                                     | Owns                                                                                                                                       |
+| ---------------------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------ |
+| Reviewer, design system guard, e2e tests | `tests/`, `playwright.config.ts`, `docs/review/`; no feature code                                                                          |
+| Foundation                               | `src/api/`, `src/model/`, `src/layout/`, `src/routes/`, `src/components/`, `src/App.tsx`, `src/main.tsx`, `vite.config.ts`, `package.json` |
+| Primary sidebar                          | `src/views/threads/`, `src/views/filters/`                                                                                                 |
+| Main                                     | `src/views/chat/`                                                                                                                          |
+| Secondary sidebar                        | `src/views/sources/`                                                                                                                       |
 
-- **Only #5 adds dependencies.** Others report a need. The exception: KA CC
-  adds test dependencies in a small PR of its own.
-- Route pages (`src/routes/`) and the route setup (`App.tsx`) are #5's; a view
-  exports a component that #5 mounts in the right slot and route.
-- Shared types live in `src/model/` (#5). Code against them, ask for changes.
+- **Only the foundation adds dependencies.** Others report a need. The
+  exception: the reviewer adds test dependencies in a small PR of its own.
+- Route pages (`src/routes/`) and the route setup (`App.tsx`) are the
+  foundation's; a view exports a component that the foundation mounts in the
+  right slot and route.
+- Shared types live in `src/model/` (the foundation). Code against them, ask
+  for changes.
 - Before the foundation is merged: use mock data from `src/api/mock/`, or
   fixtures of your own in your own folder.
 
@@ -68,7 +70,9 @@ head covers everything above it in the same scrolling box, and «above» applies
 to the tab order too: the browser scrolls a control that gets focus to the top
 of the region, which is exactly where the head is. The control lands under the
 head, clicks land on the head and the focus ring is invisible (WCAG 2.4.11).
-Measured in PR #55, where the «Tråder» button became unclickable because of a
+Measured in
+[PR #55](https://github.com/larsekhansen/kunnskapsassistenten-frontend/pull/55)
+in the earlier repo, where the «Tråder» button became unclickable because of a
 view-local head.
 
 That is why the shell puts the box first in the region, and a view that wants a
@@ -162,8 +166,8 @@ get around it.
   status line; not everyone runs the same model.
 - Push your own branch, **open the PR against `main` as a draft early**, and
   keep it updated. CI runs only on PRs. When every check-run is green, CodeQL
-  included, report to the conductor, and KA CC reviews. After the approval you
-  mark the PR as ready.
+  included, report to the conductor, and the reviewer reviews. After the
+  approval you mark the PR as ready.
 - **Never merge.** The repo's maintainer merges, not the conductor and not
   you. Never push to `main` or to someone else's branch. Rebase on `main` when
   the conductor says so.
@@ -236,8 +240,10 @@ you skip here meets you there.
 
 ## Shared resources
 
-- Dev server: 5173 is #5's. #2 uses 5174, #3 5175, #4 5176 (`--port`).
-- E2E: KA CC 4173, #2 4174, #3 4175, #4 4176, #5 4177. Run
+- Dev server: 5173 is the foundation's. The primary sidebar uses 5174, main
+  5175, the secondary sidebar 5176 (`--port`).
+- E2E: the reviewer 4173, the primary sidebar 4174, main 4175, the secondary
+  sidebar 4176, the foundation 4177. Run
   `KA_E2E_PORT=<yours> CI=true npm run test:e2e`. Without it everyone ends up
   on 4173, and then startup fails with the port named, because
   `playwright.config.ts` has `reuseExistingServer: false` and `--strictPort`.

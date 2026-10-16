@@ -375,10 +375,11 @@ knappene ennå.
 
 ## Dokumentasjon
 
-Everything in the repo is in English: code, comments, test names, commit
-messages, branch names, PRs, issues, reviews and docs. What users see or hear
-stays Norwegian bokmål with æøå. Norwegian docs are translated when a PR
-touches them.
+From 2026-10-16, new and changed text in the repo is written in English:
+code, comments, test names, commit messages, branch names, PRs, issues,
+reviews and docs. What users see or hear stays Norwegian bokmål with æøå.
+Older Norwegian text, such as most of this README, is translated when a PR
+touches it.
 
 [`decisions/`](decisions/) are the ADRs, in English like `digdir-headless-rag`:
 why Preact, why a BFF, why `/api/mcp` rather than `/v1`. 0004–0008 came with
