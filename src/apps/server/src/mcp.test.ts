@@ -269,7 +269,12 @@ describe('ask: plan and answer', () => {
       new Response(body, { headers: { 'Content-Type': 'text/event-stream' } });
     try {
       const out: Array<Record<string, unknown>> = [];
-      for await (const e of mcp.ask('q', 'u', undefined, new AbortController().signal)) {
+      for await (const e of mcp.ask(
+        'q',
+        { userId: 'u' },
+        undefined,
+        new AbortController().signal,
+      )) {
         out.push(e as unknown as Record<string, unknown>);
       }
       return out;
@@ -284,7 +289,12 @@ describe('ask: plan and answer', () => {
       new Response(body, { headers: { 'Content-Type': 'text/event-stream' } });
     try {
       let text = '';
-      for await (const e of mcp.ask('q', 'u', undefined, new AbortController().signal)) {
+      for await (const e of mcp.ask(
+        'q',
+        { userId: 'u' },
+        undefined,
+        new AbortController().signal,
+      )) {
         if (e.type === 'delta') text += e.text;
       }
       return text;
@@ -306,7 +316,12 @@ describe('ask: plan and answer', () => {
     globalThis.fetch = upstream as typeof globalThis.fetch;
     try {
       const out: Array<Record<string, unknown>> = [];
-      for await (const e of mcp.ask('q', 'u', undefined, new AbortController().signal)) {
+      for await (const e of mcp.ask(
+        'q',
+        { userId: 'u' },
+        undefined,
+        new AbortController().signal,
+      )) {
         out.push(e as unknown as Record<string, unknown>);
       }
       return out;

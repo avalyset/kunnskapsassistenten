@@ -5,6 +5,7 @@ import { deleteCookie, getSignedCookie, setSignedCookie } from 'hono/cookie';
 import type { User } from '@ka/contract';
 import { config } from './config.ts';
 import { entraLoginPage } from './authPages.ts';
+import { dropTokens, getTokens } from './tokenStore.ts';
 
 const MAX_AGE = 60 * 60 * 8;
 const SCOPES = ['openid', 'profile', 'email'];
@@ -22,12 +23,12 @@ const msal =
       })
     : null;
 
-const secure = () => !config.auth.origin.startsWith('http://localhost');
+export const secure = () => !config.auth.origin.startsWith('http://localhost');
 // __Host- needs Secure, which a plain-http localhost cannot have.
 const SESSION = secure() ? '__Host-ka_session' : 'ka_session';
-const RETURN_TO = secure() ? '__Host-ka_return_to' : 'ka_return_to';
+export const RETURN_TO = secure() ? '__Host-ka_return_to' : 'ka_return_to';
 
-function cookieOptions() {
+export function cookieOptions() {
   return {
     path: '/',
     httpOnly: true,
@@ -37,28 +38,48 @@ function cookieOptions() {
   };
 }
 
-export async function readUser(c: Context): Promise<User | null> {
+async function readSession(c: Context): Promise<{ user: User; sid?: string } | null> {
   const raw = await getSignedCookie(c, config.auth.sessionSecret, SESSION);
   if (!raw) return null;
   try {
-    const u = JSON.parse(raw) as User & { exp?: number };
+    const u = JSON.parse(raw) as User & { exp?: number; sid?: string };
     if (!u.id) return null;
     if (u.exp && Date.now() > u.exp) return null;
-    return { id: u.id, name: u.name, email: u.email };
+    return {
+      user: { id: u.id, name: u.name, email: u.email },
+      ...(typeof u.sid === 'string' ? { sid: u.sid } : {}),
+    };
   } catch {
     return null;
   }
 }
 
-export function clearUser(c: Context): void {
+/** With Ansattporten, signed in only while this process still holds the tokens. */
+export async function readUser(c: Context): Promise<User | null> {
+  const session = await readSession(c);
+  if (!session) return null;
+  if (config.auth.mode === 'ansattporten') {
+    const tokens = getTokens(session.sid);
+    if (!tokens || tokens.refused) return null;
+  }
+  return session.user;
+}
+
+/** The key to this session's Ansattporten tokens (tokenStore.ts). */
+export async function readSessionId(c: Context): Promise<string | undefined> {
+  return (await readSession(c))?.sid;
+}
+
+export async function clearUser(c: Context): Promise<void> {
+  dropTokens(await readSessionId(c));
   deleteCookie(c, SESSION, { path: '/', secure: secure() });
 }
 
-export async function writeUser(c: Context, user: User): Promise<void> {
+export async function writeUser(c: Context, user: User, sid?: string): Promise<void> {
   await setSignedCookie(
     c,
     SESSION,
-    JSON.stringify({ ...user, exp: Date.now() + MAX_AGE * 1000 }),
+    JSON.stringify({ ...user, ...(sid ? { sid } : {}), exp: Date.now() + MAX_AGE * 1000 }),
     config.auth.sessionSecret,
     cookieOptions(),
   );

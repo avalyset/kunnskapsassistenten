@@ -25,6 +25,9 @@ export function page(body: string): string {
   button:hover, .button:hover { background: #1f2937; }
   .err { color: #b3261e; font-size: .9rem; margin: 0 0 1rem; }
   .note { color: #6b7280; font-size: .8rem; margin: 1rem 0 0; }
+  .choices { display: grid; gap: .75rem; }
+  .choices form { margin: 0; }
+  button[aria-current="true"] { outline: 2px solid #1f4f8f; outline-offset: 2px; }
 </style></head>
 <body><div class="card">${body}</div></body></html>`;
 }
@@ -37,4 +40,39 @@ export function entraLoginPage(next: string, error?: string): string {
   <p class="lead">Logg inn med Digdir-kontoen din.</p>
   ${error ? `<p class="err" role="alert">${esc(error)}</p>` : ''}
   <a class="button" href="/auth/start?next=${esc(encodeURIComponent(next))}">${AZURE_LOGO}Azure AD</a>`);
+}
+
+export function ansattportenLoginPage(next: string, error?: string): string {
+  return page(`<p class="eyebrow">Kunnskapsassistent</p>
+  <h1>Logg inn</h1>
+  <p class="lead">Logg inn med Ansattporten for å bruke tjenesten på vegne av virksomheten din.</p>
+  ${error ? `<p class="err" role="alert">${esc(error)}</p>` : ''}
+  <a class="button" href="/auth/start?next=${esc(encodeURIComponent(next))}">Logg inn med Ansattporten</a>`);
+}
+
+export function organisationPage(
+  organisations: Array<{ orgNumber: string; name: string }>,
+  next: string,
+  current?: string,
+): string {
+  const choices = organisations
+    .map(
+      (o) => `<form method="post" action="/auth/org">
+    <input type="hidden" name="org" value="${esc(o.orgNumber)}" />
+    <input type="hidden" name="next" value="${esc(next)}" />
+    <button type="submit"${o.orgNumber === current ? ' aria-current="true"' : ''}>${esc(o.name)} (${esc(o.orgNumber)})</button>
+  </form>`,
+    )
+    .join('\n');
+  return page(`<p class="eyebrow">Kunnskapsassistent</p>
+  <h1>Velg virksomhet</h1>
+  <p class="lead">Du har tilgang for flere virksomheter. Velg hvem du bruker tjenesten for nå.</p>
+  <div class="choices">${choices}</div>`);
+}
+
+export function noAccessPage(reason: string): string {
+  return page(`<p class="eyebrow">Kunnskapsassistent</p>
+  <h1>Ingen tilgang</h1>
+  <p class="lead">${esc(reason)}</p>
+  <a class="button" href="/auth/logout">Logg ut</a>`);
 }

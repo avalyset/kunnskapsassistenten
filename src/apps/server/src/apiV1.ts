@@ -43,7 +43,7 @@ v1.get('/capabilities', (c) =>
 
 v1.get('/conversations/:id', async (c) => {
   try {
-    const thread = await rememberedThread(c.get('userId'), c.req.param('id'));
+    const thread = await rememberedThread(c.get('caller'), c.req.param('id'));
     return c.json({
       ...thread,
       messages: thread.messages.map(({ failed, ...message }) =>

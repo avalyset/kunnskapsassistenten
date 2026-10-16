@@ -13,6 +13,7 @@ const CHAT_ERROR_CODES = [
   'timeout',
   'no-hits',
   'unauthorized',
+  'locked',
   'rate-limited',
   'question-too-long',
   'thread-not-found',
