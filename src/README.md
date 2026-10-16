@@ -298,10 +298,11 @@ Tvinges med `KA_CAPABILITIES="filters"` eller `"no-filters"`.
 
 `AUTH_MODE` velger mekanisme.
 
-|         |                                                                 |
-| ------- | --------------------------------------------------------------- |
-| `entra` | Entra ID. Det som kjører på `qa.kunnskap.digdir.cloud`.         |
-| `off`   | Kun lokalt. Usignert id, hvem som helst kan bli hvem som helst. |
+|                |                                                                 |
+| -------------- | --------------------------------------------------------------- |
+| `entra`        | Entra ID. Det som kjører på `qa.kunnskap.digdir.cloud`.         |
+| `ansattporten` | Ansattporten, mot genki. Personens token går til backenden.     |
+| `off`          | Kun lokalt. Usignert id, hvem som helst kan bli hvem som helst. |
 
 Utelater du `AUTH_MODE` utledes den: `entra` hvis Azure-variablene er satt,
 ellers `off`. Serveren skriver hvilken modus den kjører i ved hver oppstart.
@@ -310,6 +311,67 @@ Ingen token når nettleseren, bare en signert informasjonskapsel. `/api/*`
 svarer 401 uten innlogging, og `/api/health` er åpen. Hvem som slipper inn,
 bestemmes av Entra ID og ikke av appen. `AUTH_MODE=off` nekter å starte hvis
 `APP_ORIGIN` ikke er localhost. Oppsett i [`deploy/README.md`](deploy/README.md).
+
+### Ansattporten
+
+Med `AUTH_MODE=ansattporten` logger personen inn med Ansattporten i BFF-en,
+og BFF-en spør genki med personens token i stedet for tjenestenøkkelen
+([`decisions/0011`](decisions/0011-ansattporten-in-the-bff.md)). Tokenene blir
+i serveren; nettleseren får bare en signert informasjonskapsel med en nøkkel
+til dem. De fornyes med refresh-tokenet før de går ut, og «Logg ut» avslutter
+også økten i Ansattporten.
+
+Lokalt, mot genki-test, i `apps/server/.env`:
+
+```sh
+AUTH_MODE=ansattporten
+SESSION_SECRET=<openssl rand -hex 32>
+DIGDIR_API_BASE=https://api.genki-test.digdir.cloud
+DIGDIR_TOOL=kunnskapsassistenten__default
+DIGDIR_AGENT_ID=kunnskapsassistenten
+DIGDIR_DATASET_CONFIG_KEY=default
+ANSATTPORTEN_ISSUER=https://test.ansattporten.no
+ANSATTPORTEN_CLIENT_ID=<klient-id fra Samarbeidsportalen>
+ANSATTPORTEN_CLIENT_SECRET=<klienthemmeligheten>
+ANSATTPORTEN_REDIRECT_URI=http://localhost:8787/auth/callback
+ANSATTPORTEN_ALTINN_RESOURCE=urn:altinn:resource:digdir-genai-platform-test
+KA_CAPABILITIES=no-filters
+```
+
+`DIGDIR_API_KEY` kan stå tom. Den brukes da bare til filtermålingen, og uten
+den gjelder `KA_CAPABILITIES`. Klienten må være registrert i Ansattporten med
+`http://localhost:8787/auth/callback`, og i genki-portalen som en brukerflate
+av typen `browser` med samme klient-id.
+
+Hvem som slipper inn:
+
+- Organisasjonene står i tokenet (`authorization_details` for Altinn-ressursen).
+  Er det én, sendes ingen `GenAI-Acting-For`. Er det flere, velger personen på
+  `/auth/org`, og valget sendes som `GenAI-Acting-For`.
+- En innlogging med Entra ID gjennom Ansattporten har ingen organisasjoner i
+  tokenet. Da spør BFF-en genki (`GET /me`). Tokenet har heller ikke navn, så
+  e-postadressen vises i stedet.
+- genki-test er låst for språkmodeller: bare Entra ID-innlogginger i Digdirs
+  gruppe får svar. Andre får siden «Ingen tilgang» ved innlogging
+  (`urn:genai:problem:entra-not-trusted`), eller beskjeden «Testmiljøet er
+  låst» når de spør (`urn:genai:problem:locked-environment`).
+
+Tokenene ligger i minnet til prosessen. En omstart logger alle ut, og
+utrullingen holder hver person på samme replika (`stickySessions`).
+
+Den delte hemmeligheten i lenken (`?secret=`) hører til serveren i
+`apps/web/server`, som ruller ut klienten alene mot headless-rag. Den er ikke
+endret. BFF-en har ingen slik port: med Ansattporten er innloggingen porten.
+
+### Tilbakemelding
+
+`POST /api/feedback` og `/api/v2/feedback` tar `{ conversationId, taskId,
+rating, comment? }` og sender den videre til genki. `taskId` kommer med `done`
+i svaret og på svarene når en tråd leses. BFF-en sender bare tilbakemelding på
+et svar som står i personens egen tråd. headless-rag sender ingen `taskId`, så
+der gir ruten 404. En backend som har svar-id-er, men ikke tar imot
+tilbakemelding, gir `{ ok: false, unavailable: true }`. Ingen av klientene har
+knappene ennå.
 
 ## Dokumentasjon
 
@@ -320,7 +382,7 @@ korpus skal bo, klienten bak BFF-en, filterfelt og korpusnavn fra BFF-en,
 visningsnivået, og teksten i utdragene og kildene etter ny innlasting. 0009 er
 API-et i to versjoner: `/api/*` i formatet fra main for klienten i
 `apps/web-preact`, og `/api/v2/*` for klienten i `apps/web`. 0010 er genki som
-backend.
+backend, og 0011 innlogging med Ansattporten i BFF-en.
 
 [`deploy/README.md`](deploy/README.md) dekker utrulling til Azure og
 innlogging.

@@ -150,7 +150,8 @@ export async function probe(
 ): Promise<Capabilities> {
   const override = fromEnv();
   const impossible = impossibleFilter(fields);
-  if ('filters' in override || !impossible) {
+  // Without a key (Ansattporten, decisions/0011) there is no one to probe as.
+  if ('filters' in override || !impossible || !config.apiKey) {
     current = { ...current, filters: false, ...override };
     probed = true;
     return capabilities();

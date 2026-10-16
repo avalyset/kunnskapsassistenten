@@ -23,6 +23,32 @@ A new public host needs its `https://<host>/auth/callback` added to the app
 registration's redirect URIs before `APP_ORIGIN` and `AZURE_REDIRECT_URI` point
 at it.
 
+## Ansattporten instead of Entra ID
+
+`authMode=ansattporten` signs people in with Ansattporten and sends their
+token to genki (`decisions/0011`). It needs, besides the genki values in
+Deploying from scratch:
+
+| Parameter                    | genki-test                                                  |
+| ---------------------------- | ----------------------------------------------------------- |
+| `authMode`                   | `ansattporten`                                              |
+| `ansattportenIssuer`         | `https://test.ansattporten.no` (the default)                |
+| `ansattportenClientId`       | the client id from Samarbeidsportalen                       |
+| `ansattportenClientSecret`   | its secret (secure parameter, a Container Apps secret)      |
+| `ansattportenAudience`       | `digdir:genai` (the default)                                |
+| `ansattportenAltinnResource` | `urn:altinn:resource:digdir-genai-platform-test`            |
+| `kaCapabilities`             | `no-filters` or `filters`, as there is no key to probe with |
+
+`digdirApiKey` may then be empty, and `azureClientId` and `azureClientSecret`
+are not used. The redirect URI is `https://<publicHost>/auth/callback` and
+must be registered with the client in Samarbeidsportalen, with
+`https://<publicHost>/` as post-logout redirect URI. The same client id is
+registered in the genki portal as a `browser` frontend for the service.
+
+The tokens live in the replica that signed the person in, so ingress is
+sticky in this mode, and the app keeps one replica, since removing a replica
+signs out everyone on it. A new revision or a restart signs everyone out.
+
 ## Changing a running deployment
 
 There is no deploy pipeline, deliberately. `az acr build` uploads the working

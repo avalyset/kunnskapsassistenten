@@ -162,6 +162,7 @@ export const MOCK_ERROR_QUERIES: Readonly<Record<string, ChatErrorCode>> = {
   'simuler tidsavbrudd': 'timeout',
   'simuler ingen treff': 'no-hits',
   'simuler avvist nøkkel': 'unauthorized',
+  'simuler låst testmiljø': 'locked',
 };
 
 /**
