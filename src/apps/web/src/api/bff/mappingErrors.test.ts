@@ -23,6 +23,13 @@ describe('chatErrorFromBff', () => {
     expect(chatErrorFromBff('backend_http_500', 'Backend svarte 500.').code).toBe('unknown');
   });
 
+  it('a locked test environment is its own case, whatever genki called it', () => {
+    expect(chatErrorFromBff('locked_environment', 'Testmiljøet er låst.')).toEqual({
+      code: 'locked',
+    });
+    expect(chatErrorFromBff('entra_not_trusted', 'Ikke blant dem.')).toEqual({ code: 'locked' });
+  });
+
   it('a broken stream says what happened, in Norwegian', () => {
     expect(chatErrorFromBff('stream_broken', 'Forbindelsen til backend ble brutt.')).toEqual({
       code: 'unknown',

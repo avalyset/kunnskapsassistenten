@@ -1,12 +1,12 @@
-/** `X-User-Id` always comes from the session, never from a request. */
+/** The caller always comes from the session, never from a request. */
 import type { ConversationDetail, ConversationSummary, Message } from '@ka/contract';
+import { backendHeaders, type Caller } from './backend.ts';
 import { config } from './config.ts';
 import { noteTitleFromBackend } from './capabilities.ts';
 
-const headers = (userId: string): Record<string, string> => ({
+const headers = (caller: Caller): Record<string, string> => ({
   'Content-Type': 'application/json',
-  'X-API-Key': config.apiKey,
-  'X-User-Id': userId,
+  ...backendHeaders(caller),
 });
 
 interface BackendConversation {
@@ -50,19 +50,19 @@ export function topicFrom(query: string): string {
   return one.length <= 60 ? one : `${one.slice(0, 57)}…`;
 }
 
-export async function list(userId: string): Promise<ConversationSummary[]> {
+export async function list(caller: Caller): Promise<ConversationSummary[]> {
   const res = await fetch(`${config.apiBase}/api/conversations?page_size=100`, {
-    headers: headers(userId),
+    headers: headers(caller),
   });
   if (!res.ok) throw new BackendHttpError('list', res.status);
   const body = (await res.json()) as { conversations?: BackendConversation[] };
   return (body.conversations ?? []).map(toSummary).sort((a, b) => b.created - a.created);
 }
 
-export async function create(userId: string, topic: string): Promise<ConversationSummary> {
+export async function create(caller: Caller, topic: string): Promise<ConversationSummary> {
   const res = await fetch(`${config.apiBase}/api/conversations`, {
     method: 'POST',
-    headers: headers(userId),
+    headers: headers(caller),
     body: JSON.stringify({ agentId: config.agentId, title: topic }),
   });
   if (!res.ok) throw new BackendHttpError('create', res.status);
@@ -72,14 +72,20 @@ export async function create(userId: string, topic: string): Promise<Conversatio
   return summary;
 }
 
-export async function detail(userId: string, id: string): Promise<ConversationDetail> {
+export async function detail(caller: Caller, id: string): Promise<ConversationDetail> {
   const res = await fetch(`${config.apiBase}/api/conversations/${encodeURIComponent(id)}`, {
-    headers: headers(userId),
+    headers: headers(caller),
   });
   if (!res.ok) throw new BackendHttpError('detail', res.status);
   const body = (await res.json()) as {
     conversation: BackendConversation;
-    messages?: Array<{ id: string; role: string; text: string; created: number }>;
+    messages?: Array<{
+      id: string;
+      role: string;
+      text: string;
+      created: number;
+      task?: unknown;
+    }>;
   };
   const messages: Message[] = (body.messages ?? [])
     .filter((m) => m.role === 'user' || m.role === 'assistant')
@@ -88,23 +94,26 @@ export async function detail(userId: string, id: string): Promise<ConversationDe
       role: m.role as 'user' | 'assistant',
       text: m.text ?? '',
       created: m.created ?? 0,
+      ...(m.role === 'assistant' && typeof m.task === 'string' && m.task
+        ? { taskId: m.task }
+        : {}),
     }));
   return { conversation: toSummary(body.conversation), messages };
 }
 
-export async function rename(userId: string, id: string, title: string): Promise<void> {
+export async function rename(caller: Caller, id: string, title: string): Promise<void> {
   const res = await fetch(`${config.apiBase}/api/conversations/${encodeURIComponent(id)}`, {
     method: 'PUT',
-    headers: headers(userId),
+    headers: headers(caller),
     body: JSON.stringify({ title }),
   });
   if (!res.ok) throw new BackendHttpError('rename', res.status);
 }
 
-export async function remove(userId: string, id: string): Promise<void> {
+export async function remove(caller: Caller, id: string): Promise<void> {
   const res = await fetch(`${config.apiBase}/api/conversations/${encodeURIComponent(id)}`, {
     method: 'DELETE',
-    headers: headers(userId),
+    headers: headers(caller),
   });
   if (!res.ok) throw new BackendHttpError('delete', res.status);
 }

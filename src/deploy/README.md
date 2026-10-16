@@ -23,6 +23,32 @@ A new public host needs its `https://<host>/auth/callback` added to the app
 registration's redirect URIs before `APP_ORIGIN` and `AZURE_REDIRECT_URI` point
 at it.
 
+## Ansattporten instead of Entra ID
+
+`authMode=ansattporten` signs people in with Ansattporten and sends their
+token to genki (`decisions/0011`). It needs, besides the genki values in
+Deploying from scratch:
+
+| Parameter                    | genki-test                                                  |
+| ---------------------------- | ----------------------------------------------------------- |
+| `authMode`                   | `ansattporten`                                              |
+| `ansattportenIssuer`         | `https://test.ansattporten.no` (the default)                |
+| `ansattportenClientId`       | the client id from Samarbeidsportalen                       |
+| `ansattportenClientSecret`   | its secret (secure parameter, a Container Apps secret)      |
+| `ansattportenAudience`       | `digdir:genai` (the default)                                |
+| `ansattportenAltinnResource` | `urn:altinn:resource:digdir-genai-platform-test`            |
+| `kaCapabilities`             | `no-filters` or `filters`, as there is no key to probe with |
+
+`digdirApiKey` may then be empty, and `azureClientId` and `azureClientSecret`
+are not used. The redirect URI is `https://<publicHost>/auth/callback` and
+must be registered with the client in Samarbeidsportalen, with
+`https://<publicHost>/` as post-logout redirect URI. The same client id is
+registered in the genki portal as a `browser` frontend for the service.
+
+The tokens live in the replica that signed the person in, so ingress is
+sticky in this mode, and the app keeps one replica, since removing a replica
+signs out everyone on it. A new revision or a restart signs everyone out.
+
 ## Changing a running deployment
 
 There is no deploy pipeline, deliberately. `az acr build` uploads the working
@@ -121,6 +147,15 @@ Parameters the template needs are declared with `@description` in
 `main.bicep`. The ones that are not obvious: `digdirDatasetConfigKey` is
 `kudos` on the hosted backend and `default` locally, and `publicHost` is the
 custom domain, which decides `APP_ORIGIN` and the Entra callback.
+
+`digdirApiBase`, `digdirTool` and `digdirAgentId` choose the backend. They
+default to headless-rag. For genki-test: `https://api.genki-test.digdir.cloud`,
+`kunnskapsassistenten__default` and `kunnskapsassistenten`, with
+`digdirDatasetConfigKey` set to `default` and `digdirApiKey` a genki service key
+for `kunnskapsassistenten`, made by an Entra ID login (genki-test is locked).
+On a running deployment the same switch is
+`--set-env-vars DIGDIR_API_BASE=… DIGDIR_TOOL=… DIGDIR_AGENT_ID=… DIGDIR_DATASET_CONFIG_KEY=default`
+and the key with `secret set` as above.
 
 `kaFilterFields` and `kaDataset` are the dataset's filter fields and its name,
 passed as `KA_FILTER_FIELDS` and `KA_DATASETS` under `digdirDatasetConfigKey`.
