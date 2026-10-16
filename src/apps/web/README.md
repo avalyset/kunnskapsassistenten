@@ -18,10 +18,10 @@ Navnereglene står under [Naming](#naming), og kortversjonen av arbeidsreglene i
 
 ## Kom i gang
 
-Klienten mot den delte backenden er `npm run web` fra `src/`. Den går i live og
-leser `.env.local` her, som lages fra `.env.example` med de to nøklene fylt inn.
-Steg for steg, også for deg som ikke er utvikler:
-[Kjør lokalt](docs/kjor-lokalt.md).
+The client against the shared backend is `npm run web` from `src/`. It runs in
+live and reads `.env.local` here, which is made from `.env.example` with the two
+keys filled in. Step by step, also for those who are not developers:
+[Run locally](docs/run-locally.md).
 
 I monorepoet står oppskriften i
 [`src/README.md`, «Komme i gang»](../../README.md#komme-i-gang): Node 24,
@@ -882,16 +882,16 @@ rekker å trykke. En mock som strømmer momentant strømmer ikke.
 
 ## Ekte backend
 
-`npm run web` fra `src/` går i live, og det gjør `npm run dev` her også uten
-`VITE_API_MODE`: `createChatClient()` gir `LiveChatClient`, og dev-serveren er
-proxyen som holder nøkkelen. Kopier `.env.example` til `.env.local` og fyll inn
-de to nøklene, `KA_API_KEY` og `TYPESENSE_API_KEY`. Resten står der for den
-delte backenden og Typesense. Mot stacken på maskinen er det
-`KA_API_URL=http://localhost:8080` og nøkkelen derfra.
+`npm run web` from `src/` runs in live, and so does `npm run dev` here without
+`VITE_API_MODE`: `createChatClient()` gives `LiveChatClient`, and the dev server
+is the proxy that holds the key. Copy `.env.example` to `.env.local` and fill in
+the two keys, `KA_API_KEY` and `TYPESENSE_API_KEY`. The rest is there for the
+shared backend and Typesense. Against the stack on your machine it is
+`KA_API_URL=http://localhost:8080` and the key from there.
 
-`TYPESENSE_API_KEY` er en søkenøkkel med tilgang til samlingene, aldri
-adminnøkkelen. Mangler noe, skriver dev-serveren én linje ved oppstart om hva
-og hvor det settes. Ingenting fyller inn for det som mangler.
+`TYPESENSE_API_KEY` is a search key with access to the collections, never the
+admin key. If anything is missing, the dev server prints one line at startup
+saying what and where it is set. Nothing fills in for what is missing.
 
 **`VITE_API_MODE` skal ikke stå i `.env.local`.** Alle Vite-servere fra samme
 sjekkout leser den samme fila, så en modus lagt inn der slår inn for alle som
