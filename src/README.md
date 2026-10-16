@@ -277,13 +277,18 @@ bestemmes av Entra ID og ikke av appen. `AUTH_MODE=off` nekter å starte hvis
 
 ## Dokumentasjon
 
-[`decisions/`](decisions/) er på engelsk, som resten av koden og som
-`digdir-headless-rag`: hvorfor Preact, hvorfor en BFF, hvorfor `/api/mcp`
-framfor `/v1`. 0004–0008 kom med klienten i `apps/web`: hvor kunnskapen om et
-korpus skal bo, klienten bak BFF-en, filterfelt og korpusnavn fra BFF-en,
-visningsnivået, og teksten i utdragene og kildene etter ny innlasting. 0009 er
-API-et i to versjoner: `/api/*` i formatet fra main for klienten i
-`apps/web-preact`, og `/api/v2/*` for klienten i `apps/web`.
+Everything in the repo is in English: code, comments, test names, commit
+messages, branch names, PRs, issues, reviews and docs. What users see or hear
+stays Norwegian bokmål with æøå. Norwegian docs are translated when a PR
+touches them.
+
+[`decisions/`](decisions/) are the ADRs, in English like `digdir-headless-rag`:
+why Preact, why a BFF, why `/api/mcp` rather than `/v1`. 0004–0008 came with
+the client in `apps/web`: where the knowledge about a corpus should live, the
+client behind the BFF, filter fields and corpus names from the BFF, the display
+level, and the text in the excerpts and the sources after a reload. 0009 is the
+API in two versions: `/api/*` in the format from main for the client in
+`apps/web-preact`, and `/api/v2/*` for the client in `apps/web`.
 
 [`deploy/README.md`](deploy/README.md) dekker utrulling til Azure og
 innlogging.
