@@ -1,5 +1,6 @@
 import assert from 'node:assert/strict';
 import { after, before, beforeEach, describe, test } from 'node:test';
+import { serializeSigned } from 'hono/utils/cookie';
 import {
   ALTINN_RESOURCE,
   startFakeAnsattporten,
@@ -142,6 +143,24 @@ describe('sign-in', () => {
     assert.equal(res.status, 400);
   });
 
+  test('the callback sends a foreign return address home, even in a forged return cookie', async () => {
+    op.nextLogin({ parties: [DIGDIR] });
+    const start = await app.request('/auth/start');
+    const jar = keep(start);
+    const { code, state } = op.authorize(start.headers.get('location') ?? '');
+    const [name, signed] = [...jar].find(([k]) => k.endsWith('ka_return_to'))!;
+    const pending = JSON.parse(decodeURIComponent(signed).replace(/\.[^.]*$/, ''));
+    const forged = await serializeSigned(
+      name,
+      JSON.stringify({ ...pending, next: '//evil.example/x' }),
+      's'.repeat(40),
+    );
+    jar.set(name, forged.slice(name.length + 1).split(';')[0]!);
+    const res = await get(`/auth/callback?code=${code}&state=${state}`, jar);
+    assert.equal(res.status, 302);
+    assert.equal(res.headers.get('location'), '/');
+  });
+
   test('without a session the API asks for a sign-in', async () => {
     const res = await app.request('/api/v2/conversations');
     assert.equal(res.status, 401);
@@ -155,6 +174,8 @@ describe('ID token checks', () => {
     ['another issuer', { issuer: 'https://evil.example' }],
     ['another audience', { audience: 'someone-else' }],
     ['a signature from an unknown key', { signWith: 'stranger' }],
+    ['an unsigned token', { signWith: 'none' }],
+    ['an expired token', { idExpiresIn: -120 }],
   ];
   for (const [label, extra] of cases) {
     test(`refuses ${label}`, async () => {

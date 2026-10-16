@@ -191,7 +191,7 @@ resource app 'Microsoft.App/containerApps@2024-03-01' = {
           ]
         }
       ]
-      scale: { minReplicas: 1, maxReplicas: 3 }
+      scale: { minReplicas: 1, maxReplicas: ansattporten ? 1 : 3 }
     }
   }
 }

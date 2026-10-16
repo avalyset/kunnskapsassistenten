@@ -46,7 +46,8 @@ must be registered with the client in Samarbeidsportalen, with
 registered in the genki portal as a `browser` frontend for the service.
 
 The tokens live in the replica that signed the person in, so ingress is
-sticky in this mode. A new revision or a restart signs everyone out.
+sticky in this mode, and the app keeps one replica, since removing a replica
+signs out everyone on it. A new revision or a restart signs everyone out.
 
 ## Changing a running deployment
 

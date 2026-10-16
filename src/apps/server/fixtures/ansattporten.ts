@@ -29,14 +29,22 @@ export interface FakeLogin {
   issuer?: string;
   audience?: string;
   accessExpiresIn?: number;
-  signWith?: 'trusted' | 'stranger';
+  idExpiresIn?: number;
+  signWith?: 'trusted' | 'stranger' | 'none';
 }
 
 const base64url = (b: Buffer) => b.toString('base64url');
 
-const jwt = (claims: Record<string, unknown>, key: KeyObject, kid: string) => {
-  const head = base64url(Buffer.from(JSON.stringify({ alg: 'RS256', kid, typ: 'JWT' })));
+const jwt = (
+  claims: Record<string, unknown>,
+  key: KeyObject,
+  kid: string,
+  unsigned = false,
+) => {
+  const alg = unsigned ? 'none' : 'RS256';
+  const head = base64url(Buffer.from(JSON.stringify({ alg, kid, typ: 'JWT' })));
   const body = base64url(Buffer.from(JSON.stringify(claims)));
+  if (unsigned) return `${head}.${body}.`;
   const signature = sign('RSA-SHA256', Buffer.from(`${head}.${body}`), key);
   return `${head}.${body}.${base64url(signature)}`;
 };
@@ -111,12 +119,13 @@ export async function startFakeAnsattporten(clientId: string, clientSecret: stri
         {
           ...common,
           aud: login.audience ?? clientId,
-          exp: now + 600,
+          exp: now + (login.idExpiresIn ?? 600),
           ...(login.name ? { name: login.name } : {}),
           ...(nonce !== undefined ? { nonce: login.nonce ?? nonce } : {}),
         },
         key,
         kid,
+        login.signWith === 'none',
       ),
       access_token: jwt(
         {

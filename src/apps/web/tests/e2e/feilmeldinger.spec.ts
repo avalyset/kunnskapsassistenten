@@ -21,6 +21,7 @@ const ERROR_CASES = [
   { query: 'simuler feil korpus', heading: 'Søket i dokumentene svarte ikke', retry: true },
   { query: 'simuler tidsavbrudd', heading: 'Svaret tok for lang tid', retry: true },
   { query: 'simuler avvist nøkkel', heading: 'Ingen tilgang', retry: false },
+  { query: 'simuler låst testmiljø', heading: 'Testmiljøet er låst', retry: false },
 ] as const;
 
 /** Types a question into the compose field and sends it. */

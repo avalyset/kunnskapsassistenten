@@ -367,8 +367,9 @@ endret. BFF-en har ingen slik port: med Ansattporten er innloggingen porten.
 `POST /api/feedback` og `/api/v2/feedback` tar `{ conversationId, taskId,
 rating, comment? }` og sender den videre til genki. `taskId` kommer med `done`
 i svaret og på svarene når en tråd leses. BFF-en sender bare tilbakemelding på
-et svar som står i personens egen tråd. En backend uten tilbakemelding, som
-headless-rag, gir `{ ok: false, unavailable: true }`. Ingen av klientene har
+et svar som står i personens egen tråd. headless-rag sender ingen `taskId`, så
+der gir ruten 404. En backend som har svar-id-er, men ikke tar imot
+tilbakemelding, gir `{ ok: false, unavailable: true }`. Ingen av klientene har
 knappene ennå.
 
 ## Dokumentasjon

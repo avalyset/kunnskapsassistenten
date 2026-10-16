@@ -69,7 +69,8 @@ Ansattporten the sign-in is the gate.
 
 - A restart, or a new revision, signs everyone out. The deploy template makes
   ingress sticky in this mode, so a person stays on the replica that holds
-  their tokens.
+  their tokens, and keeps one replica, since a scale-in would sign out
+  everyone on the replica it removes.
 - Without a service key there is nothing to probe filters with, so
   `KA_CAPABILITIES` decides.
 - KA's Ansattporten client must be registered in Samarbeidsportalen and, with

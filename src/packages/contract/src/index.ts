@@ -328,7 +328,7 @@ export interface FeedbackRequest {
   comment?: string;
 }
 
-/** `unavailable` when the backend takes no feedback, as headless-rag. */
+/** `unavailable` when the backend has run ids but takes no feedback. */
 export interface FeedbackResponse {
   ok: boolean;
   unavailable?: boolean;

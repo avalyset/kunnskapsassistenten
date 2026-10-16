@@ -63,5 +63,6 @@ test('with Ansattporten the template passes its settings, the secret as a secret
   );
   assert.match(template, /name: 'AUTH_MODE', value: authMode/);
   assert.match(template, /affinity: ansattporten \? 'sticky' : 'none'/);
+  assert.match(template, /maxReplicas: ansattporten \? 1 : 3/);
   assert.equal(defaultOf('authMode'), 'entra');
 });
