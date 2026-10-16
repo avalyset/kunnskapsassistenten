@@ -29,10 +29,10 @@ import {
     The turn keeps running. */
 export const SLOW_ANSWER_MS = 30_000;
 
-/** Without progress for this long, the client stops the turn itself — the
-    same move as «Avbryt», so the backend hears about it and no answer turns
-    up afterwards. */
-export const STALLED_ANSWER_MS = 120_000;
+/** Without progress for this long, the client stops the turn itself, the same
+    move as «Avbryt»: this page stops waiting and closes the connection, while
+    the backend finishes and stores the run, so a reload can show the answer. */
+export const STALLED_ANSWER_MS = 300_000;
 
 /** The documents one question is asked with: ids for the wire, names for the
     thread. Both, because a name looked up later goes missing when the reader
