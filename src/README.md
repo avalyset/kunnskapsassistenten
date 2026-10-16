@@ -134,11 +134,12 @@ kildekortene viser ingen utdrag.
 
 genki er den nye backenden ([`decisions/0010`](decisions/0010-genki-as-backend.md)).
 BFF-en snakker med den på samme måte som med `digdir-headless-rag`, så byttet
-er bare innstillinger i `apps/server/.env`:
+er bare innstillinger i `apps/server/.env`. `DIGDIR_API_KEY` er
+tjenestenøkkelen fra genki, se under:
 
 ```sh
 DIGDIR_API_BASE=https://api.genki-test.digdir.cloud
-DIGDIR_API_KEY=<tjenestenøkkel fra genki>
+DIGDIR_API_KEY=
 DIGDIR_TOOL=kunnskapsassistenten__default
 DIGDIR_AGENT_ID=kunnskapsassistenten
 DIGDIR_TENANT=public-sector-knowledge
