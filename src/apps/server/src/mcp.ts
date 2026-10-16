@@ -6,6 +6,7 @@ import type {
   ToolCallEvent,
   TurnEvent,
 } from '@ka/contract';
+import { backendHeaders, knownProblem, type Caller } from './backend.ts';
 import { config } from './config.ts';
 import { excerpts } from './excerpts.ts';
 
@@ -19,11 +20,10 @@ export function setAllowedTools(ids: string[]): void {
 }
 
 /** Derived from the body: a disagreeing header is rejected with -32020. */
-function headers(method: string, userId: string, toolName?: string): Record<string, string> {
+function headers(method: string, caller: Caller, toolName?: string): Record<string, string> {
   const h: Record<string, string> = {
     'Content-Type': 'application/json',
-    'X-API-Key': config.apiKey,
-    'X-User-Id': userId,
+    ...backendHeaders(caller),
     'MCP-Protocol-Version': PROTOCOL_VERSION,
     'Mcp-Method': method,
   };
@@ -45,6 +45,7 @@ const strings = (value: unknown): string[] =>
 /** As the backend sends it: the text fields are read with a type check. */
 interface ProgressMeta {
   event?: string;
+  'request-id'?: unknown;
   delta?: unknown;
   iteration?: number | string;
   'max-iterations'?: number | string;
@@ -259,7 +260,7 @@ function backendError(
 /** Never accumulates the upstream body: that would stall the stream. */
 export async function* ask(
   query: string,
-  userId: string,
+  caller: Caller,
   conversationId: string | undefined,
   signal: AbortSignal,
   requestedTool?: string,
@@ -288,7 +289,7 @@ export async function* ask(
   try {
     upstream = await fetch(`${config.apiBase}/api/mcp`, {
       method: 'POST',
-      headers: { ...headers('tools/call', userId, tool), Accept: 'text/event-stream' },
+      headers: { ...headers('tools/call', caller, tool), Accept: 'text/event-stream' },
       body: JSON.stringify(body),
       signal,
     });
@@ -309,6 +310,11 @@ export async function* ask(
     return;
   }
 
+  const problem = upstream.ok ? undefined : await knownProblem(upstream);
+  if (problem) {
+    yield { type: 'error', ...problem };
+    return;
+  }
   if (!upstream.ok || !upstream.body) {
     // The sentence keeps the status, because that is what anyone debugging
     // from a screenshot has to go on; the code is what the client acts on.
@@ -327,6 +333,7 @@ export async function* ask(
   let streamedAnyText = false;
   let iteration = 0;
   let maxIterations = 10;
+  let taskId: string | undefined;
   // A `response/chunk` is not known to be answer text when it arrives, so
   // deltas are held: `agent/thinking` drops them, `agent/finalized` and the
   // result release them. headless-rag sends an `agent/thinking` with the same
@@ -393,6 +400,7 @@ export async function* ask(
           type: 'done',
           conversationId: convo ?? '',
           insufficient: Boolean(meta.insufficient),
+          ...(taskId ? { taskId } : {}),
         };
         return;
       }
@@ -417,6 +425,8 @@ export async function* ask(
       const meta: ProgressMeta = msg.params?._meta ?? {};
       const event = meta.event;
       if (!event) continue;
+      if (event === 'request/started' && typeof meta['request-id'] === 'string')
+        taskId = meta['request-id'];
 
       iteration = num(meta.iteration, iteration);
       maxIterations = num(meta['max-iterations'], maxIterations);

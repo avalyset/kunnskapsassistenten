@@ -6,6 +6,7 @@ import { secureHeaders } from 'hono/secure-headers';
 import type { Env } from './apiShared.ts';
 import { v1 } from './apiV1.ts';
 import { v2 } from './apiV2.ts';
+import { mountAnsattporten, requireAnsattporten } from './ansattporten.ts';
 import { mountAuth, readUser, requireAuth } from './auth.ts';
 import { probe } from './capabilities.ts';
 import { clientOf, switchByQuery, type Client } from './clientSwitch.ts';
@@ -45,7 +46,9 @@ app.use(
 // Only form-encoded posts are checked, so the JSON API keeps working.
 app.use('*', csrf({ origin: config.auth.origin }));
 
-mountAuth(app);
+const ansattporten = config.auth.mode === 'ansattporten';
+if (ansattporten) mountAnsattporten(app);
+else mountAuth(app);
 app.use(
   '/api/*',
   bodyLimit({
@@ -55,7 +58,10 @@ app.use(
 );
 
 const HEALTH = new Set(['/api/health', '/api/v2/health']);
-app.use('/api/*', async (c, next) => (HEALTH.has(c.req.path) ? next() : requireAuth(c, next)));
+app.use('/api/*', async (c, next) => {
+  if (HEALTH.has(c.req.path)) return next();
+  return ansattporten ? requireAnsattporten(c, next) : requireAuth(c, next);
+});
 
 /*
  * The version is in the path, and each client asks for its own

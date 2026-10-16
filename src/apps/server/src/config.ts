@@ -18,14 +18,39 @@ function required(name: string): string {
   return v;
 }
 
-function authMode(entraReady: boolean): 'entra' | 'off' {
+export type AuthMode = 'entra' | 'ansattporten' | 'off';
+
+function authMode(entraReady: boolean): AuthMode {
   const asked = (process.env.AUTH_MODE ?? '').trim().toLowerCase();
-  if (asked === 'entra' || asked === 'off') return asked;
+  if (asked === 'entra' || asked === 'ansattporten' || asked === 'off') return asked;
   if (asked) {
-    console.error(`AUTH_MODE må være entra eller off. Fikk "${asked}".`);
+    console.error(`AUTH_MODE må være entra, ansattporten eller off. Fikk "${asked}".`);
     process.exit(1);
   }
   return entraReady ? 'entra' : 'off';
+}
+
+function ansattportenConfig(mode: AuthMode) {
+  const ap = {
+    issuer: (process.env.ANSATTPORTEN_ISSUER ?? '').replace(/\/$/, ''),
+    clientId: process.env.ANSATTPORTEN_CLIENT_ID ?? '',
+    clientSecret: process.env.ANSATTPORTEN_CLIENT_SECRET ?? '',
+    redirectUri:
+      process.env.ANSATTPORTEN_REDIRECT_URI ??
+      `http://localhost:${process.env.PORT ?? 8787}/auth/callback`,
+    audience: process.env.ANSATTPORTEN_AUDIENCE ?? 'digdir:genai',
+    altinnResource: process.env.ANSATTPORTEN_ALTINN_RESOURCE ?? '',
+  };
+  if (
+    mode === 'ansattporten' &&
+    !(ap.issuer && ap.clientId && ap.clientSecret && ap.altinnResource)
+  ) {
+    console.error(
+      'AUTH_MODE=ansattporten krever ANSATTPORTEN_ISSUER, ANSATTPORTEN_CLIENT_ID, ANSATTPORTEN_CLIENT_SECRET og ANSATTPORTEN_ALTINN_RESOURCE.',
+    );
+    process.exit(1);
+  }
+  return ap;
 }
 
 function authConfig() {
@@ -35,10 +60,13 @@ function authConfig() {
   const redirectUri =
     process.env.AZURE_REDIRECT_URI ??
     `http://localhost:${process.env.PORT ?? 8787}/auth/callback`;
-  const origin = process.env.APP_ORIGIN?.replace(/\/$/, '') ?? new URL(redirectUri).origin;
   const sessionSecret = process.env.SESSION_SECRET ?? '';
   const entraReady = Boolean(tenantId && clientId && clientSecret);
   const mode = authMode(entraReady);
+  const ansattporten = ansattportenConfig(mode);
+  const origin =
+    process.env.APP_ORIGIN?.replace(/\/$/, '') ??
+    new URL(mode === 'ansattporten' ? ansattporten.redirectUri : redirectUri).origin;
   const enabled = mode !== 'off';
   if (mode === 'entra' && !entraReady) {
     console.error(
@@ -65,6 +93,7 @@ function authConfig() {
     redirectUri,
     origin,
     sessionSecret,
+    ansattporten,
   };
 }
 
@@ -79,10 +108,16 @@ function defaultClient(): Client {
   }
 }
 
+const auth = authConfig();
+
 export const config = {
   port: Number(process.env.PORT ?? 8787),
   apiBase: (process.env.DIGDIR_API_BASE ?? 'http://localhost:8099').replace(/\/$/, ''),
-  apiKey: required('DIGDIR_API_KEY'),
+  /** With Ansattporten the person's token is sent instead, and the key only probes. */
+  apiKey:
+    auth.mode === 'ansattporten'
+      ? (process.env.DIGDIR_API_KEY ?? '')
+      : required('DIGDIR_API_KEY'),
 
   /** Default only: the browser may name another that the key already grants. */
   tool: process.env.DIGDIR_TOOL ?? 'builtin.agent-rag-agent__agent-rag-graph-bundled',
@@ -108,7 +143,7 @@ export const config = {
   /** The client a browser without the `ka_klient` cookie gets. */
   defaultClient: defaultClient(),
 
-  auth: authConfig(),
+  auth,
 } as const;
 
 export const typesenseConfigured = Boolean(

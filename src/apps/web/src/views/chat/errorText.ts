@@ -43,6 +43,13 @@ const BY_CODE: Record<Exclude<ChatErrorCode, 'aborted' | 'no-hits'>, ChatErrorTe
       'Last siden på nytt og logg inn igjen. Står meldingen der fortsatt, må noen med tilgang til tjenesten se på det.',
     retryable: false,
   },
+  locked: {
+    title: 'Testmiljøet er låst',
+    what: 'Du er logget inn, men denne innloggingen får ikke bruke språkmodellene i testmiljøet.',
+    advice:
+      'Logg ut og logg inn med Entra ID i Ansattporten, med en Digdir-konto som har fått tilgang.',
+    retryable: false,
+  },
   'rate-limited': {
     title: 'For mange spørsmål på kort tid',
     what: 'Tjenesten tok imot for mange spørsmål på kort tid og satte dette til side.',
