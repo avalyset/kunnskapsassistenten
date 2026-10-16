@@ -223,8 +223,13 @@ const ANSWER_TOOL = 'generate_response';
 /** Said once per run, by whichever frame tells us the answer is being written first. */
 const WRITING_THE_ANSWER = 'Jeg skriver svaret med kildehenvisninger.';
 
-/** The search strings this call ran, under either of the names the backends use. */
+/**
+ * The search strings this call ran, under either of the names the backends use. The tool that
+ * writes the answer is handed the question itself, which is not a search and must not show up
+ * as one.
+ */
 function queriesOf(call: ToolCall): string[] | undefined {
+  if (call.tool === ANSWER_TOOL) return undefined;
   return call.args?.queries ?? (call.args?.query ? [call.args.query] : undefined);
 }
 
@@ -243,7 +248,7 @@ function toolCallStep(call: ToolCall, index: number): ThinkingStep {
   return {
     id: `tool-${index}-${tool}`,
     ...toolVoice(tool, isRead),
-    detail: call['result-summary'],
+    detail: tool === ANSWER_TOOL ? undefined : call['result-summary'],
     queries: queriesOf(call),
     durationMs: call['duration-ms'],
   };
@@ -260,9 +265,9 @@ export class McpStreamState {
   #answer = '';
   #keywords: string[] = [];
   #steps = 0;
-  /** Tools a `tool/call` frame announced in the turn now running, so the turn's own report of
-      the same call does not draw the step a second time. */
-  #announced: string[] = [];
+  /** Tools a `tool/call` frame announced in the turn now running, with the number their step
+      was drawn under: the turn's own report fills that step in instead of drawing a new one. */
+  #announced: { tool: string; index: number }[] = [];
   /** Whether the step that says the answer is being written has been shown. */
   #writing = false;
 
@@ -323,7 +328,7 @@ export class McpStreamState {
         if (!call?.tool) return [];
         this.#rememberQueries(queriesOf(call));
         this.#steps += 1;
-        this.#announced.push(call.tool);
+        this.#announced.push({ tool: call.tool, index: this.#steps });
         const step = toolCallStep(call, this.#steps);
         if (step.kind === 'finalizing') this.#writing = true;
         return [{ type: 'thinking-step', step }];
@@ -333,14 +338,12 @@ export class McpStreamState {
         const events: StreamEvent[] = [];
         for (const call of meta['tool-calls'] ?? []) {
           this.#rememberQueries(queriesOf(call));
-          const announced = this.#announced.indexOf(call.tool ?? '');
-          if (announced !== -1) {
-            // Already drawn when the tool started; the turn only reports that it is done.
-            this.#announced.splice(announced, 1);
-            continue;
-          }
-          this.#steps += 1;
-          const step = toolCallStep(call, this.#steps);
+          const announced = this.#announced.findIndex((seen) => seen.tool === call.tool);
+          // A call drawn when it started is sent again under the same id, now with what only
+          // the report knows: how long it took and what it found. The reader sees one step.
+          const index = announced === -1 ? (this.#steps += 1) : this.#announced[announced].index;
+          if (announced !== -1) this.#announced.splice(announced, 1);
+          const step = toolCallStep(call, index);
           if (step.kind === 'finalizing') this.#writing = true;
           events.push({ type: 'thinking-step', step });
         }

@@ -352,27 +352,81 @@ describe('McpStreamState', () => {
     expect(event.step.label).toBe('Jeg skriver svaret med kildehenvisninger.');
   });
 
-  it('does not draw the same call again when the turn reports it finished', () => {
+  it('fills an announced call in when the turn reports it, under the same id', () => {
     const state = new McpStreamState();
-    state.progress(startsTool('search', { queries: ['Nkom 2023'] }));
-    state.progress(startsTool('read_chunks', { chunk_ids: ['c1'] }));
+    const started = [
+      ...state.progress(startsTool('search', { queries: ['Nkom 2023'] })),
+      ...state.progress(startsTool('read_chunks', { chunk_ids: ['c1'] })),
+    ];
+    const ids = started.map((event) =>
+      event.type === 'thinking-step' ? event.step.id : 'ikke et tenkesteg',
+    );
 
+    const done = state.progress({
+      event: 'agent/turn-completed',
+      iteration: 1,
+      'tool-calls': [
+        { tool: 'search', args: { queries: ['Nkom 2023'] }, 'result-summary': '20 treff' },
+        { tool: 'read_chunks', args: { chunk_ids: ['c1'] }, 'duration-ms': 812 },
+      ],
+    });
+
+    // The same two steps, not two more: same ids, now with what only the report knows.
+    expect(done).toHaveLength(2);
     expect(
-      state.progress({
-        event: 'agent/turn-completed',
-        iteration: 1,
-        'tool-calls': [
-          { tool: 'search', args: { queries: ['Nkom 2023'] }, 'result-summary': '20 treff' },
-          { tool: 'read_chunks', args: { chunk_ids: ['c1'] }, 'duration-ms': 812 },
-        ],
-      }),
-    ).toEqual([]);
+      done.map((event) => (event.type === 'thinking-step' ? event.step.id : 'ikke et tenkesteg')),
+    ).toEqual(ids);
+    const [search, read] = done;
+    if (search.type !== 'thinking-step' || read.type !== 'thinking-step')
+      throw new Error('forventet tenkesteg');
+    expect(search.step.detail).toBe('20 treff');
+    expect(read.step.durationMs).toBe(812);
     expect(state.keywords).toEqual(['Nkom 2023']);
+  });
+
+  it('forgets what a turn announced once the turn is over', () => {
+    const state = new McpStreamState();
+    // A call that is announced but never reported: the next turn must not be held back by it.
+    state.progress(startsTool('search', { queries: ['Nkom 2023'] }));
+    state.progress({ event: 'agent/turn-completed', iteration: 1, 'tool-calls': [] });
+
+    const [event] = state.progress({
+      event: 'agent/turn-completed',
+      iteration: 2,
+      'tool-calls': [{ tool: 'search', args: { queries: ['Nkom 2024'] } }],
+    });
+
+    if (event.type !== 'thinking-step') throw new Error('forventet et tenkesteg');
+    expect(event.step.id).not.toBe('tool-1-search');
+  });
+
+  it('keeps the question out of the search words and the answer out of the step', () => {
+    const state = new McpStreamState();
+    state.progress(startsTool('generate_response', { query: 'Hva sier rapportene?' }));
+    const [event] = state.progress({
+      event: 'agent/turn-completed',
+      iteration: 2,
+      'tool-calls': [
+        {
+          tool: 'generate_response',
+          args: { query: 'Hva sier rapportene?' },
+          'result-summary': 'Nkom rapporterer om god måloppnåelse …',
+          'duration-ms': 37_980,
+        },
+      ],
+    });
+
+    if (event.type !== 'thinking-step') throw new Error('forventet et tenkesteg');
+    expect(event.step.detail).toBeUndefined();
+    expect(event.step.queries).toBeUndefined();
+    expect(event.step.durationMs).toBe(37_980);
+    expect(state.keywords).toEqual([]);
   });
 
   it('draws a tool the turn reports without having announced it', () => {
     const state = new McpStreamState();
-    state.progress(startsTool('search', { queries: ['Nkom 2023'] }));
+    const [first] = state.progress(startsTool('search', { queries: ['Nkom 2023'] }));
+    if (first.type !== 'thinking-step') throw new Error('forventet et tenkesteg');
 
     const events = state.progress({
       event: 'agent/turn-completed',
@@ -383,10 +437,13 @@ describe('McpStreamState', () => {
       ],
     });
 
-    expect(events).toHaveLength(1);
-    const [event] = events;
-    if (event.type !== 'thinking-step') throw new Error('forventet et tenkesteg');
-    expect(event.step.label).toBe('Jeg søker i dokumentene.');
+    // The announced one comes back under its own id; the other one is new.
+    expect(events).toHaveLength(2);
+    const ids = events.map((event) =>
+      event.type === 'thinking-step' ? event.step.id : 'ikke et tenkesteg',
+    );
+    expect(ids[0]).toBe(first.step.id);
+    expect(ids[1]).not.toBe(first.step.id);
   });
 
   it('says the answer is being written once, however many frames mention it', () => {
@@ -394,13 +451,15 @@ describe('McpStreamState', () => {
     state.progress(startsTool('generate_response', { query: 'måloppnåelse' }));
     state.progress({ event: 'response/chunk', delta: 'Nkom rapporterer.' });
 
-    expect(
-      state.progress({
-        event: 'agent/turn-completed',
-        iteration: 1,
-        'tool-calls': [{ tool: 'generate_response', 'result-summary': 'Nkom rapporterer.' }],
-      }),
-    ).toEqual([]);
+    const [again] = state.progress({
+      event: 'agent/turn-completed',
+      iteration: 1,
+      'tool-calls': [{ tool: 'generate_response', 'result-summary': 'Nkom rapporterer.' }],
+    });
+    // The same step, filled in, and no second one saying the answer is being written.
+    if (again.type !== 'thinking-step') throw new Error('forventet et tenkesteg');
+    expect(again.step.kind).toBe('finalizing');
+    expect(again.step.id).toBe('tool-1-generate_response');
     // The text still has to come out, even though the step is already up.
     expect(state.progress({ event: 'agent/finalized', iteration: 1 })).toEqual([
       { type: 'token', text: 'Nkom rapporterer.' },
