@@ -5,6 +5,8 @@ interface ImportMetaEnv {
   /** Which corpus live mode asks: both or neither, since the backend honours only the pair. */
   readonly VITE_KA_TENANT?: string;
   readonly VITE_KA_DATASET_CONFIG_KEY?: string;
+  /** The MCP tool live mode calls; unset is headless-rag's default. See src/api/live/mcp.ts. */
+  readonly VITE_KA_TOOL?: string;
   /**
    * Corpora for the chooser, `key=Name|description;…`; unset means no chooser. See api/corpus.ts.
    */

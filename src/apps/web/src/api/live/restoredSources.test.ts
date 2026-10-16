@@ -1,5 +1,5 @@
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
-import type { StreamEvent } from '../../model';
+import { emptyFilterSelection, type FilterSelection, type StreamEvent } from '../../model';
 import { LiveChatClient, resetLiveConversation } from './LiveChatClient';
 import { SOURCES_STORAGE_KEY, answerFingerprint, recallThread } from './sourceStore';
 
@@ -34,6 +34,8 @@ type Backend = {
   excerptsHeld?: Promise<void>;
   /** The assistant message the backend gives back when the thread is read. */
   storedAnswer: { text: string; chunks: unknown[] };
+  /** The create call's `filter-value`, given back on a message of its own when set. */
+  createdWith?: Record<string, unknown>;
 };
 
 let backend: Backend;
@@ -89,6 +91,9 @@ beforeEach(() => {
         conversation: { id: 'conv-1', topic: 'Nkom', tags: ['corpus:kudos-full'], created: 1 },
         messages: [
           { id: 'm0', role: 'system', text: 'You are a helpful assistant.', chunks: [] },
+          ...(backend.createdWith
+            ? [{ id: 'f', role: null, chunks: [], filterValue: backend.createdWith }]
+            : []),
           { id: 'm1', role: 'user', text: 'Hva sier Nkom om måloppnåelse?', chunks: [] },
           { id: 'm2', role: 'assistant', created: 2, ...backend.storedAnswer },
         ],
@@ -106,9 +111,9 @@ afterEach(() => {
 
 const client = () => new LiveChatClient({ tenant: 'kudos', datasetConfigKey: 'kudos-full' });
 
-async function ask(): Promise<StreamEvent[]> {
+async function ask(filters?: FilterSelection): Promise<StreamEvent[]> {
   const events: StreamEvent[] = [];
-  for await (const event of client().ask({ query: 'Hva sier Nkom om måloppnåelse?' })) {
+  for await (const event of client().ask({ query: 'Hva sier Nkom om måloppnåelse?', filters })) {
     events.push(event);
   }
   return events;
@@ -290,5 +295,44 @@ describe('Fremgangsmåte etter ny innlasting', () => {
     expect(recallThread('conv-1')?.has(answerFingerprint(ANSWER))).toBe(true);
     release();
     await asking;
+  });
+});
+
+/**
+ * «Avgrenset til» over et svar etter ny innlasting. Live låser ikke tråden, og
+ * backenden lagrer bare filteret samtalen ble laget med (målt mot :8080
+ * 15.10), så det et spørsmål ble stilt med, skrives ned i nettleseren.
+ */
+describe('filteret over svaret etter ny innlasting', () => {
+  const ARSRAPPORT = { 'document-type': ['Årsrapport'], organisation: [], year: [] };
+  const answerOf = async () => {
+    const thread = await client().getThread('conv-1');
+    return { thread, answer: thread?.messages.find((message) => message.role === 'assistant') };
+  };
+
+  it('gir svaret filteret det ble stilt med, ikke det tråden ble laget med', async () => {
+    backend.createdWith = ARSRAPPORT;
+    const evaluering = { ...emptyFilterSelection, documentType: ['Evaluering'] };
+    await ask(evaluering);
+
+    const { thread, answer } = await answerOf();
+
+    expect(thread?.filter).toBeUndefined();
+    expect(answer?.filter).toEqual(evaluering);
+  });
+
+  it('husker at et spørsmål ble stilt uten filter', async () => {
+    backend.createdWith = ARSRAPPORT;
+    await ask();
+
+    expect((await answerOf()).answer?.filter).toEqual(emptyFilterSelection);
+  });
+
+  it('har bare filteret tråden ble laget med når denne nettleseren ikke har skrevet ned noe', async () => {
+    // Another device, or a cleared browser: wrong for a question asked after
+    // the filter changed. See `threadDetailFrom`.
+    backend.createdWith = ARSRAPPORT;
+
+    expect((await answerOf()).answer?.filter?.documentType).toEqual(['Årsrapport']);
   });
 });

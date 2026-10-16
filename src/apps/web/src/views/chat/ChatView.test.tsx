@@ -13,6 +13,7 @@ import {
   type AnswerSources,
   threadFromQuestion,
   type FilterSelection,
+  type Message,
   type StreamEvent,
   type ThreadDetail,
 } from '../../model';
@@ -701,6 +702,39 @@ describe('ChatView', () => {
     await screen.findByRole('button', { name: 'Kopier svaret' });
 
     expect(screen.queryByText(/Avgrenset til/u)).toBeNull();
+  });
+
+  it('says over an answer read back what it was asked with, before the thread’s filter', async () => {
+    const reply = (id: string, content: string, filter?: FilterSelection): Message => ({
+      id,
+      role: 'assistant',
+      content,
+      createdAt: '2026-10-15T09:00:01Z',
+      citations: [],
+      status: 'complete',
+      ...(filter ? { filter } : {}),
+    });
+    const restored: ThreadDetail = {
+      ...threadWith('Hva sier rapporten?'),
+      filter: { ...emptyFilterSelection, documentType: ['Årsrapport'] },
+      messages: [
+        ...threadWith('').messages,
+        reply('a1', 'Første svar.', { ...emptyFilterSelection, documentType: ['Evaluering'] }),
+        // Empty is «none», not «not known».
+        reply('a2', 'Andre svar.', emptyFilterSelection),
+        reply('a3', 'Tredje svar.'),
+      ],
+    };
+
+    render(
+      <Shell>
+        <ChatView client={clientYielding([])} thread={restored} />
+      </Shell>,
+    );
+
+    expect(await screen.findAllByText(/Avgrenset til: Evaluering/u)).toHaveLength(1);
+    expect(screen.getAllByText(/Avgrenset til: Årsrapport/u)).toHaveLength(1);
+    expect(screen.getAllByText(/Avgrenset til/u)).toHaveLength(2);
   });
 
   it('copies the answer with its sources, and counts them in the receipt', async () => {

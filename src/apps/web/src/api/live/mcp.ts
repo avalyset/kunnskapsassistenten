@@ -20,8 +20,8 @@ import { publicUrl } from '../publicUrl';
 export const MCP_PROTOCOL_VERSION = '2026-07-28';
 
 /**
- * The tool the server marks as default; the frontend hides the others. A constant because the Vite
- * proxy cannot rewrite a body; in production it belongs on the server that holds the API key.
+ * The tool asked when `VITE_KA_TOOL` is not set: the one headless-rag marks as default. Another
+ * backend names its own, as genki does with `kunnskapsassistenten__default`.
  */
 export const DEFAULT_TOOL_NAME = 'builtin.agent-rag-agent__agent-rag-graph-bundled';
 

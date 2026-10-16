@@ -3,6 +3,18 @@
 Beslutninger og milepæler for klienten, med den nyeste øverst. Hvordan loggen
 føres, står i [README](README.md). PR-numrene uten repo foran er i dette repoet.
 
+## 2026-10-15
+
+- **I live er en tråd ikke lenger låst til filteret den ble startet med**
+  ([digdir#155](https://github.com/digdir/kunnskapsassistenten/pull/155)). Filterfeltene står i panelet også i en tråd som er i gang,
+  og endres filteret, kommer beskjeden med «Ny tråd». Saken
+  [digdir#90](https://github.com/digdir/kunnskapsassistenten/issues/90) ba om en beskjed, ikke en lås, og
+  avgrensningen sto to steder, i panelet og over hvert svar. Linja over svaret
+  blir stående og sier hva akkurat det svaret ble stilt med. Backenden lagrer
+  ikke filteret per spørsmål, så det skrives ned i nettleseren. På en annen
+  enhet viser linja derfor filteret tråden ble startet med. Bak BFF-en er
+  tråden fortsatt låst, fordi serveren låser den.
+
 ## 2026-10-14
 
 - **Innstillinger er en egen side, lenket først i foten av navigasjonspanelet**
@@ -98,6 +110,7 @@ føres, står i [README](README.md). PR-numrene uten repo foran er i dette repoe
 - **En tråd som er startet med et filter, er låst til det, også i live**
   ([#247](https://github.com/larsekhansen/kunnskapsassistenten-frontend/pull/247)).
   Endres filteret i en tråd uten lås, får leseren en beskjed med «Ny tråd».
+  I live gjaldt låsen fram til 2026-10-15.
 - **Kildene står under svaret, og snarveiene er ute av kildepanelet**
   ([#246](https://github.com/larsekhansen/kunnskapsassistenten-frontend/pull/246),
   [#248](https://github.com/larsekhansen/kunnskapsassistenten-frontend/pull/248)).

@@ -1,5 +1,6 @@
 import type { Facet } from '../../../shared/facets.ts';
 import {
+  emptyFilterSelection,
   isEmptySelection,
   type FilterFacet,
   type FilterSelection,
@@ -41,6 +42,7 @@ import { currentUserId } from './userId';
 export type LiveChatClientOptions = {
   /** Where the proxy lives. Relative on purpose: same origin, no CORS. */
   basePath?: string;
+  /** The MCP tool to call, `VITE_KA_TOOL`. Blank or unset is `DEFAULT_TOOL_NAME`. */
   toolName?: string;
   /** Which corpus to ask; both or neither. Dataset names, not credentials, so `VITE_` is fine. */
   tenant?: string;
@@ -76,7 +78,8 @@ export class LiveChatClient implements ChatClient {
 
   constructor(options: LiveChatClientOptions = {}) {
     this.#basePath = options.basePath ?? '/api';
-    this.#toolName = options.toolName ?? DEFAULT_TOOL_NAME;
+    // `VITE_KA_TOOL=` in an .env file arrives as '', and an empty name would be sent as is.
+    this.#toolName = options.toolName?.trim() || DEFAULT_TOOL_NAME;
     this.#tenant = options.tenant;
     this.#corpusKey =
       typeof options.datasetConfigKey === 'function'
@@ -150,8 +153,9 @@ export class LiveChatClient implements ChatClient {
           // The thread's corpus, kept on the thread: the backend returns `tags` as given, so the
           // corpus is known on any machine. Prefixed, because `tags` is a shared list.
           ...(corpusKey ? { tags: [`${CORPUS_TAG_PREFIX}${corpusKey}`] } : {}),
-          // The filter locks the thread (issue 90). The backend keeps `filter-value` from the
-          // create call, but not the filter a turn is asked with. Not sent when empty (`lockOf`).
+          // What the thread was started with. The backend keeps `filter-value` from the create
+          // call, but not the filter a turn is asked with, so it is the only filter an answer read
+          // back can show without this browser's record (`threadDetailFrom`). Not sent when empty.
           ...(filter && !isEmptySelection(filter) ? { 'filter-value': filter } : {}),
         }),
       });
@@ -263,6 +267,8 @@ export class LiveChatClient implements ChatClient {
                 retrieval,
                 thinkingSteps: turn.thinkingSteps,
                 thoughtMs: turn.thoughtMs,
+                // Kept also when empty: «none» must not read back as the thread's first filter.
+                filter: params.filters ?? emptyFilterSelection,
               }),
           });
           // Through the recorder on their way out, so what was shown can be written down with the
@@ -348,6 +354,9 @@ export class LiveChatClient implements ChatClient {
         if (message.thoughtMs === undefined && answer.thoughtMs !== undefined) {
           restored.thoughtMs = answer.thoughtMs;
         }
+        // Over the thread's first filter (`threadDetailFrom`): this is what the question was
+        // asked with.
+        if (answer.filter) restored.filter = answer.filter;
         if (!message.sources?.length && answer.chunks.length > 0) {
           const documents = await this.#withTexts(
             toSourceDocuments(answer.chunks, detail.corpusKey),
