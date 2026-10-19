@@ -112,6 +112,12 @@ type ToolCall = {
   'result-summary'?: string;
 };
 
+/**
+ * A chunk's heading path as the backend sends it. headless-rag sends a string in Clojure map syntax
+ * (`{"Header 1" "Mål"}`), genki an object (`{"Header 1": "Mål"}`), and genki also sends `null`.
+ */
+export type ChunkMetadata = string | Record<string, unknown>;
+
 export type McpChunk = {
   chunk_id?: string;
   doc_num?: string;
@@ -120,7 +126,7 @@ export type McpChunk = {
   doc_title?: string;
   docTitle?: string;
   url?: string | null;
-  metadata?: string;
+  metadata?: ChunkMetadata | null;
 };
 
 // The chunk's title under whichever name it came. Blank counts as missing, because an empty line
@@ -135,16 +141,26 @@ function chunkTitle(chunk: McpChunk): string {
 const HEADING_MARKER = /#+\s+/;
 
 /**
- * The heading path inside a document. The server sends Clojure map syntax as a string, despite the
- * schema saying object, so the quoted values are read in order and split on heading markers.
- * Headings run together are siblings but are drawn as steps; nothing in the string says more.
+ * The heading values in order, from either shape of `ChunkMetadata`. In the string the quoted
+ * values alternate with their keys; in the object they are read in the order they came, and a
+ * value that is not a string is not a heading.
  */
-export function parseHeadingPath(metadata: string | undefined): string | undefined {
+function headingValues(metadata: ChunkMetadata): string[] {
+  if (typeof metadata !== 'string') {
+    return Object.values(metadata).filter((value): value is string => typeof value === 'string');
+  }
+  const quoted = [...metadata.matchAll(/"((?:[^"\\]|\\.)*)"/g)].map((match) => match[1]);
+  return quoted.filter((_, index) => index % 2 === 1);
+}
+
+/**
+ * The heading path inside a document, from the metadata's values split on heading markers.
+ * Headings run together are siblings but are drawn as steps; nothing in the metadata says more.
+ */
+export function parseHeadingPath(metadata: ChunkMetadata | null | undefined): string | undefined {
   if (!metadata) return undefined;
 
-  const quoted = [...metadata.matchAll(/"((?:[^"\\]|\\.)*)"/g)].map((match) => match[1]);
-  const values = quoted.filter((_, index) => index % 2 === 1);
-  const path = values
+  const path = headingValues(metadata)
     .flatMap((value) => value.split(HEADING_MARKER))
     .map((step) => step.trim())
     // Empty or all hashes: a marker with no heading behind it.

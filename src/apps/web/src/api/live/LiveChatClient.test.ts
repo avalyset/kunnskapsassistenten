@@ -936,3 +936,149 @@ describe('fasettene i live', () => {
     expect(fetchMock.mock.calls[0]?.[1]?.signal).toBe(abort.signal);
   });
 });
+
+/**
+ * genki, measured against genki-test on 2026-10-19 with the service's own key.
+ *
+ * genki ties a service key's conversation to `X-User-Id`, so a `tools/call` on the reader's
+ * conversation without it answered `conversation_not_found`. And it sends a chunk's heading
+ * metadata as an object, or `null`, where headless-rag sends a string; reading the object as a
+ * string threw, and the reader got «Forbindelsen brøt sammen mens svaret kom» as the answer ended.
+ */
+describe('LiveChatClient against genki', () => {
+  beforeEach(() => resetLiveConversation());
+  afterEach(() => vi.unstubAllGlobals());
+
+  function headersOf(fetchMock: ReturnType<typeof vi.fn>, path: string) {
+    const calls = fetchMock.mock.calls as unknown as [unknown, RequestInit | undefined][];
+    const call = calls.find(([url]) => String(url).endsWith(path));
+    return call?.[1]?.headers as Record<string, string> | undefined;
+  }
+
+  it('asks as the same reader the conversation was made for', async () => {
+    const fetchMock = captureRequest();
+    await askAndReadBody(
+      new LiveChatClient({ toolName: 'kunnskapsassistenten__default' }),
+      fetchMock,
+    );
+
+    const reader = headersOf(fetchMock, '/conversations')?.['X-User-Id'];
+    expect(reader).toMatch(/^ka-/);
+    expect(headersOf(fetchMock, '/mcp')?.['X-User-Id']).toBe(reader);
+  });
+
+  /** The frames genki-test sent, shortened, in the order it sent them. */
+  function genkiStream(): Response {
+    const progress = (meta: Record<string, unknown>) => ({
+      jsonrpc: '2.0',
+      method: 'notifications/progress',
+      params: { progressToken: 'ka-1', progress: 1, message: '', _meta: meta },
+    });
+    const frames = [
+      progress({
+        event: 'request/started',
+        'request-id': 'r-1',
+        query: 'Hva skriver Statens vegvesen?',
+      }),
+      progress({ event: 'agent/iteration-started', iteration: 0, 'max-iterations': 10 }),
+      progress({ event: 'agent/thinking', iteration: 0, reasoning: 'Jeg søker i årsrapporten.' }),
+      progress({
+        event: 'tool/call',
+        'tool-call': { tool: 'search', args: { queries: ['trafikksikkerhet 2024'] } },
+      }),
+      progress({
+        event: 'tool/result',
+        'tool-result': { tool: 'search', summary: 'Search pass 1: found 22 chunks.' },
+      }),
+      progress({ event: 'response/chunk', delta: 'Norge er Europas mest ' }),
+      progress({ event: 'response/chunk', delta: 'trafikksikre land. [1]' }),
+      progress({ event: 'agent/finalized', iteration: 1, 'response-length': 44 }),
+      {
+        jsonrpc: '2.0',
+        id: 1,
+        result: {
+          resultType: 'complete',
+          content: [
+            { type: 'text', text: 'Norge er Europas mest trafikksikre land. [1]' },
+            {
+              type: 'resource_link',
+              name: 'Årsrapport Statens vegvesen 2024',
+              uri: 'https://kudos.dfo.no/dokumenter?query=%C3%85rsrapport%20Statens%20vegvesen%202024',
+            },
+          ],
+          structuredContent: {
+            chunks: [
+              {
+                chunk_id: '7c1a6fedce87',
+                doc_num: '420689',
+                title: 'Årsrapport Statens vegvesen 2024',
+                metadata: {
+                  'Header 1': '3. Årets aktiviteter og resultater',
+                  'Header 2': 'Risiko',
+                },
+                url: 'https://kudos.dfo.no/dokumenter?query=%C3%85rsrapport%20Statens%20vegvesen%202024',
+              },
+              {
+                chunk_id: 'a9a5ccb485f3',
+                doc_num: '420689',
+                title: 'Årsrapport Statens vegvesen 2024',
+                metadata: null,
+              },
+            ],
+            conversation_id: 'c-genki',
+            filters_applied: [],
+          },
+          isError: false,
+          _meta: {
+            conversation_id: 'c-genki',
+            agent_id: 'kunnskapsassistenten',
+            status: 'complete',
+            insufficient: false,
+          },
+        },
+      },
+    ];
+    return new Response(frames.map((frame) => `data: ${JSON.stringify(frame)}\n\n`).join(''), {
+      status: 200,
+      headers: { 'Content-Type': 'text/event-stream' },
+    });
+  }
+
+  it('ends a genki answer with its sources, not with a broken connection', async () => {
+    vi.stubGlobal(
+      'fetch',
+      vi.fn(async (url: unknown) =>
+        String(url).endsWith('/mcp') ? genkiStream() : backendCreatingResponse('c-genki'),
+      ),
+    );
+    const events: StreamEvent[] = [];
+    for await (const event of new LiveChatClient({ toolName: 'kunnskapsassistenten__default' }).ask(
+      {
+        query: 'Hva skriver Statens vegvesen?',
+      },
+    )) {
+      events.push(event);
+    }
+
+    expect(events.filter((event) => event.type === 'error')).toEqual([]);
+    const sources = events.find((event) => event.type === 'sources');
+    expect(
+      sources?.type === 'sources' && sources.documents.map((document) => document.title),
+    ).toEqual(['Årsrapport Statens vegvesen 2024']);
+    expect(
+      sources?.type === 'sources' &&
+        sources.documents[0].excerpts.map((excerpt) => excerpt.heading),
+    ).toEqual(['3. Årets aktiviteter og resultater › Risiko', undefined]);
+    expect(events.at(-1)).toMatchObject({ type: 'done', conversationId: 'c-genki' });
+  });
+});
+
+/** `POST /api/conversations` as genki answers it. */
+function backendCreatingResponse(id: string): Response {
+  return new Response(
+    JSON.stringify({
+      conversation: { id, topic: 'Hva skriver Statens vegvesen?', agentId: 'kunnskapsassistenten' },
+    }),
+    { status: 201, headers: { 'Content-Type': 'application/json' } },
+  );
+}
