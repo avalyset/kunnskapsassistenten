@@ -49,17 +49,27 @@ cp apps/web/.env.example apps/web/.env.local
 ```
 
 Open `apps/web/.env.local` in a text editor. Everything is filled in except
-two lines:
+two lines, `KA_API_KEY=` and `TYPESENSE_API_KEY=`. Paste each key right after
+`=`, with no spaces, and not into Claude Code either. `.env.local` is kept out
+of git and must never be committed.
 
-- `KA_API_KEY=`: a service key for the service `kunnskapsassistenten` in
-  genki-test. It is made in the genki-test portal by someone who signs in with
-  Entra ID, and it only reaches that service.
-- `TYPESENSE_API_KEY=`: the search key to Typesense, which gives the filters
-  and the excerpts in the sources.
+`KA_API_KEY` is your own key to genki, which you make yourself. It reaches only
+the service Kunnskapsassistenten, and it can be revoked without touching anyone
+else's.
 
-Ask the team for both. They are shared in the password manager, never in chat
-or email. Paste them right after `=`, with no spaces, and not into Claude Code
-either. `.env.local` is kept out of git and must never be committed.
+1. Go to https://portal.genki-test.digdir.cloud, choose Entra ID and sign in
+   with your Digdir email.
+2. Choose «Tjenester», then «Kunnskapsassistenten», then «Kanaler og
+   frontend».
+3. Scroll down to «API-nøkler for tjenesten» and press «Lag API-nøkkel».
+4. Give it a name you recognise, such as `ka-lokal-yourname`, so it can be
+   revoked on its own.
+5. Copy the key straight away: the portal shows it only once. Paste it after
+   `KA_API_KEY=`.
+
+`TYPESENSE_API_KEY` is the search key to Typesense, which gives the filters and
+the excerpts in the sources. Ask the team for it. It is shared in the password
+manager, never in chat or email.
 
 ## 4. Start the app
 
@@ -86,13 +96,14 @@ port and prints it. To choose another port, use `npm run web -- --port 5180`.
 After every change to `.env.local`, stop the app with Ctrl+C and start it
 again with `npm run web`. It reads the file only when it starts.
 
-| You see                                                    | It means                                                          | Do this                                                                                                                                                              |
-| ---------------------------------------------------------- | ----------------------------------------------------------------- | -------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| `[ka] Live mangler` and some names, in Terminal            | Those lines are empty in `.env.local`                             | Fill in the lines it names                                                                                                                                           |
-| «Oppsettet mangler» in the app                             | `KA_API_URL` is missing from `.env.local`                         | Copy `.env.example` again (step 3), and paste the keys in again                                                                                                      |
-| «Ingen tilgang» when you ask                               | genki refused `KA_API_KEY`                                        | Check that it is the service key for `kunnskapsassistenten` in genki-test, all of it, with no spaces. A key made without an Entra ID sign-in is refused the same way |
-| «Filtrering er ikke tilgjengelig ennå» in the filter panel | Typesense did not accept the key, or did not find the collections | Check `TYPESENSE_API_KEY`, and that `TYPESENSE_URL`, `KA_FACET_COLLECTIONS` and `KA_CHUNK_COLLECTIONS` are as in `.env.example`                                      |
-| «Svaret kom ikke fram» when you ask                        | The backend answered with an error                                | Tell the team, with the time                                                                                                                                         |
+| You see                                                    | It means                                                                                                            | Do this                                                                                                                                                                |
+| ---------------------------------------------------------- | ------------------------------------------------------------------------------------------------------------------- | ---------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `[ka] Live mangler` and some names, in Terminal            | Those lines are empty in `.env.local`                                                                               | Fill in the lines it names                                                                                                                                             |
+| «Oppsettet mangler» in the app                             | `KA_API_URL` is missing from `.env.local`                                                                           | Copy `.env.example` again (step 3), and paste the keys in again                                                                                                        |
+| 403 when you make the key in the portal                    | You are on «Integrasjoner», which makes keys for the whole organisation, or your login has no access to the service | Make the key in the service's own list, «API-nøkler for tjenesten» (step 3), or ask the team for access under «Tilgang»                                                |
+| «Ingen tilgang» when you ask                               | genki refused `KA_API_KEY`                                                                                          | Check that it is the key you made under «API-nøkler for tjenesten» (step 3), all of it, with no spaces. A key made without an Entra ID sign-in is refused the same way |
+| «Filtrering er ikke tilgjengelig ennå» in the filter panel | Typesense did not accept the key, or did not find the collections                                                   | Check `TYPESENSE_API_KEY`, and that `TYPESENSE_URL`, `KA_FACET_COLLECTIONS` and `KA_CHUNK_COLLECTIONS` are as in `.env.example`                                        |
+| «Svaret kom ikke fram» when you ask                        | The backend answered with an error                                                                                  | Tell the team, with the time                                                                                                                                           |
 
 ## 6. Working with Claude Code
 
