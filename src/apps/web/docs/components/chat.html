@@ -23,14 +23,14 @@
         id="chat"
         data-component="chat"
         data-phase="sketch"
-        data-optional="false"
+        data-optional="unknown"
         aria-labelledby="chat-title"
       >
         <div class="component-head">
           <div>
             <h1 id="chat-title">Chat</h1>
             <div class="badges">
-              <span class="badge phase">Sketch</span><span class="badge">Always included</span
+              <span class="badge phase">Sketch</span><span class="badge">Always included?</span
               ><span class="badge">Main area</span>
             </div>
             <p class="summary">
@@ -62,7 +62,10 @@
           <div>
             <h2>Use it when</h2>
             <ul>
-              <li>Always. The chat is the core of every assistant.</li>
+              <li>
+                Hypothesis: always, as the core of every assistant. To be tested: some assistants
+                may not need a chat at all.
+              </li>
             </ul>
             <h2>Variants</h2>
             <ul>
@@ -112,6 +115,7 @@
           <div class="wide open-questions">
             <h2>Open questions</h2>
             <ul>
+              <li>Does every assistant need a chat? To be tested.</li>
               <li>
                 How do we tell “not found” from “not read”, when the assistant reads only a
                 selection closely?
