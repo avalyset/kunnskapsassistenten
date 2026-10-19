@@ -1,10 +1,10 @@
 # Run Kunnskapsassistenten locally
 
-This is how you get the app running on your own machine, against the shared
-test backend and Typesense, with real answers and real filters. The guide is
-for you if you are not a developer and have Claude Code to help. Each step is
-one command or one action, and below it is what you should see when it has
-worked. The commands are typed in Terminal on a Mac.
+This is how you get the app running on your own machine, against genki-test,
+the shared test platform, and Typesense, with real answers and real filters.
+The guide is for you if you are not a developer and have Claude Code to help.
+Each step is one command or one action, and below it is what you should see
+when it has worked. The commands are typed in Terminal on a Mac.
 
 ## 1. Git and Node 24
 
@@ -51,8 +51,9 @@ cp apps/web/.env.example apps/web/.env.local
 Open `apps/web/.env.local` in a text editor. Everything is filled in except
 two lines:
 
-- `KA_API_KEY=`: the key to the backend at `test.rag.digdir.cloud`. It only
-  allows asking questions.
+- `KA_API_KEY=`: a service key for the service `kunnskapsassistenten` in
+  genki-test. It is made in the genki-test portal by someone who signs in with
+  Entra ID, and it only reaches that service.
 - `TYPESENSE_API_KEY=`: the search key to Typesense, which gives the filters
   and the excerpts in the sources.
 
@@ -85,13 +86,13 @@ port and prints it. To choose another port, use `npm run web -- --port 5180`.
 After every change to `.env.local`, stop the app with Ctrl+C and start it
 again with `npm run web`. It reads the file only when it starts.
 
-| You see                                                    | It means                                                          | Do this                                                                                                                         |
-| ---------------------------------------------------------- | ----------------------------------------------------------------- | ------------------------------------------------------------------------------------------------------------------------------- |
-| `[ka] Live mangler` and some names, in Terminal            | Those lines are empty in `.env.local`                             | Fill in the lines it names                                                                                                      |
-| «Oppsettet mangler» in the app                             | `KA_API_URL` is missing from `.env.local`                         | Copy `.env.example` again (step 3), and paste the keys in again                                                                 |
-| «Ingen tilgang» when you ask                               | The backend refused `KA_API_KEY`                                  | Check that the key is the one for `test.rag.digdir.cloud`, and that all of it is there, with no spaces                          |
-| «Filtrering er ikke tilgjengelig ennå» in the filter panel | Typesense did not accept the key, or did not find the collections | Check `TYPESENSE_API_KEY`, and that `TYPESENSE_URL`, `KA_FACET_COLLECTIONS` and `KA_CHUNK_COLLECTIONS` are as in `.env.example` |
-| «Svaret kom ikke fram» when you ask                        | The backend answered with an error                                | Tell the team, with the time                                                                                                    |
+| You see                                                    | It means                                                          | Do this                                                                                                                                                              |
+| ---------------------------------------------------------- | ----------------------------------------------------------------- | -------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `[ka] Live mangler` and some names, in Terminal            | Those lines are empty in `.env.local`                             | Fill in the lines it names                                                                                                                                           |
+| «Oppsettet mangler» in the app                             | `KA_API_URL` is missing from `.env.local`                         | Copy `.env.example` again (step 3), and paste the keys in again                                                                                                      |
+| «Ingen tilgang» when you ask                               | genki refused `KA_API_KEY`                                        | Check that it is the service key for `kunnskapsassistenten` in genki-test, all of it, with no spaces. A key made without an Entra ID sign-in is refused the same way |
+| «Filtrering er ikke tilgjengelig ennå» in the filter panel | Typesense did not accept the key, or did not find the collections | Check `TYPESENSE_API_KEY`, and that `TYPESENSE_URL`, `KA_FACET_COLLECTIONS` and `KA_CHUNK_COLLECTIONS` are as in `.env.example`                                      |
+| «Svaret kom ikke fram» when you ask                        | The backend answered with an error                                | Tell the team, with the time                                                                                                                                         |
 
 ## 6. Working with Claude Code
 
