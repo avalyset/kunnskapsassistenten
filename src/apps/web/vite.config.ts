@@ -197,6 +197,14 @@ export default defineConfig(({ command, mode }) => {
                 configure(proxy) {
                   proxy.on('proxyReq', (proxyRequest) => {
                     if (apiKey) proxyRequest.setHeader('X-API-Key', apiKey);
+                    // The call is the server's, not the browser's, as from server/proxy.ts,
+                    // which forwards neither. genki-test refused the key on any call that
+                    // carried an Origin (401, 2026-10-19). Not toward the BFF, which checks
+                    // Origin against cross-site requests.
+                    if (!bff) {
+                      proxyRequest.removeHeader('Origin');
+                      proxyRequest.removeHeader('Referer');
+                    }
                     // No compression on the streaming route. A gzip stream buffers,
                     // and then the answer arrives all at once at the end.
                     proxyRequest.setHeader('Accept-Encoding', 'identity');

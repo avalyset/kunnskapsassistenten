@@ -222,8 +222,9 @@ export class LiveChatClient implements ChatClient {
           'Mcp-Name': this.#toolName,
           // The same reader as on the conversation it continues. genki ties a service key's
           // conversation to `X-User-Id` and answers `conversation_not_found` to a call without it;
-          // headless-rag reads it only on /api/conversations. Behind the test environment's login
-          // the server replaces it, as on every call (server/identity.ts).
+          // headless-rag reads it only on /api/conversations and ignores it here. With
+          // `KA_USER_ID_FROM=platform`, behind a login, the server replaces it as on every call
+          // (server/identity.ts). Without, as on the test page today, this id is the one that goes.
           'X-User-Id': currentUserId(),
         },
         body: JSON.stringify(body),

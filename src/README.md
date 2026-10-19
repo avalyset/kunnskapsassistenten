@@ -52,11 +52,15 @@ preferanse: den autentiserer applikasjoner og ikke personer, og `X-User-Id`
 godtas uten verifisering. Derfor må noe på serversiden _være_ identiteten. Se
 [`decisions/0002`](decisions/0002-backend-for-frontend.md).
 
-## Komme i gang
+## Getting started
 
-Fra en ny klone til appen på din maskin, med testene. Hver blokk kjøres for
-seg, og alle kommandoene etter `cd` kjøres i `src/`. Målt 06.10 på macOS med
-Node 24.21.0 og npm 11.19.0.
+From a fresh clone to the app on your machine, with the tests. Each block is run
+on its own, and every command after `cd` is run in `src/`. Measured 06.10 on
+macOS with Node 24.21.0 and npm 11.19.0.
+
+Only the client against genki-test, step by step and also for those who are not
+developers: [Run locally](apps/web/docs/run-locally.md). In short,
+`npm run web`, with `apps/web/.env.local` made from `.env.example`.
 
 ### 1. Klonen og Node 24
 
@@ -175,26 +179,28 @@ BFF-en starter på `PORT` fra `.env` (8787), og klienten på
 `KA_BFF_URL` må med, for ellers ser klienten etter BFF-en på 8788. Er 5173
 opptatt, velger Vite neste ledige port og skriver den ut.
 
-### 5. Klienten alene, mot backenden
+### 5. The client alone, against the backend
 
 ```sh
 cp apps/web/.env.example apps/web/.env.local
 ```
 
-Fyll inn `KA_API_URL` og `KA_API_KEY`, korpuset (`VITE_KA_TENANT` og
-`VITE_KA_DATASET_CONFIG_KEY`), Typesense (`TYPESENSE_URL`, `TYPESENSE_API_KEY`,
-`KA_FACET_COLLECTIONS` og `KA_CHUNK_COLLECTIONS`) og `VITE_KA_FILTER_FIELDS` i
-`apps/web/.env.local`. Typesense-nøkkelen er en søkenøkkel, aldri
-adminnøkkelen.
+Fill in the two keys in `apps/web/.env.local`: `KA_API_KEY`, your own key from
+genki's portal (step 3 of [Run locally](apps/web/docs/run-locally.md)), and
+`TYPESENSE_API_KEY`, a search key for Typesense and never the admin key. The
+rest is in `.env.example` for genki-test. Without the file, `npm run web` has
+neither a backend nor keys.
 
 ```sh
-npm run dev:web
+npm run web
 ```
 
-Klienten i live på <http://localhost:5173>, slik testmiljøet kjører:
-Vite-proxyen sender spørsmålene rett til headless-rag med nøkkelen, og filtrene
-og utdragene kommer fra Typesense. Mangler noe, skriver dev-serveren én linje
-ved oppstart om hva og hvor det settes. Mock er bare for testene under.
+The client in live on <http://localhost:5173>, the way the test environment
+runs it: the Vite proxy sends the questions straight to the backend in
+`KA_API_URL`, genki-test in `.env.example`, with the key, and the filters and
+the excerpts come from Typesense. If anything is missing, the dev server prints
+one line at startup saying what and where it is set. Mock is only for the tests
+below.
 
 ### 6. Testene
 
@@ -236,20 +242,20 @@ nåværende i `apps/web-preact`, eller den `KA_DEFAULT_CLIENT` sier (`ny` eller
 klient spør sin egen versjon av API-et: `apps/web-preact` `/api/*` og
 `apps/web` `/api/v2/*` (`decisions/0009`).
 
-## Kommandoer
+## Commands
 
-|                                         |                                                                                                               |
-| --------------------------------------- | ------------------------------------------------------------------------------------------------------------- |
-| `npm run dev`                           | BFF-en og klienten, med watch. Klienten går i live uten `VITE_API_MODE=bff`, se [Komme i gang](#komme-i-gang) |
-| `npm run dev:web`                       | bare klienten, i live                                                                                         |
-| `npm run doctor`                        | sjekk forbindelsen til backenden                                                                              |
-| `npm run build`                         | produksjonsbygg av klienten                                                                                   |
-| `npm test`                              | server (node:test) og web (vitest)                                                                            |
-| `npm run typecheck`                     | alle tre prosjektene                                                                                          |
-| `npm run format`                        | prettier, skriver                                                                                             |
-| `npm run format:check`                  | prettier, sjekker bare                                                                                        |
-| `npm run lint --workspace apps/web`     | oxlint og stylelint i klienten                                                                                |
-| `npm run test:e2e --workspace apps/web` | Playwright mot klienten i mock                                                                                |
+|                                         |                                                                                                                                  |
+| --------------------------------------- | -------------------------------------------------------------------------------------------------------------------------------- |
+| `npm run dev`                           | the BFF and the client, with watch. The client runs in live without `VITE_API_MODE=bff`, see [Getting started](#getting-started) |
+| `npm run web`                           | only the client, in live, with `apps/web/.env.local`                                                                             |
+| `npm run doctor`                        | checks the connection to the backend                                                                                             |
+| `npm run build`                         | production build of the client                                                                                                   |
+| `npm test`                              | server (node:test) and web (vitest)                                                                                              |
+| `npm run typecheck`                     | all three projects                                                                                                               |
+| `npm run format`                        | prettier, writes                                                                                                                 |
+| `npm run format:check`                  | prettier, checks only                                                                                                            |
+| `npm run lint --workspace apps/web`     | oxlint and stylelint in the client                                                                                               |
+| `npm run test:e2e --workspace apps/web` | Playwright against the client in mock                                                                                            |
 
 ## Status
 
