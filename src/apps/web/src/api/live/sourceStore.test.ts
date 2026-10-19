@@ -52,6 +52,35 @@ describe('rememberAnswer og recallThread', () => {
     ]);
   });
 
+  it("keeps genki's heading metadata, an object, with its string values only", () => {
+    // As genki-test sent it on 2026-10-19, plus a value that is not a heading.
+    rememberAnswer('conv-1', 'Svar [1].', {
+      chunks: [
+        {
+          chunk_id: '4ea9c6895f29',
+          doc_num: '420689',
+          title: 'Årsrapport Statens vegvesen 2024',
+          metadata: {
+            'Header 1': '3. Årets aktiviteter og resultater',
+            'Header 2': 'Risiko',
+            level: 2,
+          },
+        },
+        { chunk_id: '7c1a6fedce87', doc_num: '420689', metadata: null },
+      ],
+    });
+
+    expect(recallThread('conv-1')?.get(answerFingerprint('Svar [1].'))?.chunks).toEqual([
+      {
+        chunk_id: '4ea9c6895f29',
+        doc_num: '420689',
+        title: 'Årsrapport Statens vegvesen 2024',
+        metadata: { 'Header 1': '3. Årets aktiviteter og resultater', 'Header 2': 'Risiko' },
+      },
+      { chunk_id: '7c1a6fedce87', doc_num: '420689' },
+    ]);
+  });
+
   it('lagrer bare det svaret bar, ikke tekst fra dokumentene', () => {
     rememberAnswer('conv-1', 'Svar.', {
       chunks: [{ ...chunks[0], content_markdown: 'Hele utdraget.' } as never],
