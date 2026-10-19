@@ -1,5 +1,6 @@
 import { afterEach, describe, expect, it, vi } from 'vitest';
 import { emptyFilterSelection } from '../../model';
+import { readableHeading } from '../../views/sources/readableText';
 import type { DatasetFilterFields } from '../filterFields';
 import {
   McpStreamState,
@@ -54,6 +55,22 @@ describe('parseHeadingPath', () => {
     expect(parseHeadingPath(null)).toBeUndefined();
     expect(parseHeadingPath({})).toBeUndefined();
     expect(parseHeadingPath({ 'Header 1': 3, 'Header 2': null })).toBeUndefined();
+  });
+
+  it("reads as the same line with genki's page anchor as with headless-rag's escaped one", () => {
+    // `Header 1` as genki-test sent it on 2026-10-19: the converter's page anchor, unescaped in
+    // an object value. headless-rag sends the same anchor escaped inside its string. The view
+    // cleans the heading (`readableHeading`), so that is what is compared.
+    const fromGenki = parseHeadingPath({
+      'Header 1': '<span id="page-14-0"></span>3. Årets aktiviteter og resultater',
+      'Header 2': 'Risiko',
+    });
+    const fromHeadlessRag = parseHeadingPath(
+      '{"Header 1" "<span id=\\"page-14-0\\"></span>3. Årets aktiviteter og resultater", "Header 2" "Risiko"}',
+    );
+
+    expect(readableHeading(fromGenki)).toBe('3. Årets aktiviteter og resultater › Risiko');
+    expect(readableHeading(fromHeadlessRag)).toBe(readableHeading(fromGenki));
   });
 });
 
