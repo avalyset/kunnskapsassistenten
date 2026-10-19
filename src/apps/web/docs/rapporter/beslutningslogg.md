@@ -6,6 +6,23 @@ repo.
 
 ## 2026-10-15
 
+- **Two time limits for an answer that never arrives: a notice after 30
+  seconds, an automatic end after 5 minutes**
+  ([digdir#161](https://github.com/digdir/kunnskapsassistenten/pull/161)). No
+  link in the chain had an overall deadline, and the backend's keep-alive
+  restarts the idle timeouts along the way, so a turn could stay open without
+  end. Progress is a new step or new text, and every piece of progress
+  restarts both clocks. Measured gaps without progress in ordinary live
+  answers: 3.7, 10.6, 21.9, 27.5 and 45.1 seconds. The longest ones fall in
+  the agent's last turn, where the answer is written in one go and the backend
+  sends nothing at all until it is done, so the notice does show on the very
+  longest answers. That is accepted: a step is expected to say something well
+  inside 30 seconds, and a longer gap is about how finely the backend reports
+  its steps, not about the notice. The end is set as high as 5 minutes because
+  an answer may legitimately take minutes, and «Avbryt» is the reader's own way
+  out. The end stops the turn the way «Avbryt» does: this page stops waiting
+  and closes the connection, while the backend finishes and stores the run, so
+  the answer can be in the thread after a reload.
 - **In live, a thread is no longer locked to the filter it was started with**
   ([digdir#155](https://github.com/digdir/kunnskapsassistenten/pull/155)). The filter fields are in the panel also in a thread that is under way,
   and if the filter changes, the notice comes with «Ny tråd». The issue
