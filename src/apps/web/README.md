@@ -16,32 +16,32 @@ Hva som er ferdig, står under «Status» i [`src/README.md`](../../README.md#st
 Navnereglene står under [Naming](#naming), og kortversjonen av arbeidsreglene i
 [CONTRIBUTING.md](CONTRIBUTING.md).
 
-## Kom i gang
+## Getting started
 
-The client against the shared backend is `npm run web` from `src/`. It runs in
-live and reads `.env.local` here, which is made from `.env.example` with the two
-keys filled in. Step by step, also for those who are not developers:
+The client against genki-test is `npm run web` from `src/`. It runs in live and
+reads `.env.local` here, which is made from `.env.example` with the two keys
+filled in. Step by step, also for those who are not developers:
 [Run locally](docs/run-locally.md).
 
-I monorepoet står oppskriften i
-[`src/README.md`, «Komme i gang»](../../README.md#komme-i-gang): Node 24,
-`npm ci` i `src/`, BFF-en og klienten, testene og bildet. Skriptene under
-kjøres fra `src/` med `--workspace apps/web`.
+In the monorepo the recipe is in
+[`src/README.md`, «Getting started»](../../README.md#getting-started): Node 24,
+`npm ci` in `src/`, the BFF and the client, the tests and the image. The scripts
+below are run from `src/` with `--workspace apps/web`.
 
-| Skript                  | Gjør                                                                                             |
-| ----------------------- | ------------------------------------------------------------------------------------------------ |
-| `npm run dev`           | Utviklingsserver                                                                                 |
-| `npm run build`         | `tsc -b` og produksjonsbygg til `dist/`, for BFF-en uten `VITE_API_MODE` (`src/api/apiMode.ts`)  |
-| `npm run preview`       | Server produksjonsbygget lokalt                                                                  |
-| `npm run lint`          | oxlint, inkludert `jsx-a11y`-reglene                                                             |
-| `npm run test`          | vitest én gang. `npm run test:watch` for løpende kjøring                                         |
-| `npm run format`        | Prettier, skriver                                                                                |
-| `npm run format:check`  | Prettier, sjekker bare                                                                           |
-| `npm run tokens:build`  | Bygger temaet på nytt fra `designsystemet.config.json`                                           |
-| `npm run tokens:verify` | Bygger temaet i en midlertidig mappe og feiler hvis resultatet er annerledes enn det innsjekkede |
+| Script                  | Does                                                                                                   |
+| ----------------------- | ------------------------------------------------------------------------------------------------------ |
+| `npm run dev`           | Development server                                                                                     |
+| `npm run build`         | `tsc -b` and a production build to `dist/`, for the BFF without `VITE_API_MODE` (`src/api/apiMode.ts`) |
+| `npm run preview`       | Serves the production build locally                                                                    |
+| `npm run lint`          | oxlint, including the `jsx-a11y` rules                                                                 |
+| `npm run test`          | vitest once. `npm run test:watch` to keep it running                                                   |
+| `npm run format`        | Prettier, writes                                                                                       |
+| `npm run format:check`  | Prettier, checks only                                                                                  |
+| `npm run tokens:build`  | Builds the theme again from `designsystemet.config.json`                                               |
+| `npm run tokens:verify` | Builds the theme in a temporary folder and fails if the result differs from the one checked in         |
 
-Kjør `tokens:verify` etter hver oppgradering av Designsystemet. Feiler den, er
-det informasjonen du vil ha: les diffen før du sjekker inn.
+Run `tokens:verify` after every upgrade of Designsystemet. If it fails, that is
+the information you want: read the diff before you check it in.
 
 ## CI
 
@@ -884,30 +884,35 @@ tok 15,1 sekunder, målt 2026-09-11.
 fortsatt er på vei når stoppknappen trykkes, og på null er alt over før testen
 rekker å trykke. En mock som strømmer momentant strømmer ikke.
 
-## Ekte backend
+## The real backend
 
 `npm run web` from `src/` runs in live, and so does `npm run dev` here without
 `VITE_API_MODE`: `createChatClient()` gives `LiveChatClient`, and the dev server
 is the proxy that holds the key. Copy `.env.example` to `.env.local` and fill in
-the two keys, `KA_API_KEY` and `TYPESENSE_API_KEY`. The rest is there for the
-shared backend and Typesense. Against the stack on your machine it is
-`KA_API_URL=http://localhost:8080` and the key from there.
+the two keys, `KA_API_KEY` and `TYPESENSE_API_KEY`. The rest is there for
+genki-test and Typesense, and step 3 of [Run locally](docs/run-locally.md) says
+where you make your own genki key.
+
+Against the headless-rag stack on your machine instead:
+`KA_API_URL=http://localhost:8080` and the key from there, `VITE_KA_TOOL`
+removed, and `VITE_KA_TENANT` and `VITE_KA_DATASET_CONFIG_KEY` set to one of
+that stack's datasets, such as `demo` and `norquad-docs`.
 
 `TYPESENSE_API_KEY` is a search key with access to the collections, never the
 admin key. If anything is missing, the dev server prints one line at startup
 saying what and where it is set. Nothing fills in for what is missing.
 
-**`VITE_API_MODE` skal ikke stå i `.env.local`.** Alle Vite-servere fra samme
-sjekkout leser den samme fila, så en modus lagt inn der slår inn for alle som
-kjører i treet. Sett den på kommandolinja for den ene kjøringen som skal noe
-annet enn live:
+**`VITE_API_MODE` does not belong in `.env.local`.** Every Vite server from the
+same checkout reads the same file, so a mode put there applies to everyone
+running in the tree. Set it on the command line for the one run that needs
+something other than live:
 
 ```sh
 VITE_API_MODE=bff npm run dev
 ```
 
-`mock` er testenes modus, og Playwright og vitest setter den selv. En verdi som
-ikke er `live`, `bff` eller `mock`, stopper dev-serveren og bygget.
+`mock` is the tests' mode, and Playwright and vitest set it themselves. A value
+that is not `live`, `bff` or `mock` stops the dev server and the build.
 
 ### Hvilket korpus
 

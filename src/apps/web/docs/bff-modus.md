@@ -33,7 +33,7 @@ finnes, som i live.
 ## Kjøre
 
 I monorepoet står oppskriften i
-[`src/README.md`, «Komme i gang»](../../../README.md#komme-i-gang). Steg 4
+[`src/README.md`, «Getting started»](../../../README.md#getting-started). Steg 4
 kjører BFF-en og klienten sammen, og steg 7 bygger bildet der BFF-en serverer
 klienten fra samme origin.
 
