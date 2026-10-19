@@ -440,6 +440,10 @@ td.no {
   color: var(--muted);
   font-size: 13px;
 }
+.placeholder {
+  color: var(--muted);
+  font-style: italic;
+}
 .open-questions {
   background: var(--open-bg);
   color: var(--open-text);
