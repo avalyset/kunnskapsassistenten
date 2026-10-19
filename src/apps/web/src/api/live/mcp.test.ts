@@ -28,6 +28,33 @@ describe('parseHeadingPath', () => {
     expect(parseHeadingPath(undefined)).toBeUndefined();
     expect(parseHeadingPath('{}')).toBeUndefined();
   });
+
+  /*
+   * genki sends the same headings as an object, and sometimes `null`. Measured
+   * against genki-test on 2026-10-19: reading the object as a string threw, and
+   * the reader saw «Forbindelsen brøt sammen mens svaret kom» as the answer ended.
+   */
+  it("reads genki's object in the order it came", () => {
+    expect(
+      parseHeadingPath({
+        'Header 1': '3. Årets aktiviteter og resultater',
+        'Header 2': '3.1.4. Nullvisjonen for drepte og hardt skadde',
+        'Header 3': 'Nullvisjonen',
+      }),
+    ).toBe(
+      '3. Årets aktiviteter og resultater › 3.1.4. Nullvisjonen for drepte og hardt skadde › Nullvisjonen',
+    );
+  });
+
+  it('splits heading markers inside an object value, as inside the string', () => {
+    expect(parseHeadingPath({ 'Header 1': 'Noter## Referanser' })).toBe('Noter › Referanser');
+  });
+
+  it('gives up quietly on null, an empty object, and values that are not text', () => {
+    expect(parseHeadingPath(null)).toBeUndefined();
+    expect(parseHeadingPath({})).toBeUndefined();
+    expect(parseHeadingPath({ 'Header 1': 3, 'Header 2': null })).toBeUndefined();
+  });
 });
 
 /**
@@ -153,6 +180,41 @@ describe('toSourceDocuments', () => {
 
   it('reads the heading out of the metadata string', () => {
     expect(toSourceDocuments(chunks)[0].excerpts[0].heading).toBe('Mål');
+  });
+
+  it("groups genki's chunks, with object or null metadata, into one document", () => {
+    // Shortened from genki-test's answer on 2026-10-19; the fields this side does not read are
+    // left in, since they arrive.
+    const genki = [
+      {
+        chunk_id: '4ea9c6895f29',
+        chunk_index: 41,
+        content_length: 5762,
+        content_markdown: 'R1: Etaten får ikke redusert barrierer …',
+        doc_num: '420689',
+        excerpt: 'R1: Etaten får ikke redusert barrierer …',
+        metadata: { 'Header 1': '3. Årets aktiviteter og resultater', 'Header 2': 'Risiko' },
+        published_at: '2025-11-17T20:25:00.000000Z',
+        title: 'Årsrapport Statens vegvesen 2024',
+        url: 'https://kudos.dfo.no/dokumenter?query=%C3%85rsrapport%20Statens%20vegvesen%202024',
+      },
+      {
+        chunk_id: '7c1a6fedce87',
+        doc_num: '420689',
+        metadata: null,
+        title: 'Årsrapport Statens vegvesen 2024',
+      },
+    ];
+
+    const [document, ...rest] = toSourceDocuments(genki, 'kudos');
+
+    expect(rest).toEqual([]);
+    expect(document.id).toBe('420689');
+    expect(document.excerpts.map((excerpt) => excerpt.heading)).toEqual([
+      '3. Årets aktiviteter og resultater › Risiko',
+      undefined,
+    ]);
+    expect(document.excerpts.map((excerpt) => excerpt.citationNumber)).toEqual([1, 2]);
   });
 
   it('bygger lenka fra doc_num når bitene ikke har url (issue 92)', () => {

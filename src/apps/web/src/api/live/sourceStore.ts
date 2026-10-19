@@ -5,7 +5,7 @@ import {
   type ThinkingStep,
   type ThinkingStepKind,
 } from '../../model';
-import type { McpChunk } from './mcp';
+import type { ChunkMetadata, McpChunk } from './mcp';
 
 // What each answer was built from and how, kept in this browser because the backend keeps only
 // the answer's text (headless-rag #21). No passage is stored, and everything fails quietly.
@@ -83,6 +83,14 @@ function isRecord(value: unknown): value is Record<string, unknown> {
 
 const optionalString = (value: unknown) => (typeof value === 'string' ? value : undefined);
 
+/** The heading metadata in either shape it arrives in, the object with its string values only. */
+function metadataFrom(value: unknown): ChunkMetadata | undefined {
+  if (typeof value === 'string') return value;
+  if (!isRecord(value)) return undefined;
+  const headings = Object.entries(value).filter(([, entry]) => typeof entry === 'string');
+  return headings.length > 0 ? Object.fromEntries(headings) : undefined;
+}
+
 /** One stored chunk, or nothing, from whatever was in storage. */
 function chunkFrom(value: unknown): StoredChunk | undefined {
   if (!isRecord(value)) return undefined;
@@ -91,7 +99,7 @@ function chunkFrom(value: unknown): StoredChunk | undefined {
   const docNum = optionalString(value.doc_num);
   const title = optionalString(value.title);
   const url = optionalString(value.url);
-  const metadata = optionalString(value.metadata);
+  const metadata = metadataFrom(value.metadata);
   if (id) chunk.chunk_id = id;
   if (docNum) chunk.doc_num = docNum;
   if (title) chunk.title = title;
